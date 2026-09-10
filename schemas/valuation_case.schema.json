@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/valuation_case.schema.json",
+  "title": "Valuation Case / 가치평가 사례",
+  "description": "Canonical machine-readable contract for one valuation case. 하나의 가치평가 사례를 위한 표준 기계 판독 계약.",
+  "type": "object",
+  "required": ["schema_version", "case_id", "asset", "as_of", "currency", "facts", "scenarios"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1.0"},
+    "case_id": {"type": "string", "minLength": 1},
+    "asset": {
+      "type": "object",
+      "required": ["name", "asset_class"],
+      "properties": {
+        "name": {"type": "string"},
+        "ticker": {"type": ["string", "null"]},
+        "jurisdiction": {"type": ["string", "null"]},
+        "asset_class": {
+          "type": "string",
+          "enum": ["public_equity", "private_company", "startup", "real_estate", "infrastructure", "project_finance", "ip_technology", "other"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "as_of": {"type": "string", "format": "date"},
+    "currency": {"type": "string", "minLength": 3, "maxLength": 3},
+    "facts": {
+      "type": "object",
+      "description": "Observed or normalized facts with provenance. 출처가 있는 관측·정규화 사실.",
+      "additionalProperties": {"$ref": "#/$defs/fact"}
+    },
+    "scenarios": {
+      "type": "object",
+      "required": ["bear", "base", "bull"],
+      "properties": {
+        "bear": {"$ref": "#/$defs/scenario"},
+        "base": {"$ref": "#/$defs/scenario"},
+        "bull": {"$ref": "#/$defs/scenario"}
+      },
+      "additionalProperties": false
+    },
+    "probabilities": {
+      "type": ["object", "null"],
+      "properties": {
+        "bear": {"type": "number", "minimum": 0, "maximum": 1},
+        "base": {"type": "number", "minimum": 0, "maximum": 1},
+        "bull": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["type", "publisher", "as_of"],
+      "properties": {
+        "type": {"type": "string"},
+        "publisher": {"type": "string"},
+        "url": {"type": ["string", "null"]},
+        "document_id": {"type": ["string", "null"]},
+        "as_of": {"type": "string"},
+        "retrieved_at": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "fact": {
+      "type": "object",
+      "required": ["value", "unit", "period", "classification", "source"],
+      "properties": {
+        "value": {"type": ["number", "string", "null"]},
+        "unit": {"type": "string"},
+        "period": {"type": "string"},
+        "classification": {"type": "string", "enum": ["observed", "normalized"]},
+        "source": {"$ref": "#/$defs/source"},
+        "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+        "notes": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["forecast_years", "wacc", "terminal_growth", "assumptions"],
+      "properties": {
+        "forecast_years": {"type": "array", "items": {"type": "integer"}, "minItems": 1},
+        "wacc": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+        "terminal_growth": {"type": "number", "minimum": -0.2, "maximum": 0.2},
+        "assumptions": {
+          "type": "object",
+          "description": "Forecast assumptions; never silently classified as facts. 전망 가정이며 사실로 암묵 분류하지 않음.",
+          "additionalProperties": true
+        },
+        "rationale_en": {"type": ["string", "null"]},
+        "rationale_ko": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    }
+  }
+}

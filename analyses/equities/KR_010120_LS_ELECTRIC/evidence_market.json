@@ -1,0 +1,191 @@
+{
+  "case_id": "KR_010120_LS_ELECTRIC",
+  "bundle": "MARKET_AND_EQUITY_BRIDGE",
+  "as_of": "2026-09-10",
+  "claims": [
+    {
+      "claim_id": "lsel_market_price_20260910",
+      "class": "FACT",
+      "metric": "market_close_price",
+      "value": 206000,
+      "unit": "KRW_per_share",
+      "currency": "KRW",
+      "period": "2026-09-10",
+      "as_of": "2026-09-10",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "Investing.com",
+        "type": "historical_market_data",
+        "locator": "https://www.investing.com/equities/ls-industrial-systems-historical-data",
+        "tier": "B",
+        "published_at": "2026-09-10",
+        "corroboration": [
+          "https://stock.mk.co.kr/price/dealer/KR7010120004",
+          "https://stockanalysis.com/quote/krx/010120/history/"
+        ]
+      },
+      "extraction_note": "Regular-session close selected as KRW 206,000. Maeil Business Market at 15:32 and the StockAnalysis page header also showed KRW 206,000. One StockAnalysis historical-table row displayed KRW 205,000; this is documented as a vendor ingestion inconsistency rather than silently ignored.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_filing_shares_2026h1",
+      "class": "FACT",
+      "metric": "filing_date_shares_outstanding",
+      "value": 148820000,
+      "unit": "shares",
+      "currency": null,
+      "period": null,
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "S&P Global Market Intelligence via StockAnalysis",
+        "type": "market_database",
+        "locator": "https://stockanalysis.com/quote/krx/010120/financials/balance-sheet/",
+        "tier": "B",
+        "published_at": "2026-06-30"
+      },
+      "extraction_note": "Filing-date shares outstanding. Used as the current valuation denominator; the Tier-A 150,000,000 issued-share count is retained separately in evidence_manifest.json.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_cash_equiv_official_2026q2",
+      "class": "FACT",
+      "metric": "cash_and_cash_equivalents",
+      "value": 672000000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": null,
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_q2_earnings_release",
+        "locator": "https://www.ls-electric.com/ko/company/data/26_2Q_Results.pdf",
+        "tier": "A",
+        "published_at": "2026-07"
+      },
+      "extraction_note": "Official financial-position slide, rounded KRW bn.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_debt_official_2026q2",
+      "class": "FACT",
+      "metric": "company_ir_debts",
+      "value": 1478000000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": null,
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_q2_earnings_release",
+        "locator": "https://www.ls-electric.com/ko/company/data/26_2Q_Results.pdf",
+        "tier": "A",
+        "published_at": "2026-07"
+      },
+      "extraction_note": "Company-defined debts. Retained as a Tier-A cross-check and not mixed with the S&P broad-debt valuation bridge.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_net_debt_official_2026q2",
+      "class": "FACT",
+      "metric": "company_ir_net_debts",
+      "value": 806000000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": null,
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_q2_earnings_release",
+        "locator": "https://www.ls-electric.com/ko/company/data/26_2Q_Results.pdf",
+        "tier": "A",
+        "published_at": "2026-07"
+      },
+      "extraction_note": "Company-defined rounded net debts using cash equivalents.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_cash_investments_2026h1",
+      "class": "FACT",
+      "metric": "cash_and_short_term_investments",
+      "value": 740683000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": null,
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "S&P Global Market Intelligence via StockAnalysis",
+        "type": "market_database",
+        "locator": "https://stockanalysis.com/quote/krx/010120/financials/balance-sheet/",
+        "tier": "B",
+        "published_at": "2026-06-30"
+      },
+      "extraction_note": "Broad valuation-bridge cash definition: cash equivalents plus short-term investments.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_total_debt_2026h1",
+      "class": "FACT",
+      "metric": "total_debt",
+      "value": 1518700000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": null,
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "S&P Global Market Intelligence via StockAnalysis",
+        "type": "market_database",
+        "locator": "https://stockanalysis.com/quote/krx/010120/financials/balance-sheet/",
+        "tier": "B",
+        "published_at": "2026-06-30"
+      },
+      "extraction_note": "Broad total-debt definition used consistently with S&P cash/investments in the EV-to-equity bridge.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_minority_interest_2026h1",
+      "class": "FACT",
+      "metric": "minority_interest",
+      "value": 69414000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": null,
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "S&P Global Market Intelligence via StockAnalysis",
+        "type": "market_database",
+        "locator": "https://stockanalysis.com/quote/krx/010120/financials/balance-sheet/",
+        "tier": "B",
+        "published_at": "2026-06-30"
+      },
+      "extraction_note": "Minority interest used in the market-EV and DCF equity bridge.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    }
+  ],
+  "reconciliation": {
+    "share_count": "150,000,000 issued shares (Tier A) is distinct from 148,820,000 filing-date shares outstanding (Tier B). The latter is the per-share valuation denominator because treasury shares are not economically outstanding.",
+    "debt_cash": "Official IR shows rounded debt KRW 1.478tn and net debt KRW 0.806tn using cash equivalents. The valuation bridge instead uses S&P broad total debt KRW 1.5187tn and cash plus short-term investments KRW 0.740683tn consistently. Definitions are never mixed."
+  }
+}

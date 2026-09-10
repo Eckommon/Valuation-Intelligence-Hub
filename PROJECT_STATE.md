@@ -12,32 +12,50 @@
 
 ## Canonical baseline / 정식 기준선
 
-Bootstrap v0.1 was merged to `main` via merge commit:
+### Bootstrap v0.1 / Bootstrap v0.1
 
-Bootstrap v0.1은 다음 merge commit으로 `main`에 병합되었다.
+Merged to `main` via:
 
 `1d9881bcffb2499fdb72204070d058ef86676841`
 
-The baseline establishes Foundation, Methodology, AI Grounding Policy, valuation-case schema, tested core valuation primitives, and three public-equity reference-case skeletons.
+Established Foundation, Methodology, AI Grounding Policy, valuation-case schema, tested valuation primitives, CI-ready repository structure, and three public-equity reference-case skeletons.
 
-기준선은 Foundation, Methodology, AI Grounding Policy, 가치평가 사례 스키마, 핵심 가치평가 원시 함수와 테스트, 세 개 상장기업 기준 사례 골격을 확립한다.
+Foundation, Methodology, AI Grounding Policy, 가치평가 사례 스키마, 검증 가치평가 원시함수, CI 준비 구조, 세 개 상장기업 기준 사례 골격을 확립했다.
+
+### M1 Evidence grounding + public-equity normalization / M1 근거화 + 상장기업 정규화
+
+Merged to `main` via:
+
+`e3a11259c0e248f055ee16466e08ccfef2a4d13e`
+
+M1 established:
+
+M1은 다음을 확립했다.
+
+- bilingual evidence/provenance policy / 영한문 근거·출처 정책
+- machine-readable evidence schema / 기계 판독 근거 스키마
+- fail-closed canonical evidence-promotion gate / fail-closed 정식 근거 승격 게이트
+- public-equity normalization primitives / 상장기업 정규화 원시함수
+- Python 3.11/3.12 GitHub Actions CI / Python 3.11/3.12 GitHub Actions CI
+- executable product end-state / 사용자 실행형 제품 최종 목표
+
+Issue `#1` is `COMPLETED`.
+
+Issue `#1`은 `COMPLETED` 상태다.
 
 ## Active mission / 활성 미션
 
-- Issue: `#1 [M1] Evidence policy + public-equity normalization / 근거정책 + 상장기업 정규화`
-- Branch: `mission/m1-evidence-grounding-public-equity-v01`
+- Issue: `#2 [M2] Scenario + reverse valuation engines / 시나리오 + 역산 가치평가 엔진`
+- Branch: `mission/m2-scenario-reverse-valuation-v01`
 - Status: `ACTIVE`
 
 ### Implemented on active branch / 활성 브랜치 구현 내역
 
-- `docs/EVIDENCE_POLICY.md`
-- `schemas/evidence.schema.json`
-- `src/valuation_hub/evidence.py`
-- `src/valuation_hub/public_equity.py`
-- `tests/test_evidence.py`
-- `tests/test_public_equity.py`
-- `docs/PRODUCT_VISION.md`
-- `PROJECT_STATE.md`
+- `src/valuation_hub/scenario.py` — explicit-period FCFF scenario runner and sensitivity grid / 명시기간 FCFF 시나리오 실행기·민감도 표
+- `src/valuation_hub/reverse.py` — deterministic bisection solver, terminal-growth and revenue-scale reverse valuation / 결정론적 이분법 솔버, 영구성장·매출스케일 역산
+- `tests/test_scenario_reverse.py` — scenario and reverse regression tests / 시나리오·역산 회귀 테스트
+- `docs/SCENARIO_REVERSE_POLICY.md` — bilingual scenario/reverse-valuation governance / 영한문 시나리오·역산 가치평가 정책
+- `PROJECT_STATE.md` — updated canonical handoff / 정식 인계 갱신
 
 ## Grounding authority / 근거화 권위
 
@@ -64,6 +82,6 @@ The project must eventually deliver a user-executable valuation tool, not only d
 
 ## Exact resume point / 정확한 재개점
 
-Complete M1 by validating the branch changes, opening the M1 pull request, and verifying Issue #1 acceptance criteria. Do not begin M2 or canonicalize the three reference-case numerical valuations until M1 is merged.
+Complete M2 by validating the scenario and reverse-valuation implementation under CI, opening and reviewing the M2 pull request, and verifying Issue #2 acceptance criteria. Do not canonicalize the three numerical reference cases until M2 is merged.
 
-브랜치 변경사항을 검증하고 M1 PR을 개설하며 Issue #1 완료조건을 확인하여 M1을 완료한다. M1 병합 전에는 M2를 시작하거나 세 기준 사례의 수치 가치평가를 정식 승격하지 않는다.
+CI에서 시나리오·역산 가치평가 구현을 검증하고 M2 PR을 개설·검토하며 Issue #2 완료조건을 확인해 M2를 완료한다. M2 병합 전에는 세 기준 사례 수치 결과를 정식 승격하지 않는다.

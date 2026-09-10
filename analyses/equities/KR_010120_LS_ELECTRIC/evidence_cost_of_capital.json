@@ -1,0 +1,137 @@
+{
+  "case_id": "KR_010120_LS_ELECTRIC",
+  "bundle": "COST_OF_CAPITAL_EVIDENCE",
+  "claims": [
+    {
+      "claim_id": "krw_risk_free_10y_20260910",
+      "class": "FACT",
+      "metric": "krw_risk_free_rate_10y",
+      "value": 0.04461,
+      "unit": "decimal_rate",
+      "currency": null,
+      "period": null,
+      "as_of": "2026-09-10",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "Korea Exchange (KRX) Bond",
+        "type": "official_bond_market_benchmark",
+        "locator": "https://bond.krx.co.kr/main/main.jsp",
+        "tier": "A",
+        "published_at": "2026-09-10"
+      },
+      "extraction_note": "KTB 10Y LAST(09/10) = 4.461%.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_beta_5y_20260910",
+      "class": "FACT",
+      "metric": "beta_5y",
+      "value": 1.83,
+      "unit": "beta",
+      "currency": null,
+      "period": "5Y",
+      "as_of": "2026-09-10",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "S&P Global Market Intelligence via StockAnalysis",
+        "type": "market_database",
+        "locator": "https://stockanalysis.com/quote/krx/010120/statistics/",
+        "tier": "B",
+        "published_at": "2026-09-10"
+      },
+      "extraction_note": "Five-year beta.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "damodaran_mature_erp_country_table_2026",
+      "class": "FACT",
+      "metric": "mature_market_erp_country_table",
+      "value": 0.0433,
+      "unit": "decimal_rate",
+      "currency": null,
+      "period": null,
+      "as_of": "2026-07-01",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "Aswath Damodaran, NYU Stern",
+        "type": "country_risk_dataset",
+        "locator": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.htm",
+        "tier": "B",
+        "published_at": "2026-07-01"
+      },
+      "extraction_note": "The country-risk table shows 4.33% ERP for zero-CRP Aaa markets. This value is used with the same table's South Korea CRP to preserve internal consistency. Damodaran's separate July 1 daily implied-US-ERP page shows 4.18%; the two datasets are not silently mixed.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "damodaran_korea_crp_2026",
+      "class": "FACT",
+      "metric": "south_korea_country_risk_premium",
+      "value": 0.0066,
+      "unit": "decimal_rate",
+      "currency": null,
+      "period": null,
+      "as_of": "2026-07-01",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "Aswath Damodaran, NYU Stern",
+        "type": "country_risk_dataset",
+        "locator": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.htm",
+        "tier": "B",
+        "published_at": "2026-07-01"
+      },
+      "extraction_note": "South Korea row: country risk premium 0.66%, total ERP 4.99%, Moody's Aa2.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_consensus_2026_revenue_low",
+      "class": "FACT",
+      "metric": "consensus_2026_revenue_low",
+      "value": 6100000000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": "2026-01-01/2026-12-31",
+      "as_of": "2026-09-10",
+      "status": "CURRENT",
+      "source": {"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"analyst_consensus","locator":"https://stockanalysis.com/quote/krx/010120/forecast/","tier":"B","published_at":"2026-09-10"},
+      "extraction_note": "Consensus low estimate used only to anchor a Bear scenario.",
+      "depends_on": [],"transform": null,"waiver": null
+    },
+    {
+      "claim_id": "lsel_consensus_2026_revenue_average",
+      "class": "FACT",
+      "metric": "consensus_2026_revenue_average",
+      "value": 6500000000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": "2026-01-01/2026-12-31",
+      "as_of": "2026-09-10",
+      "status": "CURRENT",
+      "source": {"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"analyst_consensus","locator":"https://stockanalysis.com/quote/krx/010120/forecast/","tier":"B","published_at":"2026-09-10"},
+      "extraction_note": "Consensus average estimate used only to anchor a Base scenario.",
+      "depends_on": [],"transform": null,"waiver": null
+    },
+    {
+      "claim_id": "lsel_consensus_2026_revenue_high",
+      "class": "FACT",
+      "metric": "consensus_2026_revenue_high",
+      "value": 6800000000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": "2026-01-01/2026-12-31",
+      "as_of": "2026-09-10",
+      "status": "CURRENT",
+      "source": {"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"analyst_consensus","locator":"https://stockanalysis.com/quote/krx/010120/forecast/","tier":"B","published_at":"2026-09-10"},
+      "extraction_note": "Consensus high estimate used only to anchor a Bull scenario.",
+      "depends_on": [],"transform": null,"waiver": null
+    }
+  ],
+  "method_guardrail": "WACC is an ASSUMPTION derived transparently from sourced components; vendor-published WACC is not imported as canonical. / WACC는 출처화된 구성요소에서 투명하게 파생한 가정이며 데이터업체 WACC를 정식 값으로 그대로 사용하지 않는다."
+}

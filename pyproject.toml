@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "valuation-intelligence-hub"
+version = "0.1.0"
+description = "Reproducible, evidence-grounded valuation intelligence system / 재현 가능하고 근거 중심의 가치분석 인텔리전스 시스템"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

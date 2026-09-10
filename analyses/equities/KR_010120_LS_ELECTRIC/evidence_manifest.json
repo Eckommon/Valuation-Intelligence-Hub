@@ -1,0 +1,196 @@
+{
+  "case_id": "KR_010120_LS_ELECTRIC",
+  "status": "EVIDENCE_REBUILD_ACTIVE",
+  "currency": "KRW",
+  "claims": [
+    {
+      "claim_id": "lsel_2025_revenue",
+      "class": "FACT",
+      "metric": "revenue",
+      "value": 4965799000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": "2025-01-01/2025-12-31",
+      "as_of": "2025-12-31",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_ir_financial_highlights",
+        "locator": "https://www.ls-electric.com/ko/company/invest/result",
+        "tier": "A",
+        "published_at": null
+      },
+      "extraction_note": "Consolidated summary income statement; unit converted from KRW million to KRW.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_2025_operating_income",
+      "class": "FACT",
+      "metric": "operating_income",
+      "value": 426407000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": "2025-01-01/2025-12-31",
+      "as_of": "2025-12-31",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_ir_financial_highlights",
+        "locator": "https://www.ls-electric.com/ko/company/invest/result",
+        "tier": "A",
+        "published_at": null
+      },
+      "extraction_note": "Consolidated operating income; unit converted from KRW million to KRW.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_2025_net_income",
+      "class": "FACT",
+      "metric": "net_income",
+      "value": 284257000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": "2025-01-01/2025-12-31",
+      "as_of": "2025-12-31",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_ir_financial_highlights",
+        "locator": "https://www.ls-electric.com/ko/company/invest/result",
+        "tier": "A",
+        "published_at": null
+      },
+      "extraction_note": "Consolidated net income; unit converted from KRW million to KRW.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_2026q2_revenue",
+      "class": "FACT",
+      "metric": "revenue",
+      "value": 1577000000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": "2026-Q2",
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_press_ir",
+        "locator": "https://nahpdev-web.ls-electric.com/company/press/3186/ls-electric-posts-best-ever-quarterly-results-riding-the-power-supercycle",
+        "tier": "A",
+        "published_at": "2026-07-23"
+      },
+      "extraction_note": "Official Q2 2026 revenue announcement.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_2026q2_operating_income",
+      "class": "FACT",
+      "metric": "operating_income",
+      "value": 178500000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": "2026-Q2",
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_press_ir",
+        "locator": "https://nahpdev-web.ls-electric.com/company/press/3186/ls-electric-posts-best-ever-quarterly-results-riding-the-power-supercycle",
+        "tier": "A",
+        "published_at": "2026-07-23"
+      },
+      "extraction_note": "Official Q2 2026 operating-profit announcement.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_2026q2_order_backlog",
+      "class": "FACT",
+      "metric": "order_backlog",
+      "value": 7000000000000,
+      "unit": "KRW",
+      "currency": "KRW",
+      "period": "2026-Q2",
+      "as_of": "2026-06-30",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_press_ir",
+        "locator": "https://nahpdev-web.ls-electric.com/company/press/3186/ls-electric-posts-best-ever-quarterly-results-riding-the-power-supercycle",
+        "tier": "A",
+        "published_at": "2026-07-23"
+      },
+      "extraction_note": "Order backlog stated as KRW 7.0 trillion.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_2026_split_ratio",
+      "class": "FACT",
+      "metric": "stock_split_ratio",
+      "value": "5:1",
+      "unit": "ratio",
+      "currency": null,
+      "period": null,
+      "as_of": "2026-04-10",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_stock_split_notice",
+        "locator": "https://www.ls-electric.com/ko/company/invest/data/%EC%A3%BC%EC%8B%9D%EB%B6%84%ED%95%A0%EA%B3%B5%EA%B3%A0_260326.pdf",
+        "tier": "A",
+        "published_at": "2026-03-26"
+      },
+      "extraction_note": "5-for-1 split effective 2026-04-10.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    },
+    {
+      "claim_id": "lsel_post_split_issued_shares",
+      "class": "FACT",
+      "metric": "issued_common_shares",
+      "value": 150000000,
+      "unit": "shares",
+      "currency": null,
+      "period": null,
+      "as_of": "2026-04-10",
+      "status": "CURRENT",
+      "source": {
+        "publisher": "LS ELECTRIC",
+        "type": "official_stock_split_notice",
+        "locator": "https://www.ls-electric.com/ko/company/invest/data/%EC%A3%BC%EC%8B%9D%EB%B6%84%ED%95%A0%EA%B3%B5%EA%B3%A0_260326.pdf",
+        "tier": "A",
+        "published_at": "2026-03-26"
+      },
+      "extraction_note": "Total issued common shares after the 5-for-1 split.",
+      "depends_on": [],
+      "transform": null,
+      "waiver": null
+    }
+  ],
+  "pending_material_inputs": [
+    "current_market_price_with_as_of_timestamp",
+    "current_basic_and_diluted_share_count_reconciliation",
+    "2026_H1_cash_and_debt",
+    "2026_H1_receivables_inventory_payables_and_other_operating_working_capital",
+    "2026_H1_depreciation_and_amortization",
+    "2026_H1_capex",
+    "tax_normalization",
+    "risk_free_rate",
+    "equity_risk_premium",
+    "beta_or_alternative_cost_of_equity_basis"
+  ],
+  "promotion_gate": "HOLD_MATERIAL_INPUTS_INCOMPLETE"
+}

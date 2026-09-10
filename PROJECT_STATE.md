@@ -9,38 +9,20 @@
 - Repository / 저장소: `Eckommon/Valuation-Intelligence-Hub`
 - Purpose / 목적: Cross-asset, evidence-grounded valuation intelligence system / 범자산 근거 기반 가치분석 인텔리전스 시스템
 - Documentation rule / 문서 원칙: English + Korean bilingual canonical documentation / 정식 문서 영한문 병기
+- Product strategy / 제품 전략: **Web-first hybrid** — Web UI primary, CLI/local secondary, one shared kernel / **웹 우선 하이브리드** — Web UI 주 인터페이스, CLI·로컬 보조, 단일 공통 커널
 
 ## Canonical baseline / 정식 기준선
 
-### Bootstrap v0.1 / Bootstrap v0.1
-
-Merged to `main` via:
-
+### Bootstrap v0.1
 `1d9881bcffb2499fdb72204070d058ef86676841`
 
 ### M1 Evidence grounding + public-equity normalization / M1 근거화 + 상장기업 정규화
-
-Merged to `main` via:
-
 `e3a11259c0e248f055ee16466e08ccfef2a4d13e`
-
-M1 established the evidence/provenance policy, machine-readable evidence schema, fail-closed evidence-promotion gate, public-equity normalization primitives, GitHub Actions CI, and executable-product end-state.
-
-M1은 근거·출처 정책, 기계 판독 근거 스키마, fail-closed 근거 승격 게이트, 상장기업 정규화 원시함수, GitHub Actions CI, 사용자 실행형 제품 최종 목표를 확립했다.
-
-Issue `#1` is `COMPLETED`.
+Issue `#1`: `COMPLETED`
 
 ### M2 Scenario + reverse valuation engines / M2 시나리오 + 역산 가치평가 엔진
-
-Merged to `main` via:
-
 `2b6d7522e7d847673a7310b9e7f4346cd26cb59e`
-
-M2 established the explicit FCFF scenario runner, WACC × terminal-growth sensitivity grid, deterministic bisection solver, terminal-growth reverse valuation, revenue-scale reverse valuation, regression tests, and bilingual scenario/reverse policy.
-
-M2는 명시기간 FCFF 시나리오 실행기, WACC × 영구성장률 민감도, 결정론적 이분법 솔버, 영구성장률 역산, 매출스케일 역산, 회귀테스트, 영한문 시나리오·역산 정책을 확립했다.
-
-Issue `#2` is `COMPLETED`.
+Issue `#2`: `COMPLETED`
 
 ## Active mission / 활성 미션
 
@@ -54,42 +36,53 @@ Issue `#2` is `COMPLETED`.
 
 ## Current M3 progress / 현재 M3 진행상태
 
-### LS ELECTRIC
+### Case 1 — LS ELECTRIC
 
-Status: `EVIDENCE_REBUILD_ACTIVE`
+Status: `REFERENCE_RESULT_READY_ON_BRANCH`
 
-Created:
+Evidence/model/result files / 근거·모델·결과 파일:
 
 - `analyses/equities/KR_010120_LS_ELECTRIC/evidence_manifest.json`
+- `evidence_market.json`
+- `evidence_financials.json`
+- `evidence_cost_of_capital.json`
+- `case_inputs.json`
+- `valuation_result.json`
+- `REPORT.md`
+- `tests/test_reference_ls_electric.py`
 
-Primary Tier-A evidence already recorded includes:
+Evidence gate / 근거 게이트: `PASS_MATERIAL_INPUTS_RECONCILED`
 
-정식 Tier-A 1차근거로 기록 완료된 항목:
+Reference model / 기준 모델: `reference-equity-fcff-v0.1`
 
-- FY2025 consolidated revenue / 2025 연결 매출
-- FY2025 consolidated operating income / 2025 연결 영업이익
-- FY2025 consolidated net income / 2025 연결 순이익
-- 2026 Q2 revenue / 2026 2분기 매출
-- 2026 Q2 operating income / 2026 2분기 영업이익
-- 2026 Q2 order backlog / 2026 2분기 수주잔고
-- 2026 5-for-1 stock split / 2026년 5:1 주식분할
-- post-split issued common shares = 150,000,000 / 분할 후 발행 보통주 150,000,000주
+Reference-case outputs / 기준사례 산출:
 
-Promotion gate remains:
+- Bear intrinsic value/share / Bear 현재 내재가치: ~KRW 13,705
+- Base intrinsic value/share / Base 현재 내재가치: ~KRW 41,475
+- Bull intrinsic value/share / Bull 현재 내재가치: ~KRW 88,458
+- Market price in snapshot / 스냅샷 시장가격: KRW 206,000
+- Classification / 분류: `MARKET_PRICE_ABOVE_MODELED_BULL`
+- Base reverse stress diagnostic / Base 역산 스트레스 진단: ~4.62x proportional revenue/cash-economics scale required under fixed Base margins/WACC/g.
 
-`HOLD_MATERIAL_INPUTS_INCOMPLETE`
+These outputs are versioned model results, not forecasts or recommendations. The regression test locks stored values against the shared scenario engine.
 
-The valuation MUST NOT be canonicalized until current market price, current diluted-share reconciliation, 2026 H1 debt/cash, working capital, D&A, CAPEX, tax normalization, and cost-of-capital inputs are sourced and reconciled.
+위 산출물은 버전 관리된 모델 결과이며 전망 또는 투자권고가 아니다. 회귀테스트는 저장 결과가 공통 시나리오 엔진과 일치하도록 고정한다.
 
-현재 시장가격, 현 희석주식수 조정, 2026 H1 부채·현금, 운전자본, D&A, CAPEX, 세율 정규화, 자본비용 입력을 출처화·조정하기 전 가치평가 결과를 정식 승격해서는 안 된다.
+### Case 2 — LS Eco Energy / LS에코에너지
 
-### LS Eco Energy / LS에코에너지
+Status: `NEXT`
 
-Status: `NOT_STARTED_M3`
+Rebuild evidence bundles and case inputs under the same M1/M2 contracts. Do not copy prior-chat exploratory values into canonical files.
 
-### Jet.AI
+동일한 M1/M2 계약 아래 근거 묶음과 사례 입력을 재구축한다. 이전 채팅의 탐색 수치를 정식 파일로 복사하지 않는다.
 
-Status: `NOT_STARTED_M3`
+### Case 3 — Jet.AI
+
+Status: `QUEUED`
+
+Use dilution-aware probability/venture logic where conventional FCFF DCF is economically inappropriate.
+
+전통적 FCFF DCF가 경제적으로 부적합한 구간에서는 희석·확률을 반영한 벤처/옵션형 논리를 사용한다.
 
 ## Grounding authority / 근거화 권위
 
@@ -110,12 +103,12 @@ If repository state and AI recollection disagree, repository state wins unless a
 
 ## Product end-state / 제품 최종 목표
 
-The project must eventually deliver a user-executable valuation tool, not only documentation or libraries. The intended path is shared kernel → stable case format → CLI → user-friendly Web UI → optional API/automation, all using the same valuation kernel.
+The project must deliver a **web-first hybrid valuation product**. Non-developers use a human-friendly Web UI; advanced/private/batch workflows use CLI/local execution. Web, CLI, API and any future desktop shell must use the same kernel, schemas, evidence gates and model registry.
 
-프로젝트는 최종적으로 문서나 라이브러리뿐 아니라 사용자가 직접 실행할 수 있는 가치분석 도구를 제공해야 한다. 동일 가치평가 커널을 공유하며 커널 → 안정적 사례 포맷 → CLI → 사용자 친화 Web UI → 선택적 API·자동화 순으로 발전한다.
+프로젝트는 **웹 우선 하이브리드 가치분석 제품**을 제공해야 한다. 비개발자는 사용자 친화 Web UI를 사용하고 고급·비공개·대량 작업은 CLI·로컬 실행을 사용한다. Web, CLI, API, 향후 데스크톱 셸은 동일 커널·스키마·근거게이트·모델 레지스트리를 사용해야 한다.
 
 ## Exact resume point / 정확한 재개점
 
-Continue LS ELECTRIC evidence reconstruction. Source and reconcile the remaining material inputs listed in `evidence_manifest.json`, then produce normalized historicals and only after the promotion gate passes run the five valuation lenses, Bear/Base/Bull FCFF DCF, sensitivity, reverse valuation, and expected IRR. Do not begin LS Eco Energy until the LS ELECTRIC reference case is reproducible or explicitly terminal-HOLD.
+Rebuild **LS Eco Energy / LS에코에너지** as M3 Case 2: source primary/authoritative financial, market, capital-structure and cost-of-capital evidence; reconcile material inputs; construct versioned Bear/Base/Bull inputs; run FCFF/sensitivity/reverse valuation; store regression-locked outputs and bilingual report. Then proceed to Jet.AI. Do not close Issue #3 or merge M3 until all three cases pass CI and acceptance criteria.
 
-LS ELECTRIC 근거 재구축을 계속한다. `evidence_manifest.json`의 잔여 중요 입력을 출처화·조정하고 정규화 과거치를 생성한 뒤 승격 게이트 통과 후에만 5대 가치평가 렌즈, Bear/Base/Bull FCFF DCF, 민감도, 역산 가치평가, 기대 IRR을 실행한다. LS ELECTRIC 사례가 재현 가능 상태 또는 명시적 terminal-HOLD가 되기 전 LS에코에너지로 넘어가지 않는다.
+M3 Case 2인 **LS에코에너지**를 재구축한다. 1차·권위 재무, 시장, 자본구조, 자본비용 근거를 수집하고 중요 입력을 조정한 뒤 버전 관리 Bear/Base/Bull 입력을 구성하고 FCFF·민감도·역산 가치평가를 실행하며 회귀 고정 결과와 영한문 보고서를 저장한다. 이후 Jet.AI로 진행한다. 세 사례가 모두 CI와 완료조건을 통과하기 전에는 Issue #3을 종료하거나 M3를 병합하지 않는다.

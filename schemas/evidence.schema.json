@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/evidence.schema.json",
+  "title": "Valuation Intelligence Hub Evidence Record / 가치분석 Hub 근거 레코드",
+  "type": "object",
+  "required": [
+    "claim_id",
+    "class",
+    "metric",
+    "value",
+    "unit",
+    "as_of",
+    "source"
+  ],
+  "properties": {
+    "claim_id": {"type": "string", "minLength": 1},
+    "class": {
+      "type": "string",
+      "enum": ["FACT", "NORMALIZED_FACT", "ASSUMPTION", "DERIVED", "INTERPRETATION", "UNKNOWN"]
+    },
+    "metric": {"type": "string", "minLength": 1},
+    "value": {},
+    "unit": {"type": "string", "minLength": 1},
+    "currency": {"type": ["string", "null"]},
+    "period": {"type": ["string", "null"]},
+    "as_of": {"type": "string", "format": "date"},
+    "status": {
+      "type": "string",
+      "enum": ["CURRENT", "STALE", "UNKNOWN_CONFLICT", "WAIVED"]
+    },
+    "source": {
+      "type": "object",
+      "required": ["publisher", "type", "locator", "tier"],
+      "properties": {
+        "publisher": {"type": "string", "minLength": 1},
+        "type": {"type": "string", "minLength": 1},
+        "locator": {"type": "string", "minLength": 1},
+        "tier": {"type": "string", "enum": ["A", "B", "C", "D"]},
+        "published_at": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "extraction_note": {"type": ["string", "null"]},
+    "depends_on": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "transform": {"type": ["string", "null"]},
+    "waiver": {"type": ["string", "null"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"class": {"const": "NORMALIZED_FACT"}}},
+      "then": {
+        "required": ["depends_on", "transform"],
+        "properties": {
+          "depends_on": {"minItems": 1},
+          "transform": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "WAIVED"}}},
+      "then": {
+        "required": ["waiver"],
+        "properties": {"waiver": {"type": "string", "minLength": 1}}
+      }
+    }
+  ],
+  "additionalProperties": false
+}

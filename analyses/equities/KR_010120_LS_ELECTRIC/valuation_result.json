@@ -1,0 +1,54 @@
+{
+  "case_id": "KR_010120_LS_ELECTRIC",
+  "model_version": "reference-equity-fcff-v0.1",
+  "valuation_as_of": "2026-09-10",
+  "currency": "KRW",
+  "status": "CANONICAL_REFERENCE_RESULT_V0_1",
+  "market_price": 206000,
+  "diluted_shares": 148820000,
+  "scenario_results": {
+    "BEAR": {
+      "forecast_fcff": [-78947000000, 233783000000, 370574000000, 438986000000, 490171000000],
+      "current_intrinsic_value_per_share": 13705,
+      "2030_terminal_value_per_share": 21281,
+      "annualized_return_to_2030_terminal_value": -0.4097
+    },
+    "BASE": {
+      "forecast_fcff": [-3168000000, 344372500000, 572819050000, 764614100000, 913493564000],
+      "current_intrinsic_value_per_share": 41475,
+      "2030_terminal_value_per_share": 58265,
+      "annualized_return_to_2030_terminal_value": -0.2542
+    },
+    "BULL": {
+      "forecast_fcff": [92250000000, 465155000000, 738759000000, 1087428475000, 1299561948600],
+      "current_intrinsic_value_per_share": 88458,
+      "2030_terminal_value_per_share": 118589,
+      "annualized_return_to_2030_terminal_value": -0.1203
+    }
+  },
+  "base_sensitivity_value_per_share": {
+    "wacc_10.5%": {"g_1.5%":49891,"g_2.0%":52582,"g_2.5%":55609,"g_3.0%":59041,"g_3.5%":62962},
+    "wacc_11.5%": {"g_1.5%":43627,"g_2.0%":45717,"g_2.5%":48040,"g_3.0%":50636,"g_3.5%":53556},
+    "wacc_12.6%": {"g_1.5%":38069,"g_2.0%":39692,"g_2.5%":41475,"g_3.0%":43444,"g_3.5%":45630},
+    "wacc_13.5%": {"g_1.5%":34299,"g_2.0%":35639,"g_2.5%":37101,"g_3.0%":38702,"g_3.5%":40464},
+    "wacc_14.5%": {"g_1.5%":30740,"g_2.0%":31839,"g_2.5%":33030,"g_3.0%":34324,"g_3.5%":35735}
+  },
+  "reverse_dcf": {
+    "target_market_price": 206000,
+    "base_case_proportional_revenue_cash_economics_scale_required": 4.61539545,
+    "implied_2030_revenue_at_that_scale": 47943040549034000,
+    "interpretation_en": "Mechanical stress diagnostic only: with Base margins, WACC and terminal growth held fixed, revenue and revenue-linked D&A/CAPEX/Delta-NWC must be scaled about 4.62x to match the market price.",
+    "interpretation_ko": "기계적 스트레스 진단이다. Base 마진, WACC, 영구성장률을 고정하면 현재 시장가격을 맞추기 위해 매출 및 매출 연동 D&A/CAPEX/Delta-NWC를 약 4.62배 확대해야 한다."
+  },
+  "classification": {
+    "business_quality": "STRONG_GROWTH_QUALITY",
+    "valuation_state": "MARKET_PRICE_ABOVE_MODELED_BULL",
+    "decision_note_en": "This is not a price forecast or investment recommendation. The reference case demonstrates expectation decomposition: current price requires economics stronger than the modeled Bull case.",
+    "decision_note_ko": "이는 주가 예측이나 투자권고가 아니다. 이 기준 사례의 목적은 기대 분해이며, 현재 가격은 모델링된 Bull case보다 강한 경제성을 요구한다."
+  },
+  "provenance": {
+    "input_file": "case_inputs.json",
+    "evidence_manifest": "evidence_manifest.json",
+    "promotion_gate": "PASS_MATERIAL_INPUTS_RECONCILED"
+  }
+}

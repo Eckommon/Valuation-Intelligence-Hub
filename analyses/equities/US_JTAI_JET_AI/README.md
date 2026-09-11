@@ -6,25 +6,41 @@ This case is the reference for a **venture/option-like public company where dilu
 
 이 사례는 **희석, 자금조달, 사업범위 변경, 확률가중 결과가 전통적 이익배수보다 더 중요한 벤처·옵션형 상장기업**의 기준 사례다.
 
+## Model selection / 모델 선택
+
+`PROBABILITY_WEIGHTED_VENTURE_OPTION_MODEL`
+
+Conventional reported P/E and historical FCFF extrapolation are rejected because the July 2026 spin-off created a business-perimeter discontinuity and the continuing business remains loss-making and financing-dependent.
+
+2026년 7월 분할로 사업범위 단절이 발생했고 계속사업은 적자·자금조달 의존 상태이므로 보고 PER과 과거 FCFF 단순연장은 사용하지 않는다.
+
+## Canonical branch result / 활성 브랜치 기준 결과
+
+`CANONICAL_REFERENCE_RESULT_V0_1`
+
+Evidence gate / 근거 게이트: `PASS_VENTURE_MODEL_INPUTS_RECONCILED`
+
+Snapshot market price / 스냅샷 시장가격: **USD 1.28**
+
+- Failure / 실패: **60%**, present value/share **$0**
+- Survival / 생존: **30%**, present value/share **$2.423**
+- Breakout / 돌파: **10%**, present value/share **$25.199**
+- Probability-weighted present value/share / 확률가중 현재 주당가치: **$3.247**
+- Reverse diagnostic / 역산 진단: Survival 30% 고정 시 시장가격이 요구하는 Breakout 확률 약 **2.20%**
+- Model risk / 모델위험: **VERY_HIGH**
+
+## Transaction treatment / 거래 처리
+
+The flyExclusive consideration is historical distributed SpinCo value and is not re-added to ongoing JTAI. The July 15, 2026 reverse-takeover LOI is non-binding and remains an excluded optional overlay until definitive evidence changes its status.
+
+flyExclusive 대가는 과거 SpinCo 분배가치이므로 현재 JTAI에 재합산하지 않는다. 2026년 7월 15일 RTO LOI는 비구속적이므로 확정 근거가 상태를 변경하기 전까지 제외된 옵션 오버레이로 유지한다.
+
 ## Primary questions / 핵심 질문
 
-- Which historical financials remain economically relevant after business transition? / 사업전환 이후 어떤 과거 재무수치가 경제적으로 유효한가?
-- What funding and dilution are required to reach each operating scenario? / 각 사업 시나리오 달성에 필요한 자금조달과 희석은 어느 정도인가?
-- What is the probability-weighted value rather than merely the conditional Bull value? / 조건부 Bull 가치가 아니라 확률가중 기대가치는 얼마인가?
+- Can the company survive funding needs without destructive dilution? / 파괴적 희석 없이 자금수요를 버틸 수 있는가?
+- Can post-spin AI infrastructure reach a durable revenue base? / 분리 후 AI 인프라가 지속 가능한 매출 기반에 도달할 수 있는가?
+- How much value depends on a low-probability Breakout tail? / 가치 중 작은 확률의 Breakout 꼬리에 얼마나 의존하는가?
 
-## Required methods / 필수 방법
+See `REPORT.md`, `case_inputs.json`, `valuation_result.json`, and evidence bundles for the reproducible reference case.
 
-- Pro-forma perimeter normalization / 프로포마 사업범위 정규화
-- Venture-style FCFF where meaningful / 의미가 있을 때 벤처형 FCFF
-- Bear/Base/Bull with explicit dilution / 희석을 명시한 3대 시나리오
-- Probability-weighted valuation / 확률가중 가치평가
-- Reverse valuation / 역산 가치평가
-- Financing runway and dilution-risk analysis / 자금 런웨이·희석위험 분석
-
-## Status / 상태
-
-`REFERENCE_CASE_SKELETON_v0.1`
-
-No historical accounting profit should be treated as recurring owner economics without normalization for one-off, financing, derivative, tax, or discontinued-business effects.
-
-일회성, 금융, 파생상품, 세금, 중단사업 영향을 정상화하지 않은 과거 회계이익을 반복 가능한 주주경제성으로 취급해서는 안 된다.
+재현 가능한 기준 사례는 `REPORT.md`, `case_inputs.json`, `valuation_result.json`, evidence 파일을 참조한다.

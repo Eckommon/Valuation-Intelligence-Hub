@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/canonical_admission_bundle.schema.json",
+  "title": "Reviewed-Draft Canonical Admission Bundle / 검토 Draft 정식 수용 Bundle",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "case_id", "target_path", "registry_entry", "artifacts", "artifact_sha256", "bundle_sha256"],
+  "properties": {
+    "schema_version": {"const": "canonical-admission-bundle-v0.1"},
+    "status": {"const": "CANONICAL_ADMISSION_PROPOSED"},
+    "canonical": {"const": false},
+    "case_id": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_]{2,79}$"},
+    "target_path": {"type": "string", "pattern": "^analyses/equities/[A-Z0-9][A-Z0-9_]{2,79}$"},
+    "registry_entry": {
+      "type": "object",
+      "required": ["case_id", "display_name_en", "display_name_ko", "asset_class", "model", "adapter", "path"],
+      "properties": {
+        "case_id": {"type": "string"},
+        "display_name_en": {"type": "string"},
+        "display_name_ko": {"type": "string"},
+        "asset_class": {"type": "string"},
+        "model": {"enum": ["equity_fcff", "venture_probability"]},
+        "adapter": {"enum": ["reviewed-draft-equity-fcff-v0.1", "reviewed-draft-venture-probability-v0.1"]},
+        "path": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {"type": "object", "minProperties": 6},
+    "artifact_sha256": {"type": "object"},
+    "bundle_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

@@ -16,7 +16,7 @@ from valuation_hub.case_service import (
     validate_case,
 )
 from valuation_hub.draft_service import load_draft_file, run_draft, template, validate_draft
-from valuation_hub.web_product import serve as serve_web
+from valuation_hub.web_draft import serve as serve_web
 
 
 def _parser() -> argparse.ArgumentParser:

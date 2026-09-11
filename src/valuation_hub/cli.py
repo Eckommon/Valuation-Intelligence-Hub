@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from valuation_hub.admission import build_admission_bundle, validate_admission_bundle
 from valuation_hub.case_service import (
     CaseServiceError,
     list_cases,
@@ -29,7 +30,7 @@ from valuation_hub.promotion_package import (
     validate_materialized_package,
     validate_promotion_package,
 )
-from valuation_hub.web_package import serve as serve_web
+from valuation_hub.web_admission import serve as serve_web
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -73,6 +74,11 @@ def _parser() -> argparse.ArgumentParser:
     package_validate = sub.add_parser("package-validate", help="Validate package JSON or materialized directory / 패키지 JSON·materialized 디렉터리 검증")
     package_validate.add_argument("path", type=Path)
 
+    admission_build = sub.add_parser("admission-build", help="Build proposed canonical admission bundle from M10 package / M10 패키지에서 정식 수용 bundle 생성")
+    admission_build.add_argument("file", type=Path, help="M10 package JSON / M10 패키지 JSON")
+    admission_validate = sub.add_parser("admission-validate", help="Validate proposed canonical admission bundle / 정식 수용 제안 bundle 검증")
+    admission_validate.add_argument("file", type=Path)
+
     web = sub.add_parser("web", help="Run local Web application / 로컬 Web 앱 실행")
     web.add_argument("--host", default="127.0.0.1", help="Bind host / 바인드 호스트")
     web.add_argument("--port", type=int, default=8765, help="Bind port / 바인드 포트")
@@ -83,18 +89,34 @@ def _dump(payload: Any) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
 
 
+def _load_json_object(path: Path, label: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise CaseServiceError(f"{label} file not found / {label} 파일 없음: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise CaseServiceError(f"invalid {label} JSON / {label} JSON 오류: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise CaseServiceError(f"{label} must be a JSON object / {label}는 JSON 객체여야 합니다")
+    return payload
+
+
 def _human_list(cases: list[dict[str, Any]]) -> None:
     print("Registered valuation cases / 등록 가치평가 사례")
     for item in cases:
+        adapter = item.get("adapter")
+        suffix = f" | {adapter}" if adapter else ""
         print(
             f"- {item['case_id']} | {item['display_name_en']} / {item['display_name_ko']} "
-            f"| {item['model']}"
+            f"| {item['model']}{suffix}"
         )
 
 
 def _human_validate(result: dict[str, Any]) -> None:
     print(f"PASS / 통과: {result['case_id']}")
     print(f"Model / 모델: {result['model']} ({result['model_version']})")
+    if result.get("adapter"):
+        print(f"Adapter / 어댑터: {result['adapter']}")
     print(f"Evidence gate / 근거 게이트: {result['promotion_gate']}")
 
 
@@ -170,6 +192,16 @@ def _human_package(result: dict[str, Any]) -> None:
     print(result["next_action_ko"])
 
 
+def _human_admission(result: dict[str, Any]) -> None:
+    print(result["status"])
+    print("BUNDLE CANONICAL / bundle 정식: FALSE")
+    print(f"Case ID / 사례 ID: {result['case_id']}")
+    print(f"Adapter / 어댑터: {result['adapter']}")
+    print(f"Valuation as of / 기준일: {result['valuation_as_of']}")
+    print(f"Admission bundle SHA-256 / 수용 bundle SHA-256: {result['bundle_sha256']}")
+    print(result["next_action_ko"])
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
@@ -233,6 +265,15 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 result = validate_promotion_package(load_package_file(args.path), args.root)
             _dump(result) if args.as_json else _human_package(result)
+            return 0
+        if args.command == "admission-build":
+            package = _load_json_object(args.file, "promotion package")
+            _dump(build_admission_bundle(package, args.root))
+            return 0
+        if args.command == "admission-validate":
+            bundle = _load_json_object(args.file, "admission bundle")
+            result = validate_admission_bundle(bundle, args.root)
+            _dump(result) if args.as_json else _human_admission(result)
             return 0
         if args.command == "web":
             if args.as_json:

@@ -1,0 +1,27 @@
+{
+  "schema_version": "draft-case-v0.1",
+  "status": "DRAFT_USER_SUPPLIED",
+  "model": "equity_fcff",
+  "name": "Example Company / 예시 기업",
+  "currency": "USD",
+  "market_price": 100.0,
+  "notes": "Replace every example value with user-supplied inputs. No value in this template is canonical evidence. / 모든 예시값을 사용자 입력으로 교체하십시오. 템플릿 값은 정식 근거가 아닙니다.",
+  "equity": {
+    "diluted_shares": 100000000,
+    "debt": 500000000,
+    "cash": 200000000,
+    "minority_interest": 0,
+    "scenarios": {
+      "BASE": {
+        "wacc": 0.10,
+        "terminal_growth": 0.025,
+        "years": [
+          {"year": 2027, "revenue": 2000000000, "ebit_margin": 0.10, "tax_rate": 0.25, "depreciation_amortization": 80000000, "capex": 100000000, "delta_nwc": 50000000},
+          {"year": 2028, "revenue": 2200000000, "ebit_margin": 0.11, "tax_rate": 0.25, "depreciation_amortization": 88000000, "capex": 105000000, "delta_nwc": 40000000},
+          {"year": 2029, "revenue": 2400000000, "ebit_margin": 0.12, "tax_rate": 0.25, "depreciation_amortization": 96000000, "capex": 110000000, "delta_nwc": 35000000},
+          {"year": 2030, "revenue": 2600000000, "ebit_margin": 0.13, "tax_rate": 0.25, "depreciation_amortization": 104000000, "capex": 115000000, "delta_nwc": 30000000}
+        ]
+      }
+    }
+  }
+}

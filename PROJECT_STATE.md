@@ -14,94 +14,105 @@
 ## Canonical baseline / 정식 기준선
 
 - Bootstrap v0.1: `1d9881bcffb2499fdb72204070d058ef86676841`
-- M1 Evidence grounding + public-equity normalization: `e3a11259c0e248f055ee16466e08ccfef2a4d13e` — Issue #1 `COMPLETED`
-- M2 Scenario + reverse valuation engines: `2b6d7522e7d847673a7310b9e7f4346cd26cb59e` — Issue #2 `COMPLETED`
-- M3 Evidence-grounded reference cases: `5c39c6a1857a5b4aeffa9782399e24bcbd77c0ae` — Issue #3 `COMPLETED`
-- M4 Executable case runner + CLI: `db14a21bb706f4f3cd74f5a33d88ca5937249aa5` — Issue #8 `COMPLETED`
+- M1 Evidence grounding + public-equity normalization: `e3a11259c0e248f055ee16466e08ccfef2a4d13e` — #1 `COMPLETED`
+- M2 Scenario + reverse valuation: `2b6d7522e7d847673a7310b9e7f4346cd26cb59e` — #2 `COMPLETED`
+- M3 Evidence-grounded reference cases: `5c39c6a1857a5b4aeffa9782399e24bcbd77c0ae` — #3 `COMPLETED`
+- M4 Executable case runner + CLI: `db14a21bb706f4f3cd74f5a33d88ca5937249aa5` — #8 `COMPLETED`
+- M5 Read-oriented Web Application MVP: `5867363d26d4efa57e5fb92d4861de9bfbf00d7f` — #12 `COMPLETED`
 
-M4 main-branch CI run `34551597634` completed successfully on the configured Python 3.11/3.12 matrix.
+M5 pull-request CI and post-merge main CI passed on Python 3.11/3.12. Main CI run: `34551943851` = `completed/success`.
 
-M4 `main` CI run `34551597634`은 설정된 Python 3.11/3.12 matrix에서 성공 완료했다.
+M5 PR CI와 병합 후 main CI는 Python 3.11/3.12에서 통과했다. main CI run `34551943851` = `completed/success`.
 
-## Canonical executable layer / 정식 실행형 계층
+## Canonical product capability / 정식 제품 기능
 
-M4 established:
+### M4 executable layer / M4 실행계층
 
-M4에서 다음을 확립했다.
-
-- `registry/cases.json` — versioned case registry / 버전 사례 레지스트리
-- `src/valuation_hub/case_service.py` — shared application service / 공통 애플리케이션 서비스
-- `src/valuation_hub/cli.py` — executable `vih` CLI / 실행형 `vih` CLI
+- versioned registry / 버전 사례 레지스트리
+- `case_service` shared application boundary / 공통 애플리케이션 서비스
 - `vih list`, `validate`, `run`, `report`
-- runtime-to-canonical drift validation / 런타임-정식결과 drift 검증
-- fail-closed unknown/malformed/non-PASS/unsupported behavior / 미등록·오류·미통과·미지원 fail-closed
+- runtime/canonical drift validation / 실행값·정식값 drift 검증
 
-All three canonical reference cases are executable through the shared service contract:
+### M5 Web MVP / M5 Web MVP
 
-세 정식 기준 사례는 모두 공통 서비스 계약으로 실행 가능하다.
-
-1. `KR_010120_LS_ELECTRIC` — `equity_fcff`
-2. `KR_229640_LS_ECO_ENERGY` — `equity_fcff`
-3. `US_JTAI_JET_AI` — `venture_probability`
+- `vih web`
+- local-first default `127.0.0.1:8765`
+- grounded case dashboard and details / 근거화 사례 대시보드·상세
+- JSON case endpoints / JSON 사례 endpoint
+- real HTTP integration tests / 실제 HTTP 통합테스트
 
 ## Active mission / 활성 미션
 
-- Issue: `#12 [M5] Read-oriented Web Application MVP / 읽기 중심 Web 애플리케이션 MVP`
-- Branch: `mission/m5-web-app-mvp-v01`
+- Issue: `#14 [M6] Interactive scenario preview + evidence browser / 인터랙티브 시나리오 미리보기 + 근거 탐색`
+- Branch: `mission/m6-interactive-preview-evidence-v01`
 - Status: `ACTIVE_IMPLEMENTATION`
 
-## Current M5 implementation / 현재 M5 구현
+## Current M6 implementation / 현재 M6 구현
 
-### Thin Web adapter / 얇은 Web 어댑터
+### Interactive service / 인터랙티브 서비스
 
-- `src/valuation_hub/web.py`
-- Standard-library local HTTP server / 표준 라이브러리 로컬 HTTP 서버
-- Web layer calls `case_service`; valuation formulas are not duplicated / Web은 `case_service`를 호출하며 가치평가 공식 복제 금지
-- Default bind: `127.0.0.1:8765` / 기본 바인드
+- `src/valuation_hub/interactive.py`
+- `evidence_view()` — canonical evidence aggregation / 정식 근거 집계
+- `preview_case()` — in-memory, non-persistent scenario preview / 메모리 기반 비영구 시나리오 preview
 
-### Web routes / Web 경로
+Preview state is always:
 
-- `GET /` — dashboard / 대시보드
-- `GET /case/<case_id>` — case detail / 사례 상세
-- `GET /healthz` — health / 상태확인
-- `GET /api/cases` — JSON case list / JSON 사례목록
-- `GET /api/cases/<case_id>` — grounded JSON case view / 근거화 JSON 사례보기
+preview 상태는 항상 다음과 같다.
 
-### CLI extension / CLI 확장
+`PREVIEW_NOT_CANONICAL`
 
-- `vih web`
-- `vih web --host 127.0.0.1 --port 8765`
+### Evidence browser / 근거 탐색
 
-### Tests / 테스트
+- `GET /case/<case_id>/evidence`
+- `GET /api/cases/<case_id>/evidence`
+- claim class, metric, value, period/as-of, publisher, tier and locator exposure / 주장분류·지표·값·기간·발행자·등급·원문 위치 노출
+- read-only / 읽기 전용
 
-- `tests/test_web.py` — dashboard, detail rendering, HTTP endpoints, unknown-case fail-closed / 대시보드·상세·HTTP·미등록 fail-closed
-- `tests/test_cli_web.py` — CLI-to-Web adapter dispatch / CLI→Web 어댑터 디스패치
+### Scenario preview / 시나리오 미리보기
+
+- `POST /api/cases/<case_id>/preview`
+- FCFF: source scenario, WACC, terminal growth, revenue scale, EBIT-margin delta, CAPEX/NWC ratio deltas
+- Venture: explicit probabilities, revenue/multiple/dilution scales
+- shared FCFF/Venture kernels only / 공통 FCFF·Venture 커널만 사용
+- no write-back / write-back 없음
+
+### Browser controls / 브라우저 조작
+
+Case pages contain sandbox controls and call the preview endpoint with JavaScript. Preview output is visibly labeled `PREVIEW · NOT CANONICAL / 비정식`.
+
+사례 화면은 샌드박스 조작 UI를 제공하고 JavaScript로 preview endpoint를 호출한다. 결과는 `PREVIEW · NOT CANONICAL / 비정식`으로 명확히 표시한다.
+
+### M6 tests / M6 테스트
+
+- `tests/test_interactive.py` — evidence, preview economics, fail-closed constraints, canonical-file hash immutability
+- `tests/test_web_interactive.py` — evidence/preview HTTP integration and invalid-state errors
+- existing M1–M5 regression tests remain required / 기존 M1–M5 회귀테스트 계속 필수
 
 ### Documentation / 문서
 
-- `docs/WEB_MVP.md` — M5 architecture, local execution, routes, scope and security limits / M5 아키텍처·로컬 실행·경로·범위·보안 제한
+- `docs/INTERACTIVE_PREVIEW.md`
 
 ## Grounding authority / 근거화 권위
 
 1. `main` canonical files and merged decisions / `main` 정식 파일·병합 결정
-2. This `PROJECT_STATE.md` and active mission records / 본 상태파일·활성 미션 기록
-3. Active Issue/PR/branch contents / 활성 Issue·PR·브랜치 내용
-4. Primary evidence manifests / 1차 근거 매니페스트
-5. Current chat / 현재 대화
+2. `PROJECT_STATE.md` and active mission / 상태파일·활성 미션
+3. active Issue/PR/branch / 활성 Issue·PR·브랜치
+4. primary evidence manifests / 1차 근거 매니페스트
+5. current chat / 현재 대화
 6. AI memory / AI 기억
 
-If repository state conflicts with AI recollection, repository state wins unless newer primary evidence requires explicit reconciliation.
+Repository state wins over AI recollection unless newer primary evidence requires explicit reconciliation.
 
-저장소 상태와 AI 기억이 충돌하면 더 최신 1차자료에 의한 명시적 조정이 필요한 경우를 제외하고 저장소 상태가 우선한다.
+더 최신 1차자료의 명시적 조정이 필요한 경우를 제외하고 저장소 상태가 AI 기억보다 우선한다.
 
 ## Product end-state / 제품 최종 목표
 
-The final product remains Web-first hybrid. The browser experience is the primary interface for non-developers; CLI/local execution remains the deterministic private/batch/automation path. Future hosted Web, API, and optional desktop shell must reuse the same registry, evidence gates, case service and valuation kernels.
+The final product remains Web-first hybrid. Canonical valuation and user experimentation are deliberately separated: canonical results are evidence-gated/versioned/regression-locked; previews are temporary and never auto-promoted.
 
-최종 제품은 웹 우선 하이브리드다. 비개발자의 주 인터페이스는 브라우저이며 CLI·로컬 실행은 결정론적 비공개·대량·자동화 경로다. 향후 호스팅 Web, API, 선택적 데스크톱 셸은 동일 레지스트리·근거게이트·case service·가치평가 커널을 재사용해야 한다.
+최종 제품은 웹 우선 하이브리드다. 정식 가치평가와 사용자 실험을 의도적으로 분리한다. 정식 결과는 근거게이트·버전·회귀잠금 대상이고 preview는 일시적이며 자동승격하지 않는다.
 
 ## Exact resume point / 정확한 재개점
 
-Validate M5 with the full Python 3.11/3.12 CI suite. Inspect and fix any Web/CLI integration failures. Open the M5 pull request and merge only after dashboard/detail/API views reproduce grounded canonical case values and unknown cases fail closed. After M5 merge, close Issue #12 and define the next mission around interactive scenario controls and evidence browsing without introducing live-data ingestion or write-back prematurely.
+Open the M6 pull request and run the full Python 3.11/3.12 CI matrix. Fix failures using preserved diagnostics. Merge only if all prior canonical regressions remain green, evidence browsing works, invalid preview states fail closed, and preview execution leaves canonical case files byte-identical. After M6 merge, close #14 and define the next mission around product-quality UX and scenario visualization before adding live-data ingestion or canonical write-back.
 
-Python 3.11/3.12 전체 CI로 M5를 검증한다. Web·CLI 통합 실패가 있으면 수정한다. 대시보드·상세·API가 근거화 정식 사례값을 재현하고 미등록 사례가 fail-closed하는 경우에만 M5 PR을 병합한다. M5 병합 후 Issue #12를 종료하고, 실시간 데이터 수집·write-back을 성급히 도입하지 않은 상태에서 인터랙티브 시나리오 조작과 근거 탐색을 다음 미션으로 정의한다.
+M6 PR을 개설하고 Python 3.11/3.12 전체 CI를 실행한다. 진단 로그를 근거로 실패를 수정한다. 기존 정식 회귀테스트가 모두 유지되고 근거 탐색이 작동하며 잘못된 preview가 fail-closed하고 preview 후 정식 사례 파일 bytes가 동일한 경우에만 병합한다. M6 이후에는 실시간 데이터 수집·정식 write-back보다 먼저 제품급 UX와 시나리오 시각화를 다음 미션으로 정의한다.

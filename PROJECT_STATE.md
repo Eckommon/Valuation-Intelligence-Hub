@@ -8,205 +8,184 @@
 
 - Repository / 저장소: `Eckommon/Valuation-Intelligence-Hub`
 - Purpose / 목적: Cross-asset, evidence-grounded valuation intelligence system / 범자산 근거 기반 가치분석 인텔리전스 시스템
+- Product strategy / 제품 전략: Web-first hybrid; one shared valuation/evidence kernel / 웹 우선 하이브리드; 단일 공통 가치·근거 커널
 - Documentation / 문서: English + Korean bilingual / 영한문 병기
-- Product strategy / 제품 전략: **Web-first hybrid** — Web UI primary, CLI/local secondary, one shared kernel / **웹 우선 하이브리드** — Web UI 주 인터페이스, CLI·로컬 보조, 단일 공통 커널
 
 ## Canonical baseline / 정식 기준선
 
 - Bootstrap v0.1: `1d9881bcffb2499fdb72204070d058ef86676841`
-- M1 Evidence grounding + public-equity normalization: `e3a11259c0e248f055ee16466e08ccfef2a4d13e` — #1 `COMPLETED`
+- M1 Evidence grounding + normalization: `e3a11259c0e248f055ee16466e08ccfef2a4d13e` — #1 `COMPLETED`
 - M2 Scenario + reverse valuation: `2b6d7522e7d847673a7310b9e7f4346cd26cb59e` — #2 `COMPLETED`
 - M3 Evidence-grounded reference cases: `5c39c6a1857a5b4aeffa9782399e24bcbd77c0ae` — #3 `COMPLETED`
-- M4 Executable case runner + CLI: `db14a21bb706f4f3cd74f5a33d88ca5937249aa5` — #8 `COMPLETED`
-- M5 Read-oriented Web Application MVP: `5867363d26d4efa57e5fb92d4861de9bfbf00d7f` — #12 `COMPLETED`
+- M4 Executable registry + CLI: `db14a21bb706f4f3cd74f5a33d88ca5937249aa5` — #8 `COMPLETED`
+- M5 Web MVP: `5867363d26d4efa57e5fb92d4861de9bfbf00d7f` — #12 `COMPLETED`
 - M6 Interactive preview + evidence browser: `caf7576c1a2c13916449d445f5badc3a29712d36` — #14 `COMPLETED`
-- M7 Product UX + valuation visualization: `243cea0233031088fac8edb0362971326840b858` — #16 `COMPLETED`
-- M8 User Draft cases + safe import: `899271709ef3c49d431e0fce716eff48d0b22370` — #18 `COMPLETED`
+- M7 Product UX + visualization: `243cea0233031088fac8edb0362971326840b858` — #16 `COMPLETED`
+- M8 User Draft workflow: `899271709ef3c49d431e0fce716eff48d0b22370` — #18 `COMPLETED`
+- M9 Reviewed Draft→Candidate promotion protocol: `3e2d0a58b13c6e90ae6e665db72dc2683d5fad3f` — #20 `COMPLETED`
 
-M8 post-merge `main` CI run `34553180936` completed successfully on Python 3.11/3.12.
+M9 post-merge `main` CI run `34565725629` completed `success` on Python 3.11/3.12.
 
-M8 병합 후 `main` CI run `34553180936`은 Python 3.11/3.12에서 성공 완료했다.
+M9 병합 후 `main` CI run `34565725629`은 Python 3.11/3.12에서 `success` 완료했다.
 
 ## Canonical product capability / 정식 제품 기능
 
-### Grounded canonical cases / 근거화 정식 사례
+- Three regression-locked reference cases / 3개 회귀 잠금 기준 사례
+- Shared FCFF and venture-probability kernels / 공통 FCFF·벤처 확률가중 커널
+- Versioned registry + `case_service` runtime/canonical drift checks / 버전 레지스트리 + 실행값 drift 검증
+- CLI and local Web product / CLI·로컬 Web 제품
+- Evidence browser and scenario preview / 근거 탐색·시나리오 preview
+- Product valuation visualization / 가치 시각화
+- User Draft Lab: `DRAFT_USER_SUPPLIED / NOT_CANONICAL / USER_SUPPLIED_UNVERIFIED`
+- M9 Promotion Review: `CANDIDATE_REVIEW → HUMAN REVIEW + SHA-256 LOCK → REVIEW_APPROVED_READY_FOR_PR`
 
-- versioned registry + shared `case_service` / 버전 레지스트리 + 공통 case service
-- three regression-locked reference cases / 세 개 회귀 잠금 기준 사례
-- FCFF and venture-probability kernels / FCFF·벤처 확률가중 커널
-- runtime-to-canonical drift validation / 런타임-정식 결과 drift 검증
+M9 never assigns `CANONICAL`. It proves only that a reviewed candidate is ready for the next governed repository transition.
 
-### Product interfaces / 제품 인터페이스
-
-- CLI: canonical run/report, Draft workflow, Web launch / 정식 실행·보고, Draft 흐름, Web 실행
-- local-first product Web UI / 로컬 우선 제품 Web UI
-- valuation visualization / 가치 시각화
-- evidence browser + classification filters / 근거 탐색·분류 필터
-- in-memory `PREVIEW_NOT_CANONICAL` scenario sandbox / 비정식 시나리오 샌드박스
-- user Draft Lab / 사용자 Draft 랩
-
-### M8 Draft boundary / M8 Draft 경계
-
-All user-authored/imported cases remain:
-
-모든 사용자 작성·가져오기 사례는 다음 상태를 유지한다.
-
-`DRAFT_USER_SUPPLIED / NOT_CANONICAL / USER_SUPPLIED_UNVERIFIED`
-
-Draft execution uses shared kernels but never auto-registers or writes canonical analysis state.
-
-Draft 실행은 공통 커널을 사용하지만 정식 레지스트리 등록·분석상태 기록을 자동 수행하지 않는다.
+M9은 `CANONICAL`을 부여하지 않고 검토 Candidate가 다음 저장소 거버넌스 전이에 준비되었는지만 증명한다.
 
 ## Active mission / 활성 미션
 
-- Issue: `#20 [M9] Reviewed Draft→Candidate→Canonical promotion protocol / 검토 기반 Draft→Candidate→Canonical 승격 프로토콜`
-- Branch: `mission/m9-reviewed-promotion-protocol-v01`
+- Issue: `#22 [M10] Deterministic reviewed promotion package staging / 검토 완료 승격 패키지 결정론적 스테이징`
+- Branch: `mission/m10-promotion-package-staging-v01`
 - Status: `ACTIVE_IMPLEMENTATION`
 
-## M9 state machine / M9 상태기계
+## M10 design decision / M10 설계 결정
+
+The M8 generic equity Draft and the legacy M3 reference-equity input format are **not losslessly equivalent**:
+
+M8 일반 equity Draft와 기존 M3 reference-equity 입력포맷은 **손실 없이 동등하지 않다**.
+
+- M8 Draft: absolute forecast D&A, CAPEX, ΔNWC / 전망 절대값
+- legacy reference equity: revenue-linked D&A/CAPEX ratios + opening core NWC + NWC-to-sales / 매출연동 비율·opening NWC 방식
+
+Therefore M10 MUST NOT fabricate missing structure or coerce reviewed Drafts into legacy `case_inputs.json`. It preserves reviewed economics exactly and declares the canonical adapter still required.
+
+따라서 M10은 누락 구조를 발명하거나 검토 Draft를 기존 `case_inputs.json`으로 억지 변환하지 않는다. 검토 경제값을 그대로 보존하고 향후 필요한 canonical adapter를 명시한다.
+
+## M10 state / M10 상태
 
 ```text
-DRAFT_USER_SUPPLIED
-        ↓
-CANDIDATE_REVIEW
-        ↓ evidence + input governance complete
-HUMAN REVIEW + SHA-256 SCOPE LOCK
-        ↓
 REVIEW_APPROVED_READY_FOR_PR
-        ↓ separate repository PR + CI + review + merge
+        ↓
+PROMOTION_PACKAGE_STAGED / NOT_CANONICAL
+        ↓ reviewed package + explicit canonical adapter
+SEPARATE GOVERNED PR
+        ↓ full CI + human review + merge
 CANONICAL
 ```
 
-`CANONICAL` remains outside the M9 service boundary. M9 can only prove readiness for a separately reviewed repository PR.
+M10 itself stops at `PROMOTION_PACKAGE_STAGED`.
 
-`CANONICAL`은 M9 서비스 경계 밖에 있다. M9은 별도 인간 검토 저장소 PR 준비 상태까지만 증명할 수 있다.
+M10 자체는 `PROMOTION_PACKAGE_STAGED`에서 멈춘다.
 
-## Current M9 implementation / 현재 M9 구현
+## Current M10 implementation / 현재 M10 구현
 
-### Candidate schema / Candidate 스키마
+### Package schema / 패키지 스키마
 
-- `schemas/promotion_candidate.schema.json`
-- schema version: `promotion-candidate-v0.1`
-- fixed state: `CANDIDATE_REVIEW`
+- `schemas/promotion_package.schema.json`
+- version: `promotion-package-v0.1`
+- fixed state: `PROMOTION_PACKAGE_STAGED`
 - fixed canonical flag: `false`
 
-### Promotion service / 승격 서비스
+### Package service / 패키지 서비스
 
-- `src/valuation_hub/promotion.py`
-- `build_candidate()` — deterministic Draft→candidate skeleton / 결정론적 Candidate 생성
-- `assess_candidate()` — fail-closed governance/evidence assessment / fail-closed 거버넌스·근거 평가
-- `validate_candidate()` — requires zero blockers / 차단요인 0 요구
-- `review_scope_sha256()` — immutable review-scope digest / 불변 검토범위 해시
-- `promotion_check()` — explicit human approval + matching hash → PR readiness only / 명시적 인간 승인·해시 일치 → PR 준비만 선언
+- `src/valuation_hub/promotion_package.py`
+- `build_promotion_package()` — approved Candidate → deterministic package / 승인 Candidate → 결정론적 패키지
+- `validate_promotion_package()` — hashes, review provenance, semantics, shared-kernel result checks / 해시·검토출처·의미·공통커널 결과 검증
+- `materialize_promotion_package()` — explicit noncanonical filesystem output only / 명시적 비정식 파일 출력만 허용
+- `validate_materialized_package()` — PACKAGE.json + materialized bytes verification / 패키지·파일 bytes 검증
 
-### Material-input governance / 중요입력 거버넌스
+### Deterministic artifacts / 결정론적 산출물
 
-Every material numeric model input is deterministically enumerated. Structural forecast `year` labels are excluded.
+1. `reviewed_candidate.json` — exact M9 approved Candidate / M9 승인 Candidate 원문
+2. `reviewed_case_payload.json` — identity + preserved Draft + adapter requirement / 식별·보존 Draft·adapter 요구
+3. `evidence_bundle.json` — input governance + evidence / 입력 거버넌스·근거
+4. `staged_valuation_result.json` — shared Draft-kernel recomputation / 공통 Draft 커널 재계산
+5. `REGISTRY_PROPOSAL.json` — blocked proposal only / 차단된 제안 전용
+6. `REPORT.md` — deterministic bilingual review summary / 결정론적 영한문 검토보고
 
-모든 중요 숫자 모델입력을 결정론적으로 전수열거하며 구조적 전망 `year` 표시는 제외한다.
+Each artifact and the full package have SHA-256 digests.
 
-Allowed binding classes / 허용 분류:
+모든 산출물과 전체 패키지는 SHA-256 digest를 가진다.
 
-- `FACT`
-- `NORMALIZED_FACT`
-- `ASSUMPTION`
+### Canonical compatibility guard / 정식 호환성 가드
 
-`UNKNOWN` skeleton bindings cannot pass the review gate.
+Every package declares:
 
-`UNKNOWN` 상태의 skeleton binding은 검토게이트를 통과할 수 없다.
+`NOT_EXECUTABLE_UNTIL_CANONICAL_ADAPTER`
 
-### Evidence controls / 근거 통제
+Required adapters:
 
-- FACT/NORMALIZED_FACT require linked evidence / 사실·정규화사실은 연결 근거 필수
-- linked evidence class must match binding class / 연결 근거 class 일치 필수
-- linked evidence numeric value must reconcile with model input / 근거 숫자와 모델입력 일치 필수
-- source publisher/locator/tier required / 출처 발행자·위치·등급 필수
-- existing `evaluate_canonical_promotion` gate reused / 기존 정식 승격게이트 재사용
-- stale/conflict/UNKNOWN/Tier-D fact failures remain fail-closed / 노후·충돌·UNKNOWN·Tier-D 사실 차단
+- equity Draft → `reviewed-draft-equity-fcff-v0.1`
+- venture Draft → `reviewed-draft-venture-probability-v0.1`
 
-Observed values cannot be reclassified as assumptions to evade evidence. For `equity_fcff`, market price, diluted shares, debt, cash, and minority interest must be FACT/NORMALIZED_FACT. For `venture_probability`, market price must be FACT/NORMALIZED_FACT.
+`REGISTRY_PROPOSAL.json` remains `registration_blocked=true`; it is not directly insertable canonical state.
 
-근거 요구를 회피하기 위해 관측값을 가정으로 낮출 수 없다. `equity_fcff`의 시장가격·희석주식수·부채·현금·비지배지분, `venture_probability`의 시장가격은 FACT/NORMALIZED_FACT여야 한다.
+`REGISTRY_PROPOSAL.json`은 `registration_blocked=true`이며 정식상태에 직접 삽입할 수 없다.
 
-### Human review lock / 인간 검토 잠금
+### Collision and path safety / 충돌·경로 안전
 
-A successful candidate assessment returns the SHA-256 of the exact reviewed scope: Draft + input governance + evidence + candidate identity fields.
-
-Candidate 검토 통과 시 Draft·입력거버넌스·근거·Candidate 식별필드 전체의 SHA-256 검토범위 해시를 반환한다.
-
-`promotion_check()` additionally requires:
-
-- `review.decision = APPROVE`
-- non-empty human reviewer / 비어 있지 않은 검토자
-- valid review timestamp / 유효한 검토시각
-- non-empty rationale / 비어 있지 않은 검토근거
-- exact `review.scope_sha256` match / 검토범위 해시 정확 일치
-
-Any post-review mutation invalidates approval.
-
-검토 후 변경은 승인을 무효화한다.
+- safe case ID regex: `^[A-Z0-9][A-Z0-9_]{2,79}$`
+- existing canonical case IDs rejected / 기존 정식 case ID 거부
+- M10 is new-case staging only / M10은 신규사례 스테이징 전용
+- repository-internal materialization allowed only below `workspace/promotion_packages/` / 저장소 내부 출력경로 제한
+- `/workspace/promotion_packages/**` Git-ignored except `.gitkeep`
+- no write to `analyses/` or `registry/` / 정식 경로 write 금지
 
 ### CLI / CLI
 
-- `vih candidate-build <draft-file>`
-- `vih candidate-validate <candidate-file>`
-- `vih promotion-check <candidate-file>`
-- `--json` supported for machine-readable validation/check output / 검증·확인 기계판독 출력 지원
+- `vih package-build <approved-candidate> --case-id ... --name-en ... --name-ko ... --asset-class ...`
+- optional `--output-dir` for explicit materialization / 명시적 materialization 선택
+- `vih package-validate <package-json-or-directory>`
 
-### Web Promotion Review Lab / Web 승격 검토 랩
+Without `--output-dir`, package build emits JSON and performs no filesystem write.
 
-- `src/valuation_hub/web_promotion.py`
-- `/promotion` — Promotion Review Lab / 승격 검토 랩
-- `POST /api/promotion/build`
-- `POST /api/promotion/assess`
-- `POST /api/promotion/check`
-- inherits M8 `/draft` and all earlier canonical/product routes / M8 Draft와 이전 정식·제품 경로 상속
-- no candidate persistence or canonical write-back / Candidate 영속화·정식 write-back 없음
+`--output-dir`가 없으면 JSON만 출력하고 파일시스템을 기록하지 않는다.
+
+### Web / Web
+
+- `src/valuation_hub/web_package.py`
+- `/package` — Promotion Package Lab / 승격 패키지 랩
+- `POST /api/package/build`
+- `POST /api/package/validate`
+- Web path is memory-only; server-side materialization intentionally excluded / Web은 메모리 전용·서버파일 기록 제외
+- inherits `/promotion`, `/draft`, canonical cases, evidence, previews / 이전 제품경로 상속
 
 ### Tests / 테스트
 
-- `tests/test_promotion.py`
-- `tests/test_cli_promotion.py`
-- `tests/test_web_promotion.py`
+- `tests/test_promotion_package.py`
+- `tests/test_cli_package.py`
+- `tests/test_web_package.py`
 
-Required invariants include:
+Required invariants / 필수 불변조건:
 
-필수 불변조건:
-
-- deterministic material-input enumeration / 중요입력 결정론적 전수열거
-- missing/duplicate binding fail-closed / binding 누락·중복 차단
-- evidence-value/model-value reconciliation / 근거값·모델값 조정
-- observed-fact reclassification evasion blocked / 관측사실 가정 우회 차단
-- stale/Tier-D evidence blocked through existing gate / 기존 게이트 기반 노후·Tier-D 차단
-- post-review mutation invalidates SHA-256 approval / 검토 후 변경 시 승인 무효화
-- promotion result remains `canonical=false` / 승격 준비 결과도 정식 아님
-- canonical registry/evidence/results remain byte-identical / 정식 상태 byte 불변
+- same approved Candidate + identity → identical package and SHA-256 / 동일 입력→동일 패키지·해시
+- non-approved or post-review-mutated Candidate fails closed / 미승인·검토후변경 차단
+- unsafe/traversal and canonical ID collisions fail closed / 위험경로·정식 ID 충돌 차단
+- reviewed Draft preserved exactly / 검토 Draft 정확 보존
+- staged valuation reproduces shared Draft kernel / staged 가치 공통커널 재현
+- artifact/package mutation detected / 산출물·패키지 변조 탐지
+- registry proposal remains blocked / 레지스트리 제안 차단 유지
+- canonical registry/evidence/results byte-identical / 정식 상태 byte 불변
 
 ### Documentation / 문서
 
-- `docs/PROMOTION_PROTOCOL.md`
+- `docs/PROMOTION_PACKAGE.md`
 
 ## Grounding authority / 근거화 권위
 
 1. `main` canonical files and merged decisions / `main` 정식 파일·병합 결정
-2. `PROJECT_STATE.md` and active mission / 상태파일·활성 미션
-3. active Issue/PR/branch / 활성 Issue·PR·브랜치
-4. primary evidence manifests / 1차 근거 매니페스트
-5. current chat / 현재 대화
-6. AI memory / AI 기억
+2. this `PROJECT_STATE.md` + active Issue/PR/branch / 본 상태파일 + 활성 Issue/PR/branch
+3. primary evidence manifests / 1차 근거 매니페스트
+4. current chat / 현재 대화
+5. AI recollection / AI 기억
 
 Repository state wins over AI recollection unless newer primary evidence requires explicit reconciliation.
 
 더 최신 1차자료의 명시적 조정이 필요한 경우를 제외하고 저장소 상태가 AI 기억보다 우선한다.
 
-## Product end-state / 제품 최종 목표
-
-The product remains Web-first hybrid. Mathematical execution, user experimentation, evidence admissibility, human review, and canonical repository state are deliberately separate control states.
-
-제품은 웹 우선 하이브리드를 유지한다. 수학적 실행, 사용자 실험, 근거 적격성, 인간 검토, 정식 저장소 상태는 의도적으로 서로 다른 통제 상태다.
-
 ## Exact resume point / 정확한 재개점
 
-Open the M9 pull request and run the full Python 3.11/3.12 CI matrix. Fix promotion-service, CLI, Web, schema, or inherited regression failures using preserved diagnostics. Merge only if all M1–M9 tests pass, candidate review scope is hash-locked, observed facts cannot evade evidence, and promotion readiness never mutates or directly creates canonical state. After M9 merge, close #20 and define the next mission around deterministic promotion-package materialization for reviewed PRs, still without bypassing human review.
+Finish M10 by synchronizing README, opening the M10 PR, and running the full Python 3.11/3.12 CI suite. Fix failures using preserved diagnostics. Merge only if deterministic package/hash tests, path/collision guards, CLI/Web integration, materialized-byte verification, shared-kernel reproduction, and all M1–M10 regressions pass while canonical files remain unchanged. After M10 merge, close #22 and define M11 around the explicit versioned `reviewed-draft-*` canonical adapter and package-admission contract; M11 must prove that reviewed economics are preserved before any registry admission.
 
-M9 PR을 개설하고 Python 3.11/3.12 전체 CI를 실행한다. 보존된 진단을 근거로 승격서비스·CLI·Web·스키마·기존 회귀 실패를 수정한다. M1–M9 전체 테스트가 통과하고 Candidate 검토범위가 해시 잠금되며 관측사실이 근거 요구를 우회할 수 없고 승격 준비가 정식 상태를 변경·직접 생성하지 않는 경우에만 병합한다. M9 병합 후 #20을 종료하고 인간 검토를 우회하지 않는 검토 PR용 결정론적 promotion-package materialization을 다음 미션으로 정의한다.
+README를 동기화하고 M10 PR을 개설한 뒤 Python 3.11/3.12 전체 CI를 실행한다. 보존 진단을 근거로 실패를 수정한다. 결정론적 패키지·해시, 경로·충돌 가드, CLI·Web 통합, materialized bytes 검증, 공통커널 재현 및 M1–M10 회귀가 모두 통과하고 정식 파일이 불변일 때만 병합한다. M10 병합 후 #22를 종료하고 명시적 버전 `reviewed-draft-*` canonical adapter 및 package-admission 계약을 M11로 정의한다. 레지스트리 수용 전 검토 경제값 보존을 증명해야 한다.

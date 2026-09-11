@@ -122,25 +122,33 @@ def _validate_reviewed_case(
         raise CaseServiceError("reviewed canonical files must declare canonical=true / 검토 정식 파일 canonical=true 필요")
     if manifest.get("promotion_gate") != REVIEWED_ADMISSION_GATE:
         raise CaseServiceError("reviewed admission gate mismatch / 검토 Draft 수용게이트 불일치")
+    if manifest.get("canonical_bundles") != ["evidence_reviewed.json"]:
+        raise CaseServiceError("reviewed evidence bundle contract mismatch / 검토 근거 bundle 계약 불일치")
 
     source_path = directory / "SOURCE_PACKAGE.json"
-    if not source_path.is_file():
-        raise CaseServiceError("SOURCE_PACKAGE.json required for reviewed adapter / 검토 adapter는 SOURCE_PACKAGE.json 필수")
+    evidence_path = directory / "evidence_reviewed.json"
+    if not source_path.is_file() or not evidence_path.is_file():
+        raise CaseServiceError("SOURCE_PACKAGE.json and evidence_reviewed.json are required / 원천 패키지·검토 근거 파일 필수")
     source_package = _read_json(source_path)
+    evidence_reviewed = _read_json(evidence_path)
 
-    # Runtime-local imports avoid module initialization cycles because promotion_package
-    # itself imports CaseServiceError/find_repo_root from this module.
+    # Runtime-local import avoids module initialization cycle: promotion_package
+    # imports CaseServiceError/find_repo_root from this module.
     from valuation_hub.promotion_package import validate_promotion_package
 
-    package_validation = validate_promotion_package(source_package, directory.parents[2], check_collision=False)
+    repo_root = directory.parents[2]
+    package_validation = validate_promotion_package(
+        source_package, repo_root, check_collision=False
+    )
     if source_package.get("case_identity", {}).get("case_id") != case_id:
         raise CaseServiceError("source package case_id mismatch / 원천 패키지 case_id 불일치")
     if package_validation.get("required_canonical_adapter") != adapter:
         raise CaseServiceError("source package adapter mismatch / 원천 패키지 adapter 불일치")
+
     package_sha = source_package.get("package_sha256")
     candidate_sha = source_package.get("source_review", {}).get("candidate_sha256")
     review_sha = source_package.get("source_review", {}).get("review_scope_sha256")
-    for label, payload in (("inputs", inputs), ("manifest", manifest), ("result", stored)):
+    for label, payload in (("inputs", inputs), ("manifest", manifest), ("result", stored), ("evidence", evidence_reviewed)):
         if payload.get("source_package_sha256") != package_sha:
             raise CaseServiceError(f"source package SHA mismatch in {label} / {label} 원천 패키지 SHA 불일치")
         if payload.get("source_candidate_sha256") != candidate_sha:
@@ -148,22 +156,49 @@ def _validate_reviewed_case(
         if payload.get("review_scope_sha256") != review_sha:
             raise CaseServiceError(f"review scope SHA mismatch in {label} / {label} 검토범위 SHA 불일치")
 
+    candidate = source_package.get("artifacts", {}).get("reviewed_candidate.json")
+    if not isinstance(candidate, dict):
+        raise CaseServiceError("approved candidate missing from source package / 원천 패키지 승인 Candidate 누락")
+    if evidence_reviewed.get("case_id") != case_id:
+        raise CaseServiceError("reviewed evidence case_id mismatch / 검토 근거 case_id 불일치")
+    if evidence_reviewed.get("claims") != candidate.get("evidence"):
+        raise CaseServiceError("reviewed evidence differs from approved package / 검토 근거가 승인 패키지와 다름")
+    if evidence_reviewed.get("input_governance") != candidate.get("input_governance"):
+        raise CaseServiceError("reviewed governance differs from approved package / 검토 거버넌스가 승인 패키지와 다름")
+
     draft = inputs.get("reviewed_draft")
     if not isinstance(draft, dict):
         raise CaseServiceError("reviewed_draft missing / reviewed_draft 누락")
-    normalized, _, _ = normalize_reviewed_runtime(draft)
+    try:
+        normalized, _, runtime = normalize_reviewed_runtime(
+            draft, require_canonical_profile=True
+        )
+    except ValueError as exc:
+        raise CaseServiceError(
+            f"reviewed canonical profile mismatch / 검토 정식 프로파일 불일치: {exc}"
+        ) from exc
     if normalized != draft:
         raise CaseServiceError("reviewed_draft normalization drift / reviewed_draft 정규화 drift")
     if draft.get("model") != model:
         raise CaseServiceError("reviewed_draft model mismatch / reviewed_draft 모델 불일치")
-    packaged_draft = source_package.get("artifacts", {}).get("reviewed_candidate.json", {}).get("draft")
+    packaged_draft = candidate.get("draft")
     if draft != packaged_draft:
         raise CaseServiceError("canonical reviewed_draft differs from approved package / 정식 reviewed_draft가 승인 패키지와 다름")
+
     valuation_as_of = inputs.get("valuation_as_of")
     if manifest.get("valuation_as_of") != valuation_as_of or stored.get("valuation_as_of") != valuation_as_of:
         raise CaseServiceError("valuation_as_of drift across canonical files / 정식 파일 간 기준일 불일치")
+    if evidence_reviewed.get("as_of") != valuation_as_of:
+        raise CaseServiceError("reviewed evidence as_of drift / 검토 근거 기준일 불일치")
     if inputs.get("currency") != draft.get("currency") or stored.get("currency") != draft.get("currency"):
         raise CaseServiceError("currency drift from reviewed Draft / 검토 Draft 통화 불일치")
+    if stored.get("market_price") != draft.get("market_price"):
+        raise CaseServiceError("market price drift from reviewed Draft / 검토 Draft 시장가격 불일치")
+
+    expected_runtime = stored.get("runtime")
+    if not isinstance(expected_runtime, dict):
+        raise CaseServiceError("stored reviewed runtime missing / 저장된 검토 runtime 누락")
+    _compare_runtime(runtime, expected_runtime, DEFAULT_DRIFT_TOLERANCE[model])
 
 
 def validate_case(case_id: str, root: Path | None = None) -> dict[str, Any]:
@@ -289,7 +324,12 @@ def _tolerance(model: str, tolerance: float | None) -> float:
     return allowed
 
 
-def _verify_against_stored(model: str, runtime: dict[str, Any], stored: dict[str, Any], tolerance: float | None) -> None:
+def _verify_against_stored(
+    model: str,
+    runtime: dict[str, Any],
+    stored: dict[str, Any],
+    tolerance: float | None,
+) -> None:
     allowed = _tolerance(model, tolerance)
     if model == "equity_fcff":
         for name in ("BEAR", "BASE", "BULL"):
@@ -303,7 +343,9 @@ def _verify_against_stored(model: str, runtime: dict[str, Any], stored: dict[str
         expected = float(stored["probability_weighted"]["expected_present_value_per_share"])
         actual = float(runtime["expected_present_value_per_share"])
         if abs(actual - expected) > allowed:
-            raise CaseServiceError(f"runtime/stored drift: {actual} vs {expected}; 실행값과 정식 저장값 불일치")
+            raise CaseServiceError(
+                f"runtime/stored drift: {actual} vs {expected}; 실행값과 정식 저장값 불일치"
+            )
 
 
 def _compare_runtime(actual: Any, expected: Any, allowed: float, path: str = "runtime") -> None:
@@ -333,7 +375,12 @@ def _compare_runtime(actual: Any, expected: Any, allowed: float, path: str = "ru
         raise CaseServiceError(f"reviewed runtime drift at {path} / 검토 runtime 불일치")
 
 
-def _verify_reviewed_against_stored(model: str, runtime: dict[str, Any], stored: dict[str, Any], tolerance: float | None) -> None:
+def _verify_reviewed_against_stored(
+    model: str,
+    runtime: dict[str, Any],
+    stored: dict[str, Any],
+    tolerance: float | None,
+) -> None:
     expected = stored.get("runtime")
     if not isinstance(expected, dict):
         raise CaseServiceError("stored reviewed runtime missing / 저장된 검토 runtime 누락")
@@ -359,7 +406,14 @@ def run_case(
         _verify_against_stored(entry["model"], runtime, stored, tolerance)
         market_price = case["market"]["price"]
     else:
-        _, _, runtime = normalize_reviewed_runtime(case["reviewed_draft"])
+        try:
+            _, _, runtime = normalize_reviewed_runtime(
+                case["reviewed_draft"], require_canonical_profile=True
+            )
+        except ValueError as exc:
+            raise CaseServiceError(
+                f"reviewed canonical profile mismatch / 검토 정식 프로파일 불일치: {exc}"
+            ) from exc
         _verify_reviewed_against_stored(entry["model"], runtime, stored, tolerance)
         market_price = case["reviewed_draft"]["market_price"]
     return {

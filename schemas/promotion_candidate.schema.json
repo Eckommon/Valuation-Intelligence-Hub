@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/promotion_candidate.schema.json",
+  "title": "Valuation Intelligence Hub Promotion Candidate / 승격 Candidate",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "draft", "input_governance", "evidence", "review"],
+  "properties": {
+    "schema_version": {"const": "promotion-candidate-v0.1"},
+    "status": {"const": "CANDIDATE_REVIEW"},
+    "canonical": {"const": false},
+    "draft": {"type": "object"},
+    "input_governance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "class", "claim_ids", "rationale"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "class": {"enum": ["UNKNOWN", "FACT", "NORMALIZED_FACT", "ASSUMPTION"]},
+          "claim_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "rationale": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["claim_id", "class", "metric", "status", "source"],
+        "properties": {
+          "claim_id": {"type": "string", "minLength": 1},
+          "class": {"enum": ["FACT", "NORMALIZED_FACT", "ASSUMPTION", "DERIVED", "INTERPRETATION", "UNKNOWN"]},
+          "metric": {"type": "string", "minLength": 1},
+          "value": {},
+          "unit": {"type": ["string", "null"]},
+          "as_of": {"type": ["string", "null"]},
+          "status": {"enum": ["CURRENT", "STALE", "UNKNOWN_CONFLICT", "WAIVED"]},
+          "waiver": {"type": ["string", "null"]},
+          "source": {
+            "type": "object",
+            "required": ["publisher", "locator", "tier"],
+            "properties": {
+              "publisher": {"type": "string", "minLength": 1},
+              "locator": {"type": "string", "minLength": 1},
+              "tier": {"enum": ["A", "B", "C", "D"]},
+              "type": {"type": ["string", "null"]},
+              "published_at": {"type": ["string", "null"]}
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "review": {
+      "type": "object",
+      "required": ["decision", "reviewer", "reviewed_at", "rationale", "scope_sha256"],
+      "properties": {
+        "decision": {"enum": ["PENDING", "APPROVE", "REJECT"]},
+        "reviewer": {"type": ["string", "null"]},
+        "reviewed_at": {"type": ["string", "null"]},
+        "rationale": {"type": ["string", "null"]},
+        "scope_sha256": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

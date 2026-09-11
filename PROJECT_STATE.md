@@ -24,165 +24,227 @@
 - M9 Reviewed promotion protocol: `3e2d0a58b13c6e90ae6e665db72dc2683d5fad3f` — #20 `COMPLETED`
 - M10 Deterministic promotion package staging: `951e6be93a2d98db3e71c7e9f77bc06b90516dd2` — #22 `COMPLETED`
 - M11 Reviewed-Draft canonical adapter + admission: `243f941b2f323ac5fdca31b86e13966950156114` — #24 `COMPLETED`
+- M12 Guarded admission applicator + PR-ready plan: `a40e92c196c39b40172711f38f7231f5e8812d52` — #26 `COMPLETED`
 
-M11 post-merge `main` CI run `34567565614` completed `success` on Python 3.11/3.12.
+M12 post-merge `main` CI run `34568371340` completed `success` on Python 3.11/3.12.
 
-M11 병합 후 `main` CI run `34567565614`은 Python 3.11/3.12에서 `success` 완료했다.
+M12 병합 후 `main` CI run `34568371340`은 Python 3.11/3.12에서 `success` 완료했다.
 
 ## Canonical product capability / 정식 제품 기능
 
-The merged product now provides:
+The merged M1–M12 product provides:
 
 - three regression-locked reference cases / 3개 회귀 잠금 기준 사례
 - shared FCFF + venture-probability kernels / 공통 FCFF + 벤처 확률가중 커널
 - versioned registry, CLI, local Web UI, evidence browser, scenario preview / 버전 레지스트리·CLI·Web·근거탐색·preview
-- M8 user Draft workflow / 사용자 Draft
-- M9 evidence-governed Candidate + human SHA-256 review lock / 근거 거버넌스 Candidate + 인간검토 해시 잠금
-- M10 deterministic tamper-evident promotion package / 결정론적 변조탐지 승격 패키지
-- M11 versioned reviewed-Draft canonical adapters + deterministic admission bundle / 버전 검토 Draft 정식 adapter + 결정론적 수용 bundle
+- user Draft → governed Candidate → human review → deterministic package / Draft→Candidate→인간검토→패키지
+- versioned reviewed-Draft canonical admission / 버전 검토 Draft 정식 수용
+- deterministic repository change planning / 결정론적 저장소 변경계획
+- guarded `admission/*` branch/worktree apply with baseline locking, exact bytes, post-apply validation and rollback / 안전 브랜치 적용
 
-M11 can produce exact proposed canonical bytes but intentionally does not place them into a Git working tree.
+The canonical authority boundary remains repository PR + CI + reviewed merge.
 
-M11은 정확한 정식 제안 bytes를 생성할 수 있지만 Git working tree에는 의도적으로 직접 기록하지 않는다.
+정식 권위의 최종 경계는 저장소 PR + CI + 검토 병합이다.
 
 ## Active mission / 활성 미션
 
-- Issue: `#26 [M12] Guarded canonical admission applicator + PR-ready change plan / 정식 수용 안전 적용기 + PR 준비 변경계획`
-- Branch: `mission/m12-guarded-admission-applicator-v01`
-- PR: `#27 M12 Guarded canonical admission applicator + PR-ready plan / 정식 수용 안전 적용기`
-- Status: `ACTIVE_FINALIZATION`
-- First PR CI: run `34568018613` — Python 3.11/3.12 `success`
+- Issue: `#28 [M13] Immutable live evidence acquisition + SEC CompanyFacts adapter / 불변 live 근거수집 + SEC CompanyFacts adapter`
+- Branch: `mission/m13-sec-live-evidence-v01`
+- Status: `ACTIVE_IMPLEMENTATION`
 
-## M12 objective / M12 목표
+## M13 objective / M13 목표
 
-Close the remaining manual-copy gap between a valid M11 admission bundle and a PR-ready working tree without creating a path that can silently modify canonical `main`.
+Introduce the first production live-source acquisition layer while preserving the M9–M12 rule that source acquisition, evidence review, and canonical authority are different states.
 
-유효한 M11 admission bundle과 PR 준비 working tree 사이의 수작업 복사 간극을 닫되 정식 `main`을 암묵적으로 변경하는 경로는 만들지 않는다.
+첫 production live-source 수집계층을 도입하되 source 수집·근거 검토·정식 권위가 서로 다른 상태라는 M9–M12 원칙을 유지한다.
 
 ```text
-CANONICAL_ADMISSION_PROPOSED
-        ↓ deterministic registry-baseline-bound plan
-REPOSITORY_CHANGE_PLANNED / canonical=false
-        ↓ explicit guarded apply on admission/* branch/worktree
-GUARDED_BRANCH_APPLIED / canonical=false
-        ↓ human diff review + PR + full CI + merge
-CANONICAL
+LIVE OFFICIAL SOURCE
+        ↓
+SOURCE_SNAPSHOT_CAPTURED / NOT_CANONICAL
+        ↓
+EVIDENCE_CANDIDATE_UNREVIEWED / NOT_CANONICAL
+        ↓ explicit governance/review
+existing M9–M12 promotion/admission path
+        ↓
+CANONICAL only after reviewed repository merge
 ```
 
-## M12 repository change plan / 저장소 변경계획
+## First production source / 첫 production 소스
 
-- schema: `schemas/repository_change_plan.schema.json`
-- service: `src/valuation_hub/admission_apply.py`
-- plan state: `REPOSITORY_CHANGE_PLANNED`
-- plan flag: `canonical=false`
-- binds exact M11 admission bundle SHA-256 / 정확한 M11 bundle 해시 결합
-- captures current `registry/cases.json` byte SHA-256 / 현재 registry bytes 기준선
-- computes exact post-change registry object + SHA-256 / 변경 후 registry 객체·해시
-- enumerates exact canonical artifact paths + SHA-256 / 정확한 정식 산출물 경로·해시
-- full plan is SHA-256 locked / 전체 plan 해시 잠금
-
-A plan is valid only while the target registry bytes remain exactly equal to the planned baseline. Registry drift requires a new plan.
-
-계획은 대상 registry bytes가 계획 기준선과 정확히 같을 때만 유효하다. registry drift가 있으면 계획을 다시 생성해야 한다.
-
-## Guarded apply boundary / 안전 적용 경계
-
-M12 filesystem apply requires an explicit target checkout/worktree whose symbolic Git branch is:
+Adapter:
 
 ```text
-admission/*
+sec-companyfacts-v0.1
 ```
 
-Fail-closed:
-
-- `main` / `master`
-- any other branch prefix / 다른 브랜치
-- detached HEAD
-- missing/invalid Git checkout marker
-- existing registry case ID
-- existing target canonical directory
-- path traversal or symlink escape
-- admission/plan/hash drift
-- registry baseline drift
-
-M12 v0.1 is new-case admission only; it cannot replace or update an existing canonical case.
-
-M12 v0.1은 신규 사례 수용 전용이며 기존 정식 사례를 교체·수정할 수 없다.
-
-## Ordered transactional apply / 순서형 트랜잭션 적용
-
-M12 does not claim impossible multi-file crash atomicity. It uses a fail-safe order:
+Official endpoint pattern:
 
 ```text
-validate plan + admission + baseline
-→ stage all case artifact bytes
-→ verify artifact SHA-256
-→ stage post-change registry bytes
-→ rename complete case directory into final path
-→ replace registry LAST
-→ verify applied bytes
-→ validate_case → run_case → evidence_view → preview_case
+https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json
 ```
 
-Caught failures restore the original registry and remove the newly created case directory. If an OS/process crash occurs in the narrow interval after the directory rename but before registry replacement, an unregistered orphan directory may remain; it has no canonical authority and future M12 planning refuses to overwrite it.
+The adapter constructs the endpoint from a normalized ten-digit CIK. Arbitrary user-supplied live URLs are not accepted.
 
-일반 예외는 registry 원본과 신규 case 디렉터리를 롤백한다. 디렉터리 rename 후 registry 교체 전 강제종료 시 미등록 orphan 디렉터리가 남을 수 있으나 registry 권위가 없으며 이후 M12가 이를 덮어쓰지 않고 차단한다.
+Adapter가 정규화 10자리 CIK에서 endpoint를 직접 구성하며 임의 사용자 live URL은 받지 않는다.
+
+## Transport controls / 전송 통제
+
+`src/valuation_hub/sec_live.py` enforces:
+
+- HTTPS only / HTTPS 전용
+- initial host fixed to `data.sec.gov`
+- redirects restricted to approved SEC hosts / redirect host 제한
+- identifying User-Agent containing contact email / 연락 이메일 포함 User-Agent
+- process-local conservative rate limiter (`>=0.1s` request interval) / 보수적 rate limiter
+- timeout and maximum response bytes / timeout·응답크기 제한
+- HTTP/content-type/UTF-8/JSON failures fail closed / 응답 오류 차단
+- injectable transport for deterministic offline tests / CI용 transport 주입
+
+The User-Agent string is not persisted into source snapshots.
+
+User-Agent 문자열은 source snapshot에 저장하지 않는다.
+
+## Immutable source snapshot / 불변 source snapshot
+
+Schema:
+
+- `schemas/source_snapshot.schema.json`
+- version `source-snapshot-v0.1`
+- state `SOURCE_SNAPSHOT_CAPTURED`
+- `canonical=false`
+
+Snapshot content includes:
+
+- publisher, source type, source tier
+- requested/final locator
+- requested normalized CIK
+- fetched timestamp
+- response content type, ETag, Last-Modified when present
+- exact raw UTF-8 response text
+- raw body byte count + SHA-256
+- full snapshot SHA-256
+
+`validate_source_snapshot()` reparses raw JSON, checks payload CIK identity, rechecks body size/hash, and reconstructs the full snapshot digest. Any metadata/raw-body tamper fails closed.
+
+`validate_source_snapshot()`은 raw JSON 재파싱, payload CIK 대조, body size/hash, 전체 snapshot digest를 재검증한다. 메타데이터·원문 변경은 fail-closed한다.
+
+## SEC evidence extraction / SEC 근거추출
+
+Initial metrics:
+
+- `revenue`
+- `operating_income`
+- `net_income`
+- `assets`
+- `cash`
+- `shares_outstanding`
+
+Each `MetricSpec` explicitly defines ordered taxonomy/concept fallback, accepted units, and filing forms.
+
+Selection rule:
+
+```text
+FIRST_AVAILABLE_CONCEPT
+→ LATEST_FILED
+→ LATEST_PERIOD_END
+```
+
+Optional `form` and `period_end` filters are explicit. Equal-precedence facts with conflicting values fail closed. Same-value duplicates are resolved deterministically. Concept fallback is recorded in the output and is never silent.
+
+동일 우선순위 값이 충돌하면 차단하며 동일값 중복은 결정론적으로 처리한다. Concept fallback은 결과에 명시한다.
+
+Each extracted candidate preserves:
+
+- taxonomy + concept + unit
+- value
+- reporting start/end + FY/FP/frame
+- accession + form + filed date
+- source snapshot SHA-256 + body SHA-256
+- explicit selection rule/filter metadata
+
+Output state:
+
+```text
+EVIDENCE_CANDIDATE_UNREVIEWED / canonical=false / FACT_CANDIDATE
+```
+
+M13 does not synthesize TTM, normalize financial statements, or automatically bind a candidate into a Draft/Candidate review object.
+
+M13은 TTM 합성, 재무제표 정규화, Draft/Candidate 자동 연결을 수행하지 않는다.
 
 ## Interfaces / 인터페이스
 
 CLI:
 
 ```bash
-vih admission-plan <admission.json> --target-repo <checkout> > change-plan.json
-vih admission-plan-validate <change-plan.json> <admission.json> --target-repo <checkout>
-vih admission-apply <change-plan.json> <admission.json> --target-repo <checkout>
+vih sec-fetch <CIK> --user-agent "App contact@example.com" --output workspace/source_snapshots/<file>.json
+vih sec-snapshot-validate workspace/source_snapshots/<file>.json
+vih sec-extract workspace/source_snapshots/<file>.json <metric> [--form ...] [--period-end YYYY-MM-DD]
 ```
 
-Web PR Preparation Lab:
+Snapshot materialization is restricted to `workspace/source_snapshots/` and refuses overwrite.
+
+Web:
 
 ```text
-/pr-prep
-POST /api/pr-prep/plan
-POST /api/pr-prep/validate
+/source
+POST /api/source/validate
+POST /api/source/extract
 ```
 
-There is deliberately no Web apply endpoint. / Web apply endpoint는 의도적으로 존재하지 않는다.
+There is deliberately no browser-origin live-fetch endpoint and no canonical-write endpoint.
 
-## M12 tests / M12 테스트
+브라우저 live fetch와 정식 write endpoint는 의도적으로 존재하지 않는다.
 
-`tests/test_admission_apply.py` and `tests/test_prprep_interfaces.py` cover:
+## Tests / 테스트
 
-- deterministic plan/hash / 결정론적 plan·해시
-- registry optimistic-concurrency drift rejection / registry drift 차단
-- main/master/other branch + detached HEAD rejection / 위험 브랜치·detached HEAD 차단
-- normal checkout + Git worktree branch detection / 일반 checkout·worktree 감지
-- canonical target collision rejection / 정식 대상 충돌 차단
-- path/symlink escape rejection / 경로·symlink 탈출 차단
-- exact equity and venture branch application / equity·venture 정확 적용
-- post-apply `validate_case → run_case → evidence_view → preview_case` / 적용 후 전체 검증
-- forced post-apply failure rollback / 강제 실패 롤백
-- tampered plan/admission rejection / 변조 계획·bundle 차단
-- CLI command contract / CLI 계약
-- Web plan-only/no-apply boundary / Web 계획전용 경계
+M13 currently includes:
+
+- `tests/fixtures/sec_companyfacts_sample.json`
+- `tests/test_sec_live.py`
+- `tests/test_sec_interfaces.py`
+
+Coverage includes:
+
+- CIK normalization + official locator construction
+- immutable hash-locked snapshot capture
+- User-Agent non-persistence
+- source host/content-type/payload identity failures
+- raw-body tamper detection
+- explicit metric fallback
+- exact filing provenance
+- form/period filters
+- equal-precedence conflict fail-closed behavior
+- deterministic same-value duplicates
+- conservative rate limiter
+- workspace-only no-overwrite materialization
+- CLI commands
+- Web source inspection and absence of browser live-fetch route
+- M1–M12 regressions through full CI
+
+CI uses injected/fixture responses and does not make external SEC requests.
 
 ## Documentation / 문서
 
-- `docs/CANONICAL_ADMISSION.md`
-- `docs/GUARDED_ADMISSION_APPLY.md`
-- `schemas/repository_change_plan.schema.json`
+- `docs/EVIDENCE_POLICY.md`
+- `docs/LIVE_EVIDENCE_SEC.md`
+- `schemas/source_snapshot.schema.json`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` canonical files and decisions / 병합 `main` 정식 파일·결정
 2. `PROJECT_STATE.md` + active Issue/PR/branch / 상태파일 + 활성 Issue·PR·브랜치
-3. source packages, admission bundles, repository plans / 원천 package·수용 bundle·저장소 계획
+3. immutable source snapshots + extraction provenance / 불변 source snapshot + 추출출처
 4. current chat / 현재 대화
 5. AI recollection / AI 기억
 
-Repository state wins over AI recollection unless newer primary evidence requires explicit reconciliation.
+Official external data does not outrank the repository merely by being fetched; it must be explicitly reconciled through the evidence pipeline before changing canonical state.
+
+공식 외부 데이터도 단순히 fetch되었다는 이유로 저장소 정식상태를 덮지 않으며 근거 파이프라인에서 명시적으로 조정되어야 한다.
 
 ## Exact resume point / 정확한 재개점
 
-Finalize README/M12 documentation, run a fresh full Python 3.11/3.12 CI on the final PR head, inspect PR mergeability, and merge #27 only if all M1–M12 regressions pass. After merge, verify the `main` push CI and close #26 through the merged PR. The next mission should move from governance plumbing to product value: live evidence/data ingestion with source adapters, while preserving the M9–M12 evidence/promotion/admission boundaries.
+Open the M13 PR and run the full Python 3.11/3.12 CI matrix. Fix any snapshot, transport, extraction, CLI, Web, or regression failure using preserved diagnostics. Merge only if source capture remains noncanonical, all snapshot hashes and CIK provenance revalidate, ambiguous facts fail closed, browser live fetch remains absent, and all M1–M13 tests pass. After M13 merge, verify the `main` push CI and close #28. The next mission should add the Korean official-data source using the same authority model: OpenDART adapter + authentication-safe immutable snapshot capture, without yet conflating it with TTM/normalization.
 
-README와 M12 문서를 최종화하고 최종 PR head에서 Python 3.11/3.12 전체 CI를 다시 실행한다. M1–M12 전체 회귀가 통과할 때만 #27을 병합하고 이후 `main` push CI와 #26 종료를 확인한다. 다음 미션은 거버넌스 배관보다 제품가치로 이동하여, M9–M12 근거·승격·수용 경계를 보존한 실시간 evidence/data ingestion source adapter를 추진하는 것이 적절하다.
+M13 PR을 개설하고 Python 3.11/3.12 전체 CI를 실행한다. snapshot·transport·추출·CLI·Web·회귀 실패를 보존 진단으로 수정한다. 비정식 수집상태, 해시·CIK 출처 재검증, 충돌 fail-closed, browser live fetch 부재, M1–M13 전체 테스트가 통과할 때만 병합한다. 병합 후 `main` push CI와 #28 종료를 확인한다. 다음 미션은 동일 권위모델을 재사용하여 OpenDART adapter와 인증 안전 immutable snapshot 수집을 구현하되 TTM/정규화와는 아직 분리한다.

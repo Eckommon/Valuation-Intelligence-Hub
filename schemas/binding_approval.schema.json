@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/binding_approval.schema.json",
+  "title": "Binding Approval v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","decision","reviewer","approved_at","proposal_sha256","draft_before_sha256","target_identity","approved_fields","approval_sha256"],
+  "properties": {
+    "schema_version": {"const": "binding-approval-v0.1"},
+    "status": {"const": "BINDING_APPROVED"},
+    "canonical": {"const": false},
+    "decision": {"const": "APPROVE"},
+    "reviewer": {"type":"string","minLength":1,"maxLength":160},
+    "approved_at": {"type":"string"},
+    "proposal_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "draft_before_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "target_identity": {"type":"object","required":["entity_id","financial_scope"]},
+    "approved_fields": {"type":"array","uniqueItems":true,"items":{"type":"string"}},
+    "approval_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

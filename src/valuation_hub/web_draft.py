@@ -9,7 +9,6 @@ Draft payload는 본 어댑터에서 영속화하거나 정식 승격하지 않�
 
 from __future__ import annotations
 
-import html
 import json
 from http import HTTPStatus
 from http.server import ThreadingHTTPServer
@@ -51,6 +50,19 @@ loadTemplate();
     return product_layout("Draft Lab — Valuation Intelligence Hub", body)
 
 
+def _dashboard_with_draft_link(repo: Path) -> str:
+    page = legacy_web.render_dashboard(repo)
+    marker = '<h2>Canonical cases / 정식 사례</h2>'
+    banner = (
+        '<div class="card" style="margin-bottom:18px;border-color:#f59e0b">'
+        '<div class="warn"><strong>Analyze your own case / 내 사례 분석</strong></div>'
+        '<p>Create or paste a user-supplied Draft. Drafts run in memory and never enter the canonical registry automatically. / '
+        '사용자 Draft를 생성·붙여넣어 분석합니다. Draft는 메모리에서 실행되며 정식 레지스트리에 자동 등록되지 않습니다.</p>'
+        '<a href="/draft">Open Draft Lab / Draft 랩 열기 →</a></div>'
+    )
+    return page.replace(marker, banner + marker, 1)
+
+
 def make_handler(root: Path | None = None):
     repo = root.resolve() if root else find_repo_root()
     Base = make_product_handler(repo)
@@ -75,6 +87,9 @@ def make_handler(root: Path | None = None):
         def do_GET(self) -> None:  # noqa: N802
             path = unquote(urlparse(self.path).path)
             try:
+                if path == "/":
+                    self._send(HTTPStatus.OK, _dashboard_with_draft_link(repo).encode("utf-8"), "text/html; charset=utf-8")
+                    return
                 if path == "/draft":
                     self._send(HTTPStatus.OK, render_draft_lab().encode("utf-8"), "text/html; charset=utf-8")
                     return

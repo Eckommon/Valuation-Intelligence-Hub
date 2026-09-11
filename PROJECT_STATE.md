@@ -26,8 +26,9 @@
 | M11 Reviewed-Draft canonical admission | `243f941b2f323ac5fdca31b86e13966950156114` | #24 |
 | M12 Guarded admission apply | `a40e92c196c39b40172711f38f7231f5e8812d52` | #26 |
 | M13 Immutable SEC live evidence | `372b8b0b26307730c3e91afea97c979b59906042` | #28 |
+| M14 Immutable OpenDART financial evidence | `1fff272cc583ec294226f5f530ebe483c2957fb5` | #30 |
 
-M13 post-merge `main` CI run `34574729338` completed `success` on Python 3.11/3.12.
+M14 post-merge `main` CI run `34575650004` completed `success` on Python 3.11/3.12.
 
 ## Canonical authority model / 정식 권위모델
 
@@ -38,15 +39,13 @@ IMMUTABLE SOURCE SNAPSHOT / NOT CANONICAL
         ↓
 UNREVIEWED EVIDENCE CANDIDATE / NOT CANONICAL
         ↓
+PERIOD NORMALIZATION / TTM / NOT CANONICAL
+        ↓
 DRAFT + EVIDENCE GOVERNANCE
         ↓
 HUMAN SHA-256 REVIEW LOCK
         ↓
-DETERMINISTIC PROMOTION PACKAGE
-        ↓
-CANONICAL ADMISSION PROPOSAL
-        ↓
-BASELINE-BOUND REPOSITORY CHANGE PLAN
+PROMOTION PACKAGE → ADMISSION PROPOSAL
         ↓
 GUARDED admission/* BRANCH APPLY
         ↓
@@ -55,139 +54,146 @@ PR + FULL CI + REVIEWED MERGE
 CANONICAL
 ```
 
-Official-source provenance does not skip evidence review or repository admission.
+Normalization and arithmetic never upgrade evidence authority.
 
-공식출처라는 이유로 근거검토 또는 저장소 수용을 건너뛰지 않는다.
+정규화와 산술은 근거 권위를 승격하지 않는다.
 
 ## Active mission / 활성 미션
 
-- Issue: `#30 [M14] OpenDART immutable financial-statement source adapter`
-- PR: `#31 M14 OpenDART immutable financial evidence`
-- Branch: `mission/m14-opendart-live-evidence-v01`
+- Issue: `#32 [M15] Financial evidence normalization + period semantics + TTM transforms`
+- PR: `#33 M15 Financial evidence normalization + TTM`
+- Branch: `mission/m15-financial-normalization-v01`
 - Status: `ACTIVE_FINALIZATION`
-- Core CI run `34575135025`: Python 3.11/3.12 `success`
-- Interface CI run `34575324786`: Python 3.11/3.12 `success`
+- Kernel checkpoint CI run `34576216890`: Python 3.11/3.12 `success`
+- CLI/Web checkpoint head: `f050a68badbfbf080379c4e4e968ee26ac40177e`
 
-## M14 scope / M14 범위
+## M15 kernel / M15 커널
 
-Adapter:
-
-```text
-opendart-fnltt-singl-acnt-all-v0.1
-```
-
-Endpoint identity:
+Primary service:
 
 ```text
-https://opendart.fss.or.kr/api/fnlttSinglAcntAll.json
-corp_code + bsns_year + reprt_code + fs_div
+src/valuation_hub/financial_normalization.py
 ```
 
-Authentication key `crtfc_key` is a transport-only secret. It must not appear in durable snapshots, sanitized locators, Web payloads, normal output, or evidence candidates.
-
-`crtfc_key`는 transport 전용 secret이며 durable snapshot·sanitized locator·Web payload·일반 출력·근거후보에 남길 수 없다.
-
-## M14 source snapshot / M14 source snapshot
-
-- schema: `schemas/dart_source_snapshot.schema.json`
-- version: `dart-source-snapshot-v0.1`
-- status: `SOURCE_SNAPSHOT_CAPTURED`
-- `canonical=false`
-- exact raw UTF-8 OpenDART response
-- raw-body size + SHA-256
-- full snapshot SHA-256
-- request identity reconciliation on every row
-- OpenDART API `status=000` required even when HTTP is 200
-- sanitized requested/final locator contains no credential
-
-## M14 extraction / M14 추출
-
-Initial metrics:
-
-- revenue
-- operating_income
-- net_income
-- assets
-- cash
-- equity
-- liabilities
-
-Selection uses explicit statement-section ordering and exact account-id/account-name fallback. No fuzzy matching.
+Schemas:
 
 ```text
-STATEMENT SECTION ORDER
-→ EXACT ACCOUNT_ID ORDER
-→ EXACT ACCOUNT_NM FALLBACK
-→ EQUAL-PRECEDENCE VALUE RECONCILIATION
+schemas/financial_observation.schema.json
+schemas/financial_ttm.schema.json
 ```
 
-Controls:
-
-- CFS/OFS isolated by request identity
-- BS/IS/CIS/CF/SCE cannot be silently crossed
-- conflicting equal-precedence values fail closed
-- blank/`-` current amount stays unknown, never zero
-- formatted integer amounts parse deterministically
-- raw amount strings remain in row provenance
-- `thstrm_add_amount` is preserved but NOT interpreted as TTM/YTD in M14
-
-Output:
+Authority propagation:
 
 ```text
-DART_EVIDENCE_CANDIDATE_UNREVIEWED
-FACT_CANDIDATE
-canonical=false
+FACT           → NORMALIZED_FACT
+FACT_CANDIDATE → NORMALIZED_FACT_CANDIDATE
 ```
+
+All normalized observations and TTM results remain `canonical=false`.
+
+## Period semantics / 기간 의미
+
+Supported kinds:
+
+- `INSTANT`
+- `DURATION_QUARTER`
+- `DURATION_YTD`
+- `DURATION_ANNUAL`
+- `DURATION_TTM`
+
+SEC controls:
+
+- instant metrics cannot have duration start;
+- 10-K duration is annual only inside bounded duration checks;
+- 10-Q duration requires explicit quarter/YTD declaration;
+- value magnitude is never used to guess period semantics.
+
+OpenDART controls:
+
+- BS current amount → instant;
+- nonannual IS/CIS current amount → quarter;
+- nonannual IS/CIS cumulative amount → YTD;
+- annual IS/CIS current amount → annual;
+- report-stage identity is preserved;
+- exact dates are not invented when OpenDART supplies only report semantics.
+
+## TTM / TTM
+
+```text
+TTM = Q[-3] + Q[-2] + Q[-1] + Q[0]
+TTM = PRIOR_FY + CURRENT_YTD - PRIOR_COMPARABLE_YTD
+```
+
+Compatibility guards require the same metric, entity, financial scope, and unit. Four-quarter inputs must be contiguous. Annual bridge requires comparable fiscal years and identical YTD stages.
+
+Every transform records exact component values and input observation SHA-256 lineage.
+
+## Reconciliation / 조정
+
+Same-period observations must represent identical metric/entity/scope/unit/period identity. Equal values reconcile deterministically, preferring reviewed `NORMALIZED_FACT`; conflicting values fail closed as `UNKNOWN_CONFLICT`. No averaging is allowed.
 
 ## Interfaces / 인터페이스
 
-CLI entry point now uses `valuation_hub.cli_entry:main` as a thin dispatcher. All existing commands delegate unchanged to the mature M1–M13 `valuation_hub.cli.main`; only M14 `dart-*` and extended Web serving are intercepted.
+CLI:
 
-```bash
-vih dart-fetch 00126380 --bsns-year 2026 --reprt-code 11012 --fs-div CFS --api-key <LOCAL_SECRET> --output workspace/source_snapshots/dart.json
-vih dart-snapshot-validate workspace/source_snapshots/dart.json
-vih dart-extract workspace/source_snapshots/dart.json revenue --statement-section IS
+```text
+normalize-sec
+normalize-dart
+normalize-validate
+ttm-four-quarters
+ttm-annual-bridge
+ttm-validate
+normalize-reconcile
 ```
 
 Web:
 
 ```text
-/dart-source
-POST /api/dart-source/validate
-POST /api/dart-source/extract
+/normalize
+POST /api/normalize/one
+POST /api/normalize/validate
+POST /api/normalize/ttm-four
+POST /api/normalize/ttm-bridge
+POST /api/normalize/reconcile
+POST /api/normalize/ttm-validate
 ```
 
-Web has no API-key input and no OpenDART live-fetch endpoint.
+The Web layer is calculate-only. It has no live-fetch, file-write, promotion, admission, or canonical-write endpoint and rejects credential-bearing payloads.
 
 ## Tests / 테스트
 
-- `tests/test_dart_live.py`
-- `tests/test_dart_interfaces.py`
-- deterministic fixture: `tests/fixtures/opendart_financials_sample.json`
+- `tests/test_financial_normalization.py`
+- `tests/test_m15_interfaces.py`
 
-CI is network-free and uses injected transport.
+Coverage includes:
+
+- authority propagation
+- SEC ambiguous 10-Q fail-closed behavior
+- OpenDART current/cumulative semantics
+- observation hash tamper detection
+- quarter continuity and compatibility
+- annual-bridge stage guards
+- conflict blocking
+- CLI TTM execution
+- Web read-only boundaries
+- Web credential rejection
 
 ## Documentation / 문서
 
-- `docs/LIVE_EVIDENCE_SEC.md`
-- `docs/LIVE_EVIDENCE_OPENDART.md`
-- `docs/M14_ACCEPTANCE.md`
-- `docs/M14_IMPLEMENTATION_SUMMARY.md`
+- `docs/FINANCIAL_NORMALIZATION.md`
+- `docs/M15_ACCEPTANCE.md`
+- `docs/M15_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. immutable source snapshots + exact extraction provenance
+3. immutable source snapshots + normalized observation/TTM lineage
 4. current chat
 5. AI recollection
 
-New external data must be reconciled through the evidence pipeline before changing canonical state.
-
-새 외부 데이터는 정식상태를 변경하기 전에 근거 파이프라인에서 조정되어야 한다.
-
 ## Exact resume point / 정확한 재개점
 
-Finalize PR #31 metadata and README documentation, run a fresh full Python 3.11/3.12 CI on the final PR head, and merge only if API-key non-persistence, OpenDART status handling, snapshot tamper detection, exact account/statement provenance, CLI/Web boundaries, SEC M13 behavior, and all M1–M14 regressions pass. After merge, verify `main` push CI and close #30. The next mission should address **financial evidence normalization**, not add more raw-source breadth: define deterministic period semantics (instant vs duration, quarter-only vs YTD, annual), source-priority reconciliation across SEC/OpenDART, and TTM transforms as `NORMALIZED_FACT`, without silently converting raw evidence into model assumptions.
+Run a fresh full Python 3.11/3.12 CI on the final PR #33 head after all M15 docs/interfaces are committed. Merge #33 only if period semantics, authority propagation, hash integrity, TTM compatibility, reconciliation conflict blocking, CLI/Web read-only boundaries, M13/M14 source behavior, and all M1–M15 regressions pass. After merge, verify the `main` push CI and Issue #32 closure.
 
-PR #31 메타데이터와 README를 최종화하고 최종 head에서 Python 3.11/3.12 전체 CI를 실행한다. API key 비보존, OpenDART status 처리, snapshot 변조탐지, 계정·재무제표 provenance, CLI/Web 경계, SEC M13 회귀, 전체 M1–M14가 통과할 때만 병합한다. 병합 후 `main` CI와 #30 종료를 확인한다. 다음 미션은 source 폭을 늘리지 않고 **재무 evidence normalization**으로 이동한다. 즉 instant/duration, 분기단독/YTD/연간 기간 semantics, SEC/OpenDART source-priority reconciliation, TTM 변환을 `NORMALIZED_FACT`로 정의하고 raw evidence를 암묵적 가정으로 바꾸지 않는다.
+If M15 closes cleanly, the next mission should be **governed normalized-evidence → valuation-model input binding**, not another raw-source adapter. It should define explicit mappings from reviewed normalized observations into Draft material inputs, completeness/staleness gates, source/perimeter compatibility, override provenance, and human review before any canonical admission.

@@ -10,6 +10,7 @@ Valuation-Intelligence-Hub는 시장가격·재무제표·사업경제성·불�
 ## Core principles / 핵심 원칙
 
 - **Facts ≠ assumptions / 사실 ≠ 가정**
+- **Official source ≠ automatic canonical fact / 공식 출처 ≠ 자동 정식 사실**
 - **Every material fact needs provenance / 모든 중요 사실은 출처 필요**
 - **Repository canonical state > AI recollection / 저장소 정식 상태 > AI 기억**
 - **Growth must reconcile with reinvestment / 성장은 재투자와 일치**
@@ -71,13 +72,19 @@ vih web
 
 Default / 기본: `http://127.0.0.1:8765`
 
-The local-first Web product includes canonical dashboards, valuation visualization, evidence browsing, scenario preview, Draft Lab, Promotion Review, Promotion Package, Canonical Admission, and M12 PR Preparation.
+The local-first Web product includes canonical dashboards, valuation visualization, evidence browsing, scenario preview, Draft Lab, Promotion Review, Promotion Package, Canonical Admission, PR Preparation, and the M13 SEC Source Snapshot Inspector.
 
-로컬 우선 Web 제품은 정식 대시보드, 가치 시각화, 근거 탐색, 시나리오 preview, Draft, 승격 검토, 승격 패키지, 정식 수용, M12 PR 준비 랩을 제공합니다.
+로컬 우선 Web 제품은 정식 대시보드, 가치 시각화, 근거 탐색, 시나리오 preview, Draft, 승격 검토, 승격 패키지, 정식 수용, PR 준비, M13 SEC Source Snapshot 검사기를 제공합니다.
 
 ## Governed user-to-canonical flow / 사용자→정식 거버넌스 흐름
 
 ```text
+M13 LIVE OFFICIAL SOURCE
+          ↓ immutable snapshot + hash lock
+     SOURCE_SNAPSHOT_CAPTURED / NOT_CANONICAL
+          ↓ deterministic extraction
+     EVIDENCE_CANDIDATE_UNREVIEWED / NOT_CANONICAL
+          ↓ explicit binding/review in existing governance
 M8  DRAFT_USER_SUPPLIED / USER_SUPPLIED_UNVERIFIED
           ↓
 M9  CANDIDATE_REVIEW
@@ -85,9 +92,9 @@ M9  CANDIDATE_REVIEW
      REVIEW_APPROVED_READY_FOR_PR
           ↓
 M10 PROMOTION_PACKAGE_STAGED / NOT_CANONICAL
-          ↓ deterministic tamper-evident package
+          ↓
 M11 CANONICAL_ADMISSION_PROPOSED / bundle canonical=false
-          ↓ deterministic registry-baseline-bound plan
+          ↓
 M12 REPOSITORY_CHANGE_PLANNED / canonical=false
           ↓ guarded local apply on admission/* branch/worktree
      GUARDED_BRANCH_APPLIED / canonical=false
@@ -95,155 +102,117 @@ M12 REPOSITORY_CHANGE_PLANNED / canonical=false
      CANONICAL
 ```
 
-Each state is deliberately distinct. Mathematical validity, evidence admissibility, human review, package integrity, repository planning, branch application, and canonical authority are not collapsed into one step.
+Each state is deliberately distinct. Mathematical validity, official-source provenance, evidence admissibility, human review, package integrity, repository planning, branch application, and canonical authority are not collapsed into one step.
 
-각 상태는 의도적으로 분리됩니다. 수학적 유효성, 근거 적격성, 인간 검토, 패키지 무결성, 저장소 계획, 브랜치 적용, 정식 권위를 하나의 단계로 합치지 않습니다.
+각 상태는 의도적으로 분리됩니다. 수학적 유효성, 공식출처, 근거 적격성, 인간 검토, 패키지 무결성, 저장소 계획, 브랜치 적용, 정식 권위를 하나의 단계로 합치지 않습니다.
 
-## M8 — User Draft / 사용자 Draft
+## M8–M12 — Governed promotion and admission / 검토·승격·수용
 
-```bash
-vih draft-template equity_fcff > workspace/user_cases/my_company.json
-vih draft-validate workspace/user_cases/my_company.json
-vih draft-run workspace/user_cases/my_company.json
-```
+The existing user-to-canonical pipeline remains intact:
 
-Draft execution uses shared kernels but never auto-registers canonical state.  
-See [`docs/USER_DRAFTS.md`](docs/USER_DRAFTS.md).
+- M8: user Draft + shared-kernel validation / 사용자 Draft
+- M9: evidence-governed Candidate + human SHA-256 review lock / 근거 거버넌스 + 인간검토
+- M10: deterministic tamper-evident promotion package / 결정론적 승격 패키지
+- M11: versioned reviewed-Draft canonical adapter + admission proposal / 정식 adapter + 수용제안
+- M12: deterministic repository plan + guarded `admission/*` branch apply / 저장소 계획 + 안전 브랜치 적용
 
-## M9 — Reviewed promotion / 검토 기반 승격
-
-```bash
-vih candidate-build workspace/user_cases/my_company.json > workspace/user_cases/my_candidate.json
-vih candidate-validate workspace/user_cases/my_candidate.json
-# Human reviews the exact scope and records APPROVE + returned SHA-256.
-vih promotion-check workspace/user_cases/my_candidate.json
-```
-
-M9 requires explicit FACT/NORMALIZED_FACT/ASSUMPTION governance, evidence-value reconciliation, and SHA-256-locked human review.  
-See [`docs/PROMOTION_PROTOCOL.md`](docs/PROMOTION_PROTOCOL.md).
-
-## M10 — Deterministic promotion package / 결정론적 승격 패키지
+Important M12 commands:
 
 ```bash
-vih package-build workspace/user_cases/my_candidate.json \
-  --case-id KR_EXAMPLE_COMPANY \
-  --name-en "Example Company" \
-  --name-ko "예시회사" \
-  --asset-class public_equity > workspace/user_cases/package.json
-
-vih package-validate workspace/user_cases/package.json
+vih admission-plan workspace/user_cases/admission.json --target-repo . > workspace/user_cases/change-plan.json
+vih admission-plan-validate workspace/user_cases/change-plan.json workspace/user_cases/admission.json --target-repo .
+vih admission-apply workspace/user_cases/change-plan.json workspace/user_cases/admission.json --target-repo .
 ```
 
-M10 preserves the exact reviewed Draft instead of coercing absolute D&A/CAPEX/ΔNWC into the legacy reference-case ratio representation.  
-See [`docs/PROMOTION_PACKAGE.md`](docs/PROMOTION_PACKAGE.md).
+Filesystem apply is allowed only on symbolic Git branches matching `admission/*`; `main`, `master`, other branch prefixes, detached HEAD, registry drift, path collision, and symlink escape fail closed.
 
-## M11 — Versioned reviewed-Draft canonical admission / 검토 Draft 정식 수용
+See [`docs/PROMOTION_PROTOCOL.md`](docs/PROMOTION_PROTOCOL.md), [`docs/PROMOTION_PACKAGE.md`](docs/PROMOTION_PACKAGE.md), [`docs/CANONICAL_ADMISSION.md`](docs/CANONICAL_ADMISSION.md), and [`docs/GUARDED_ADMISSION_APPLY.md`](docs/GUARDED_ADMISSION_APPLY.md).
 
-Versioned adapters:
+## M13 — Immutable live evidence + SEC CompanyFacts / 불변 live 근거 + SEC CompanyFacts
 
-- `reviewed-draft-equity-fcff-v0.1`
-- `reviewed-draft-venture-probability-v0.1`
-
-```bash
-vih admission-build workspace/user_cases/package.json > workspace/user_cases/admission.json
-vih admission-validate workspace/user_cases/admission.json
-```
-
-The admission bundle remains `canonical=false`. It proposes exact canonical files and an explicit adapter registry entry. `valuation_as_of` is derived from governed market-price evidence.
-
-수용 bundle 자체는 `canonical=false`이며 정확한 정식 제안 파일과 명시적 adapter registry 항목을 생성합니다. `valuation_as_of`는 거버넌스된 시장가격 근거에서 도출합니다.
-
-See [`docs/CANONICAL_ADMISSION.md`](docs/CANONICAL_ADMISSION.md).
-
-## M12 — Guarded admission apply + PR preparation / 안전 수용 적용 + PR 준비
-
-M12 closes the last manual-copy gap without opening a path that can silently modify canonical `main`.
-
-### 1. Prepare a dedicated branch/worktree / 전용 브랜치·워크트리 준비
-
-```bash
-git switch -c admission/KR_EXAMPLE_COMPANY
-```
-
-Filesystem apply is allowed only on symbolic Git branches matching `admission/*`. `main`, `master`, other branch prefixes, and detached HEAD fail closed.
-
-파일 적용은 `admission/*` Git 브랜치에서만 허용됩니다. `main`, `master`, 다른 브랜치, detached HEAD는 차단됩니다.
-
-### 2. Build a baseline-bound plan / 기준선 결합 계획 생성
-
-```bash
-vih admission-plan workspace/user_cases/admission.json \
-  --target-repo . > workspace/user_cases/change-plan.json
-```
-
-The plan locks:
-
-- M11 admission bundle SHA-256
-- current `registry/cases.json` raw-byte SHA-256
-- exact post-change registry SHA-256
-- every proposed canonical artifact path + SHA-256
-- full plan SHA-256
-
-### 3. Revalidate before apply / 적용 전 재검증
-
-```bash
-vih admission-plan-validate \
-  workspace/user_cases/change-plan.json \
-  workspace/user_cases/admission.json \
-  --target-repo .
-```
-
-If the registry changed after planning, the plan is stale and application is blocked.
-
-계획 이후 registry가 변경되면 계획은 stale로 판정되어 적용이 차단됩니다.
-
-### 4. Guardedly apply exact bytes / 정확한 bytes 안전 적용
-
-```bash
-vih admission-apply \
-  workspace/user_cases/change-plan.json \
-  workspace/user_cases/admission.json \
-  --target-repo .
-```
-
-M12 stages all case artifacts, verifies their SHA-256, moves the complete case directory into place, replaces the registry **last**, verifies applied bytes, then runs:
+M13 introduces the first production live-source adapter:
 
 ```text
-validate_case → run_case → evidence_view → preview_case
+sec-companyfacts-v0.1
 ```
 
-Caught failures roll back the original registry and newly created case directory. M12 does not claim impossible multi-file OS crash atomicity; a crash in the narrow pre-registry interval can at worst leave an **unregistered orphan directory**, which has no canonical authority and will not be overwritten automatically.
+The adapter constructs the official CompanyFacts locator from a normalized CIK and captures the exact UTF-8 response body into a noncanonical source snapshot.
 
-일반 예외는 원래 registry와 신규 case 디렉터리를 롤백합니다. 다중 파일에 대한 불가능한 완전한 OS crash atomicity를 주장하지 않으며, registry 공개 전 강제종료가 발생해도 최대 결과는 정식 권위가 없는 **미등록 orphan 디렉터리**입니다.
+Adapter는 정규화 CIK에서 공식 CompanyFacts locator를 구성하고 정확한 UTF-8 응답 원문을 비정식 source snapshot으로 보존합니다.
 
-### Web PR Preparation / Web PR 준비
+### Live fetch / Live 수집
+
+```bash
+vih sec-fetch 0000320193 \
+  --user-agent "Valuation-Intelligence-Hub contact@example.com" \
+  --output workspace/source_snapshots/AAPL-companyfacts.json
+```
+
+The transport is HTTPS/host bounded, uses an identifying SEC User-Agent, applies a conservative local request interval, bounds timeout/response size, validates JSON/UTF-8, and never stores the User-Agent text in the snapshot.
+
+전송계층은 HTTPS·host 제한, 식별 User-Agent, 보수적 rate 제한, timeout·응답크기 제한, JSON·UTF-8 검증을 적용하며 User-Agent 문자열 자체는 snapshot에 저장하지 않습니다.
+
+### Snapshot validation / Snapshot 검증
+
+```bash
+vih sec-snapshot-validate workspace/source_snapshots/AAPL-companyfacts.json
+```
+
+Snapshot validation rechecks CIK identity, raw-body size/SHA-256, metadata, and full snapshot SHA-256. Snapshot materialization is restricted to `workspace/source_snapshots/` and refuses overwrite.
+
+### Evidence candidate extraction / 근거후보 추출
+
+```bash
+vih sec-extract workspace/source_snapshots/AAPL-companyfacts.json revenue
+vih sec-extract workspace/source_snapshots/AAPL-companyfacts.json revenue --form 10-Q --period-end YYYY-MM-DD
+```
+
+Initial metric registry:
+
+- `revenue`
+- `operating_income`
+- `net_income`
+- `assets`
+- `cash`
+- `shares_outstanding`
+
+Each result preserves taxonomy/concept/unit, accession, filing form/date, reporting period, source snapshot SHA-256, and body SHA-256. Concept fallback is explicit. Equal-precedence conflicting values fail closed. M13 does **not** synthesize TTM or automatically bind extracted values into a Draft/Candidate.
+
+각 결과는 taxonomy/concept/unit, accession, filing form/date, 보고기간, snapshot/body SHA-256을 보존합니다. concept fallback은 명시적으로 표시되며 동일 우선순위 값 충돌은 fail-closed합니다. M13은 TTM을 합성하거나 Draft/Candidate에 자동 연결하지 않습니다.
+
+### Web source inspector / Web 출처 검사
 
 ```text
-/pr-prep
-POST /api/pr-prep/plan
-POST /api/pr-prep/validate
+/source
+POST /api/source/validate
+POST /api/source/extract
 ```
 
-There is deliberately **no Web apply endpoint**. Browser workflows can inspect plans but cannot mutate the repository.
+There is deliberately **no browser live-fetch endpoint** and no canonical-write endpoint. Web only inspects already captured snapshots.
 
-의도적으로 Web apply endpoint는 존재하지 않습니다. 브라우저에서는 계획을 검토할 수 있지만 저장소를 변경할 수 없습니다.
+브라우저 live-fetch 및 정식 write endpoint는 의도적으로 없습니다. Web은 이미 수집된 snapshot만 검사합니다.
 
-See [`docs/GUARDED_ADMISSION_APPLY.md`](docs/GUARDED_ADMISSION_APPLY.md).
+See [`docs/LIVE_EVIDENCE_SEC.md`](docs/LIVE_EVIDENCE_SEC.md).
 
 ## Product architecture / 제품 아키텍처
 
 ```text
-                     Shared Valuation Kernels
-                              │
-                     Shared Application Services
-                              │
-          ┌───────────────────┼───────────────────┐
-          │                   │                   │
-       Web UI                CLI                 API
-   일반사용자 중심      로컬·고급·대량        자동화·연결
+Official Sources
+      │
+Immutable Source Snapshots
+      │
+Unreviewed Evidence Candidates
+      │
+Evidence Governance + Human Review
+      │
+Shared Valuation Kernels
+      │
+Canonical Admission / Registry
+      │
+Web · CLI · API
 ```
 
-Interface layers reuse shared kernels and evidence gates; they do not create alternate valuation formulas.
+Interfaces reuse shared kernels and evidence gates; they do not create alternate valuation formulas or alternate canonical truth paths.
 
 ## Development milestones / 개발 마일스톤
 
@@ -260,9 +229,11 @@ Interface layers reuse shared kernels and evidence gates; they do not create alt
 - [x] Reviewed Draft→Candidate promotion — M9
 - [x] Deterministic reviewed promotion-package staging — M10
 - [x] Versioned reviewed-Draft canonical adapter + admission — M11
-- [ ] Guarded admission applicator + PR-ready plan — **M12 active / 진행 중**
-- [ ] Live evidence/data ingestion / 실시간 근거·데이터 수집
-- [ ] First non-equity adapter / 첫 비주식 자산 어댑터
+- [x] Guarded admission applicator + PR-ready plan — M12
+- [ ] Immutable live evidence acquisition + SEC CompanyFacts adapter — **M13 active / 진행 중**
+- [ ] OpenDART source adapter / OpenDART 소스 adapter
+- [ ] Financial normalization + TTM evidence transforms / 재무 정규화 + TTM 근거변환
+- [ ] First non-equity valuation adapter / 첫 비주식 가치평가 adapter
 
 ## Canonical documentation / 정식 문서
 
@@ -278,4 +249,5 @@ Interface layers reuse shared kernels and evidence gates; they do not create alt
 - [`docs/PROMOTION_PACKAGE.md`](docs/PROMOTION_PACKAGE.md)
 - [`docs/CANONICAL_ADMISSION.md`](docs/CANONICAL_ADMISSION.md)
 - [`docs/GUARDED_ADMISSION_APPLY.md`](docs/GUARDED_ADMISSION_APPLY.md)
+- [`docs/LIVE_EVIDENCE_SEC.md`](docs/LIVE_EVIDENCE_SEC.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — exact repository-grounded resume point / 정확한 저장소 기반 재개점

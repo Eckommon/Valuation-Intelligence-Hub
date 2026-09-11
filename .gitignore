@@ -6,6 +6,10 @@
 /workspace/promotion_packages/**
 !/workspace/promotion_packages/.gitkeep
 
+# User-local live source snapshots / 사용자 로컬 live source snapshot
+/workspace/source_snapshots/**
+!/workspace/source_snapshots/.gitkeep
+
 # Python / Python 임시파일
 __pycache__/
 *.py[cod]

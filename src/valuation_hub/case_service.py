@@ -21,6 +21,10 @@ from valuation_hub.venture import VentureScenario, probability_weighted_venture_
 
 SUPPORTED_MODELS = {"equity_fcff", "venture_probability"}
 PASS_GATES = {"PASS_MATERIAL_INPUTS_RECONCILED", "PASS_VENTURE_MODEL_INPUTS_RECONCILED"}
+DEFAULT_DRIFT_TOLERANCE = {
+    "equity_fcff": 1.0,           # one currency unit/share; e.g. KRW 1
+    "venture_probability": 1e-6, # sub-cent precision for USD option-like cases
+}
 
 
 class CaseServiceError(RuntimeError):
@@ -191,12 +195,21 @@ def _run_venture(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _verify_against_stored(model: str, runtime: dict[str, Any], stored: dict[str, Any], tolerance: float) -> None:
+def _verify_against_stored(
+    model: str,
+    runtime: dict[str, Any],
+    stored: dict[str, Any],
+    tolerance: float | None,
+) -> None:
+    allowed = DEFAULT_DRIFT_TOLERANCE[model] if tolerance is None else tolerance
+    if allowed < 0:
+        raise CaseServiceError("drift tolerance cannot be negative / 허용오차는 음수일 수 없습니다")
+
     if model == "equity_fcff":
         for name in ("BEAR", "BASE", "BULL"):
             expected = float(stored["scenario_results"][name]["current_intrinsic_value_per_share"])
             actual = float(runtime[name]["value_per_share"])
-            if abs(actual - expected) > tolerance:
+            if abs(actual - expected) > allowed:
                 raise CaseServiceError(
                     f"runtime/stored drift for {name}: {actual} vs {expected}; "
                     "실행값과 정식 저장값 불일치"
@@ -204,13 +217,18 @@ def _verify_against_stored(model: str, runtime: dict[str, Any], stored: dict[str
     else:
         expected = float(stored["probability_weighted"]["expected_present_value_per_share"])
         actual = float(runtime["expected_present_value_per_share"])
-        if abs(actual - expected) > tolerance:
+        if abs(actual - expected) > allowed:
             raise CaseServiceError(
                 f"runtime/stored drift: {actual} vs {expected}; 실행값과 정식 저장값 불일치"
             )
 
 
-def run_case(case_id: str, root: Path | None = None, *, tolerance: float = 1.0) -> dict[str, Any]:
+def run_case(
+    case_id: str,
+    root: Path | None = None,
+    *,
+    tolerance: float | None = None,
+) -> dict[str, Any]:
     """Validate, route, execute, and ground against stored canonical result."""
     repo = root.resolve() if root else find_repo_root()
     validation = validate_case(case_id, repo)
@@ -228,6 +246,7 @@ def run_case(case_id: str, root: Path | None = None, *, tolerance: float = 1.0) 
         "market_price": case["market"]["price"],
         "grounded": True,
         "promotion_gate": validation["promotion_gate"],
+        "drift_tolerance": DEFAULT_DRIFT_TOLERANCE[entry["model"]] if tolerance is None else tolerance,
         "runtime": runtime,
     }
 

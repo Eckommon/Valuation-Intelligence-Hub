@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/repository_change_plan.schema.json",
+  "title": "Guarded Canonical Admission Repository Change Plan / 정식 수용 저장소 변경계획",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "case_id", "source_admission_bundle_sha256", "target_path", "registry_path", "expected_registry_sha256", "planned_registry_sha256", "registry_after", "artifact_writes", "branch_policy", "plan_sha256"],
+  "properties": {
+    "schema_version": {"const": "repository-change-plan-v0.1"},
+    "status": {"const": "REPOSITORY_CHANGE_PLANNED"},
+    "canonical": {"const": false},
+    "case_id": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_]{2,79}$"},
+    "source_admission_bundle_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "target_path": {"type": "string", "pattern": "^analyses/equities/[A-Z0-9][A-Z0-9_]{2,79}$"},
+    "registry_path": {"const": "registry/cases.json"},
+    "expected_registry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "planned_registry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "registry_after": {"type": "object"},
+    "artifact_writes": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "branch_policy": {
+      "type": "object",
+      "required": ["required_prefix", "blocked_branches", "detached_head_allowed"],
+      "properties": {
+        "required_prefix": {"const": "admission/"},
+        "blocked_branches": {"const": ["main", "master"]},
+        "detached_head_allowed": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

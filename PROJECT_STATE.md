@@ -7,29 +7,20 @@
 
 - `Eckommon/Valuation-Intelligence-Hub`
 - Purpose: cross-asset, evidence-grounded valuation intelligence / 범자산 근거 기반 가치분석 인텔리전스
-- Documentation: English + Korean bilingual / 영한문 병기
 
 ## Completed canonical baseline / 완료 기준선
 
 | Milestone | Main commit | Issue |
 |---|---|---:|
-| M1 Evidence grounding + normalization | `e3a11259c0e248f055ee16466e08ccfef2a4d13e` | #1 |
-| M2 Scenario + reverse valuation | `2b6d7522e7d847673a7310b9e7f4346cd26cb59e` | #2 |
-| M3 Reference cases | `5c39c6a1857a5b4aeffa9782399e24bcbd77c0ae` | #3 |
-| M4 Registry + CLI | `db14a21bb706f4f3cd74f5a33d88ca5937249aa5` | #8 |
-| M5 Web MVP | `5867363d26d4efa57e5fb92d4861de9bfbf00d7f` | #12 |
-| M6 Interactive preview + evidence | `caf7576c1a2c13916449d445f5badc3a29712d36` | #14 |
-| M7 Product UX | `243cea0233031088fac8edb0362971326840b858` | #16 |
-| M8 User Draft | `899271709ef3c49d431e0fce716eff48d0b22370` | #18 |
-| M9 Reviewed promotion | `3e2d0a58b13c6e90ae6e665db72dc2683d5fad3f` | #20 |
-| M10 Promotion package | `951e6be93a2d98db3e71c7e9f77bc06b90516dd2` | #22 |
-| M11 Reviewed-Draft canonical admission | `243f941b2f323ac5fdca31b86e13966950156114` | #24 |
 | M12 Guarded admission apply | `a40e92c196c39b40172711f38f7231f5e8812d52` | #26 |
 | M13 Immutable SEC live evidence | `372b8b0b26307730c3e91afea97c979b59906042` | #28 |
 | M14 Immutable OpenDART financial evidence | `1fff272cc583ec294226f5f530ebe483c2957fb5` | #30 |
-| M15 Financial evidence normalization + TTM | `a99a6f24fa6736b01b270a2eeeb4592e8b673563` | #32 |
+| M15 Financial normalization + TTM | `a99a6f24fa6736b01b270a2eeeb4592e8b673563` | #32 |
+| M16 Governed evidence → Draft binding proposal | `fbaf90bab04a877ba6afaaa035a4e99e9ef085a0` | #34 |
 
-M15 final PR CI `34580046404` and post-merge `main` CI `34580118315` completed `success` on Python 3.11/3.12.
+M16 final PR CI `34580879940` and post-merge `main` CI run `34580956086` have Python 3.11/3.12 jobs completed `success`.
+
+Earlier M1–M11 milestones remain completed and regression-locked in repository history.
 
 ## Authority model / 권위모델
 
@@ -42,129 +33,116 @@ EVIDENCE CANDIDATE / NOT CANONICAL
   ↓
 NORMALIZED OBSERVATION / TTM / NOT CANONICAL
   ↓
-DRAFT BINDING PROPOSAL / NOT CANONICAL
+BINDING PROPOSAL / NOT CANONICAL
   ↓
-DRAFT + EVIDENCE GOVERNANCE
+HUMAN APPROVAL LOCK / NOT CANONICAL
   ↓
-HUMAN REVIEW → PACKAGE → ADMISSION → guarded branch apply → PR/CI merge
+BOUND DRAFT RESULT / NOT CANONICAL
+  ↓
+DRAFT EVIDENCE GOVERNANCE + HUMAN REVIEW
+  ↓
+PROMOTION → ADMISSION → guarded repository apply → PR/CI merge
   ↓
 CANONICAL
 ```
 
-Neither arithmetic nor a binding proposal upgrades evidence authority.
-
-산술과 바인딩 제안은 근거 권위를 승격하지 않는다.
-
 ## Active mission / 활성 미션
 
-- Issue: `#34 [M16] Governed normalized-evidence → Draft binding proposal`
-- PR: `#37 M16 Governed evidence → Draft binding proposal`
-- Branch: `mission/m16-evidence-draft-binding-v01`
+- Issue: `#38 [M17] Human-approved binding application to noncanonical Draft`
+- PR: `#39 M17 Human-approved noncanonical Draft binding apply`
+- Branch: `mission/m17-human-approved-binding-apply-v01`
 - Status: `ACTIVE_FINALIZATION`
-- Core checkpoint head: `000aba154af381c4e29b707e8ffecc24e166f822`
-- Core checkpoint CI: `34580452455` — Python 3.11/3.12 `success`
 
-## M16 objective / M16 목표
+## M17 objective / M17 목표
 
-Classify normalized financial evidence against all 13 material `equity_fcff` Draft inputs without mutating a Draft or confusing facts with assumptions.
+Apply only explicitly human-approved M16 `DIRECT_BIND` decisions to a valid noncanonical `equity_fcff` Draft while keeping the original Draft unchanged and preserving full auditability.
 
-정규화 재무근거를 13개 `equity_fcff` 핵심 Draft 입력과 비교·분류하되 Draft를 변경하거나 사실과 가정을 혼동하지 않는다.
+## Approval contract / 승인 계약
 
-## Semantic non-equivalence / 의미 비동일성
+`binding-approval-v0.1` locks:
 
-Regression-blocked:
+- reviewer
+- timezone-aware approval timestamp
+- exact M16 proposal SHA-256
+- exact target Draft-before SHA-256
+- target entity ID + financial scope
+- exact approved field list
+- approval SHA-256
 
-```text
-liabilities        ≠ debt
-shares_outstanding ≠ diluted_shares
-historical/TTM revenue ≠ forecast revenue
-historical operating evidence ≠ forecast EBIT margin
-historical tax evidence ≠ forecast tax assumption
-```
+Proposal/Draft/identity/field/reviewer/timestamp mutation invalidates approval.
 
-## Binding states / 바인딩 상태
+## Apply boundary / 적용경계
 
-- `DIRECT_BIND`
-- `REFERENCE_ONLY`
-- `NEEDS_DERIVATION`
-- `NEEDS_ASSUMPTION`
-- `MISSING_REQUIRED`
-- `CONFLICT_BLOCKED`
-- `STALE_BLOCKED`
+- only current `DIRECT_BIND` fields can be approved/applied
+- v0.1 therefore applies only eligible `equity.cash`
+- target Draft must validate as `draft-case-v0.1 / equity_fcff`
+- Draft currency must match proposal monetary unit
+- target entity/scope assertion must equal proposal identity
+- input Draft object is deep-copied and never mutated
+- no filesystem Draft overwrite
+- no canonical write
 
-Every proposal classifies exactly 13 material Draft fields.
+## Bound result / 바인딩 결과
 
-## Direct-binding boundary / 직접바인딩 경계
+`bound-draft-result-v0.1` contains:
 
-M16 v0.1 permits only:
+- full M16 binding proposal
+- full human approval
+- Draft before + SHA-256
+- exact applied diffs
+- Draft after + SHA-256
+- unresolved binding matrix
+- full result SHA-256
 
-```text
-NORMALIZED_FACT
-+ cash
-+ INSTANT
-+ EXACT date precision
-+ FRESH under explicit as_of/max_age policy
-→ equity.cash
-```
+Each diff records field, before/after values, source metric, and source observation SHA-256.
 
-`NORMALIZED_FACT_CANDIDATE` cannot direct-bind. Report-stage-only date precision cannot receive automatic freshness approval.
-
-## Identity, freshness, conflicts / 식별·최신성·충돌
-
-- one entity + one financial scope per proposal
-- one monetary unit across monetary observations
-- explicit `as_of` + `max_age_days`
-- future-dated evidence fails closed
-- unknown exact date precision is surfaced
-- differing same-metric observations conflict-block until upstream reconciliation
-- no averaging
-
-## Integrity / 무결성
-
-- source observation SHA-256 list recorded
-- complete proposal locked by `proposal_sha256`
-- policy/context/decision/identity mutation fails validation
-- proposal always `canonical=false`
+Result remains `canonical=false` and the resulting Draft must pass existing Draft validation.
 
 ## Interfaces / 인터페이스
 
 CLI:
 
 ```text
-binding-build observations.json --as-of YYYY-MM-DD [--max-age-days N]
-binding-validate proposal.json
+binding-approval-build
+binding-approval-validate
+binding-apply
+bound-draft-validate
 ```
 
 Web:
 
 ```text
-/binding
-POST /api/binding/build
-POST /api/binding/validate
+/binding-apply
+POST /api/binding-apply/approval-build
+POST /api/binding-apply/approval-validate
+POST /api/binding-apply/apply
+POST /api/binding-apply/result-validate
 ```
 
-There is deliberately no binding apply, Draft mutation, file write, promotion, admission, or canonical-write endpoint.
+Web apply is in-memory JSON transformation only. No filesystem/canonical mutation endpoint exists.
 
 ## Files / 파일
 
-- `src/valuation_hub/draft_binding.py`
-- `schemas/draft_binding_proposal.schema.json`
-- `src/valuation_hub/web_binding.py`
-- `tests/test_draft_binding.py`
-- `tests/test_m16_interfaces.py`
-- `docs/DRAFT_BINDING.md`
-- `docs/M16_ACCEPTANCE.md`
+- `src/valuation_hub/binding_apply.py`
+- `schemas/binding_approval.schema.json`
+- `schemas/bound_draft_result.schema.json`
+- `src/valuation_hub/web_binding_apply.py`
+- `tests/test_binding_apply.py`
+- `tests/test_m17_interfaces.py`
+- `docs/BINDING_APPLICATION.md`
+- `docs/M17_ACCEPTANCE.md`
+- `docs/M17_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. immutable source snapshots + normalized/TTM/binding SHA lineage
+3. immutable snapshot → normalized observation → binding proposal → approval → bound-result SHA lineage
 4. current chat
 5. AI recollection
 
 ## Exact resume point / 정확한 재개점
 
-Run a fresh full Python 3.11/3.12 CI on the final PR #37 head after all M16 interfaces/docs are committed. Merge only if semantic non-equivalence guards, candidate-authority blocking, freshness/identity/conflict controls, proposal SHA integrity, CLI/Web proposal-only boundaries, and all M1–M16 regressions pass. Then verify post-merge `main` CI and Issue #34 closure.
+Run fresh Python 3.11/3.12 CI on the final PR #39 head. Merge only if approval locking, DIRECT_BIND-only apply, entity/scope/currency guards, input-Draft nonmutation, diff/source lineage, standalone result validation, CLI/Web no-file-write boundaries, and all M1–M17 regressions pass. Then verify post-merge `main` CI and Issue #38 closure.
 
-If M16 closes cleanly, the next mission should be an explicit **human-approved binding application to a noncanonical Draft**, applying only SHA-locked `DIRECT_BIND` decisions while leaving derivations/assumptions unresolved and auditable. It must remain separate from canonical admission.
+After M17, prioritize governed derivation adapters for semantically non-identical but derivable model inputs (e.g. interest-bearing debt and diluted shares) rather than automatically generating forecast assumptions from historical facts.

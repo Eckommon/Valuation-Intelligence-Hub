@@ -1,0 +1,29 @@
+{
+  "registry_version": "0.1",
+  "cases": [
+    {
+      "case_id": "KR_010120_LS_ELECTRIC",
+      "display_name_en": "LS ELECTRIC",
+      "display_name_ko": "LS ELECTRIC",
+      "asset_class": "public_equity",
+      "model": "equity_fcff",
+      "path": "analyses/equities/KR_010120_LS_ELECTRIC"
+    },
+    {
+      "case_id": "KR_229640_LS_ECO_ENERGY",
+      "display_name_en": "LS Eco Energy",
+      "display_name_ko": "LS에코에너지",
+      "asset_class": "public_equity",
+      "model": "equity_fcff",
+      "path": "analyses/equities/KR_229640_LS_ECO_ENERGY"
+    },
+    {
+      "case_id": "US_JTAI_JET_AI",
+      "display_name_en": "Jet.AI",
+      "display_name_ko": "Jet.AI",
+      "asset_class": "public_equity_venture",
+      "model": "venture_probability",
+      "path": "analyses/equities/US_JTAI_JET_AI"
+    }
+  ]
+}

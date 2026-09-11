@@ -24,61 +24,88 @@ Issue `#1`: `COMPLETED`
 `2b6d7522e7d847673a7310b9e7f4346cd26cb59e`
 Issue `#2`: `COMPLETED`
 
+### M3 Evidence-grounded reference cases / M3 근거 기반 기준 사례
+Merged to `main` via / `main` 병합:
+
+`5c39c6a1857a5b4aeffa9782399e24bcbd77c0ae`
+
+Issue `#3`: `COMPLETED`
+
+M3 established three regression-locked reference cases and the reusable dilution-aware venture probability kernel.
+
+M3는 세 개의 회귀 잠금 기준 사례와 재사용 가능한 희석 반영 벤처 확률가중 커널을 확립했다.
+
+- LS ELECTRIC — `MARKET_PRICE_ABOVE_MODELED_BULL`
+- LS Eco Energy / LS에코에너지 — `MARKET_PRICE_BETWEEN_MODELED_BASE_AND_BULL`
+- Jet.AI — `PROBABILITY_WEIGHTED_VENTURE_OPTION_MODEL`, model risk `VERY_HIGH`
+
+The M3 CI suite passed on Python 3.11 and 3.12 before merge. CI now preserves pytest diagnostics as workflow artifacts.
+
+M3 병합 전 Python 3.11/3.12 전체 CI가 통과했으며 CI는 pytest 진단을 workflow artifact로 보존한다.
+
 ## Active mission / 활성 미션
 
-- Issue: `#3 [M3] Re-source 3 equity reference cases / 3개 상장기업 기준 사례 재수집`
-- Branch: `mission/m3-reference-cases-evidence-rebuild-v01`
-- Status: `READY_FOR_PR_CI_VALIDATION`
+- Issue: `#8 [M4] Executable case runner + CLI foundation / 실행형 사례 실행기 + CLI 기반`
+- Branch: `mission/m4-executable-runner-cli-v01`
+- Status: `ACTIVE_IMPLEMENTATION`
 
-## Current M3 progress / 현재 M3 진행상태
+## Current M4 implementation / 현재 M4 구현
 
-### Case 1 — LS ELECTRIC
+### Versioned registry / 버전 관리 레지스트리
 
-Status: `REFERENCE_RESULT_READY_ON_BRANCH`
+- `registry/cases.json`
+- Registry version / 레지스트리 버전: `0.1`
+- Registered cases / 등록 사례: 3
+- Model routes / 모델 라우트: `equity_fcff`, `venture_probability`
 
-- Model / 모델: `reference-equity-fcff-v0.1`
-- Evidence gate / 근거 게이트: `PASS_MATERIAL_INPUTS_RECONCILED`
-- Snapshot price / 스냅샷 가격: KRW 206,000
-- Bear / Base / Bull intrinsic value/share: ~KRW 13,705 / 41,475 / 88,458
-- Classification / 분류: `MARKET_PRICE_ABOVE_MODELED_BULL`
-- Reverse Base stress / Base 역산 스트레스: ~4.62x proportional revenue/cash-economics scale
-- Regression lock / 회귀 잠금: `tests/test_reference_ls_electric.py`
+### Shared application service / 공통 애플리케이션 서비스
 
-### Case 2 — LS Eco Energy / LS에코에너지
+- `src/valuation_hub/case_service.py`
 
-Status: `REFERENCE_RESULT_READY_ON_BRANCH`
+The service layer:
 
-- Model / 모델: `reference-equity-fcff-v0.1`
-- Evidence gate / 근거 게이트: `PASS_MATERIAL_INPUTS_RECONCILED`
-- Snapshot price / 스냅샷 가격: KRW 47,900
-- Bear / Base / Bull intrinsic value/share: ~KRW 4,445 / 27,326 / 57,748
-- Classification / 분류: `MARKET_PRICE_BETWEEN_MODELED_BASE_AND_BULL`
-- Reverse Base stress / Base 역산 스트레스: ~1.67x proportional revenue/cash-economics scale
-- Regression lock / 회귀 잠금: `tests/test_reference_ls_eco_energy.py`
+서비스 계층은 다음을 수행한다.
 
-### Case 3 — Jet.AI
+1. locates and validates the versioned registry / 버전 레지스트리 탐색·검증
+2. validates required case artifacts and evidence promotion gates / 필수 사례 산출물·근거 승격게이트 검증
+3. routes to the existing FCFF or venture kernel / 기존 FCFF 또는 Venture 커널로 라우팅
+4. recomputes valuation from versioned case inputs / 버전 입력에서 가치 재계산
+5. compares runtime output with canonical stored result / 런타임 결과와 정식 저장결과 비교
+6. fails closed on unknown, malformed, unsupported, non-PASS, or drifting cases / 미등록·오류·미지원·미통과·drift 사례 fail-closed
 
-Status: `REFERENCE_RESULT_READY_ON_BRANCH`
+Default drift tolerance is model-specific:
 
-- Model / 모델: `reference-venture-probability-v0.1`
-- Evidence gate / 근거 게이트: `PASS_VENTURE_MODEL_INPUTS_RECONCILED`
-- Model selection / 모델선택: `PROBABILITY_WEIGHTED_VENTURE_OPTION_MODEL`
-- Snapshot price / 스냅샷 가격: USD 1.28
-- Failure / Survival / Breakout probabilities: 60% / 30% / 10%
-- Probability-weighted present value/share / 확률가중 현재 주당가치: ~USD 3.247
-- Reverse diagnostic / 역산 진단: Survival 30% 고정 시 시장가격에 필요한 Breakout 확률 ~2.20%
-- Classification / 분류: `OPTION_LIKE_EXPECTED_VALUE_ABOVE_MARKET_WITH_EXTREME_MODEL_RISK`
-- Standard historical P/E/FCFF extrapolation / 역사적 PER·FCFF 단순연장: `REJECTED`
-- Regression lock / 회귀 잠금: `tests/test_reference_jet_ai.py`
+모델별 기본 drift 허용오차:
 
-The three cases intentionally represent three different valuation regimes: market-implied Hyper-Bull pressure, Base-versus-Bull growth economics, and dilution-aware venture optionality.
+- `equity_fcff`: `1.0` currency unit/share / 주당 통화단위 1.0
+- `venture_probability`: `1e-6` currency unit/share / 주당 통화단위 1e-6
 
-세 사례는 의도적으로 서로 다른 가치평가 체계를 대표한다: 시장 내재 Hyper-Bull 압력, Base 대 Bull 성장경제성, 희석을 반영한 벤처 옵션가치.
+### CLI / 실행형 CLI
 
-## New reusable kernel added in M3 / M3 신규 공통 커널
+- `src/valuation_hub/cli.py`
+- installed command / 설치 명령: `vih`
+- module execution / 모듈 실행: `python -m valuation_hub.cli`
 
-- `src/valuation_hub/venture.py` — probability-weighted venture/option valuation with explicit dilution / 명시적 희석을 포함한 확률가중 벤처·옵션 가치평가
-- `tests/test_venture.py` — probability, dilution and reverse-probability invariants / 확률·희석·역산확률 불변조건
+Commands / 명령:
+
+- `vih list`
+- `vih validate <case-id>`
+- `vih run <case-id>`
+- `vih report <case-id>`
+- global `--json` option / 전역 `--json` 옵션
+
+### Tests / 테스트
+
+- `tests/test_case_service.py`
+- `tests/test_cli.py`
+
+The tests require all three M3 cases to validate and execute through the shared service layer while reproducing their regression-locked values.
+
+테스트는 M3의 세 사례가 공통 서비스 계층을 통해 검증·실행되고 회귀 잠금 값을 재현하도록 요구한다.
+
+### Documentation / 문서
+
+- `docs/EXECUTION.md` — bilingual execution architecture, commands, failure guarantees, limitations / 영한문 실행 아키텍처·명령·실패보장·제한사항
 
 ## Grounding authority / 근거화 권위
 
@@ -95,12 +122,12 @@ If repository state and AI recollection disagree, repository state wins unless a
 
 ## Product end-state / 제품 최종 목표
 
-The project must deliver a **web-first hybrid valuation product**. Non-developers use a human-friendly Web UI; advanced/private/batch workflows use CLI/local execution. Web, CLI, API and any future desktop shell must use the same kernel, schemas, evidence gates and model registry.
+The project must deliver a **web-first hybrid valuation product**. Non-developers use a human-friendly Web UI; advanced/private/batch workflows use CLI/local execution. Web, CLI, API and any future desktop shell must use the same kernel, schemas, evidence gates, case registry and application-service contract.
 
-프로젝트는 **웹 우선 하이브리드 가치분석 제품**을 제공해야 한다. 비개발자는 사용자 친화 Web UI를 사용하고 고급·비공개·대량 작업은 CLI·로컬 실행을 사용한다. Web, CLI, API, 향후 데스크톱 셸은 동일 커널·스키마·근거게이트·모델 레지스트리를 사용해야 한다.
+프로젝트는 **웹 우선 하이브리드 가치분석 제품**을 제공해야 한다. 비개발자는 사용자 친화 Web UI를 사용하고 고급·비공개·대량 작업은 CLI·로컬 실행을 사용한다. Web, CLI, API, 향후 데스크톱 셸은 동일 커널·스키마·근거게이트·사례 레지스트리·애플리케이션 서비스 계약을 사용해야 한다.
 
 ## Exact resume point / 정확한 재개점
 
-Open the M3 pull request, run the full Python 3.11/3.12 CI suite, inspect failures if any, and merge only if all three reference cases and the shared venture engine pass. After merge, close Issue #3 and define the next productization mission: a stable case registry plus executable CLI foundation that uses the same kernels without duplicating valuation logic.
+Finish M4 by synchronizing the repository README with the M3/M4 canonical state, opening the M4 pull request, and running the full Python 3.11/3.12 CI suite including CLI integration tests. Merge only after all registered cases validate and reproduce canonical outputs through `case_service`. After M4 merge, close Issue #8 and create M5 for a user-friendly read-oriented Web application MVP over the same service contract.
 
-M3 PR을 개설하고 Python 3.11/3.12 전체 CI를 실행하며 실패가 있으면 원인을 조정한다. 세 기준 사례와 공통 Venture Engine이 모두 통과할 때만 병합한다. 병합 후 Issue #3을 종료하고 다음 제품화 미션인 안정적 사례 레지스트리 + 실행형 CLI 기반을 정의한다. CLI는 기존 가치평가 로직을 복제하지 않고 동일 커널을 사용해야 한다.
+README를 M3/M4 정식 상태와 동기화하고 M4 PR을 개설한 뒤 CLI 통합테스트를 포함한 Python 3.11/3.12 전체 CI를 실행하여 M4를 완료한다. 모든 등록 사례가 `case_service`를 통해 정식 결과를 검증·재현할 때만 병합한다. M4 병합 후 Issue #8을 종료하고 동일 서비스 계약 위에 사용자 친화 읽기 중심 Web Application MVP를 구축하는 M5를 생성한다.

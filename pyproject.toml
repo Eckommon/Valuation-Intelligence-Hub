@@ -9,6 +9,9 @@ description = "Reproducible, evidence-grounded valuation intelligence system / ì
 requires-python = ">=3.11"
 dependencies = []
 
+[project.scripts]
+vih = "valuation_hub.cli:main"
+
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",

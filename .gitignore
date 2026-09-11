@@ -1,0 +1,13 @@
+# User-local valuation drafts / 사용자 로컬 가치평가 Draft
+/workspace/user_cases/**
+!/workspace/user_cases/.gitkeep
+
+# Python / Python 임시파일
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Local environments / 로컬 환경
+.venv/
+venv/

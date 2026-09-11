@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime
+from math import isclose
 from pathlib import Path
 from typing import Any
 
@@ -34,27 +35,44 @@ READY_STATUS = "REVIEW_APPROVED_READY_FOR_PR"
 ALLOWED_INPUT_CLASSES = {"FACT", "NORMALIZED_FACT", "ASSUMPTION"}
 
 
-def _material_numeric_paths(value: Any, path: str = "") -> list[str]:
-    """Enumerate deterministic material numeric input paths / 중요 숫자 입력 경로 열거."""
-    paths: list[str] = []
+def _material_numeric_map(value: Any, path: str = "") -> dict[str, float]:
+    """Enumerate deterministic material numeric input paths and values."""
+    output: dict[str, float] = {}
     if isinstance(value, bool):
-        return paths
+        return output
     if isinstance(value, (int, float)):
         leaf = path.rsplit(".", 1)[-1]
         if leaf != "year":
-            paths.append(path)
-        return paths
+            output[path] = float(value)
+        return output
     if isinstance(value, dict):
         for key in sorted(value):
             if key == "canonical":
                 continue
             child = f"{path}.{key}" if path else str(key)
-            paths.extend(_material_numeric_paths(value[key], child))
+            output.update(_material_numeric_map(value[key], child))
     elif isinstance(value, list):
         for index, item in enumerate(value):
             child = f"{path}[{index}]"
-            paths.extend(_material_numeric_paths(item, child))
-    return paths
+            output.update(_material_numeric_map(item, child))
+    return output
+
+
+def _material_numeric_paths(value: Any, path: str = "") -> list[str]:
+    return list(_material_numeric_map(value, path))
+
+
+def _required_observed_paths(draft: dict[str, Any]) -> set[str]:
+    """Paths that cannot be reclassified as assumptions to evade evidence."""
+    if draft.get("model") == "equity_fcff":
+        return {
+            "market_price",
+            "equity.diluted_shares",
+            "equity.debt",
+            "equity.cash",
+            "equity.minority_interest",
+        }
+    return {"market_price"}
 
 
 def build_candidate(draft_payload: dict[str, Any]) -> dict[str, Any]:
@@ -179,8 +197,11 @@ def assess_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
         blockers.append("INPUT_GOVERNANCE_MUST_BE_LIST")
         bindings = []
 
-    expected = set(_material_numeric_paths(normalized_draft)) if normalized_draft is not None else set()
+    expected_values = _material_numeric_map(normalized_draft) if normalized_draft is not None else {}
+    expected = set(expected_values)
+    required_observed = _required_observed_paths(normalized_draft) if normalized_draft is not None else set()
     seen: dict[str, int] = {}
+    classes: dict[str, str] = {}
     for index, binding in enumerate(bindings):
         if not isinstance(binding, dict):
             blockers.append(f"BINDING_NOT_OBJECT:{index}")
@@ -191,6 +212,7 @@ def assess_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
             continue
         seen[path] = seen.get(path, 0) + 1
         cls = str(binding.get("class", ""))
+        classes[path] = cls
         claims = binding.get("claim_ids")
         rationale = str(binding.get("rationale", "")).strip()
         if cls not in ALLOWED_INPUT_CLASSES:
@@ -209,11 +231,18 @@ def assess_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
                 if pair is None:
                     blockers.append(f"LINKED_EVIDENCE_MISSING:{path}:{claim_id}")
                     continue
-                _, record = pair
+                raw_claim, record = pair
                 if record.claim_class.value != cls:
                     blockers.append(
                         f"EVIDENCE_CLASS_MISMATCH:{path}:{claim_id}:{record.claim_class.value}!={cls}"
                     )
+                model_value = expected_values.get(path)
+                evidence_value = raw_claim.get("value")
+                if model_value is not None:
+                    if isinstance(evidence_value, bool) or not isinstance(evidence_value, (int, float)):
+                        blockers.append(f"EVIDENCE_VALUE_REQUIRED:{path}:{claim_id}")
+                    elif not isclose(float(evidence_value), model_value, rel_tol=1e-9, abs_tol=1e-9):
+                        blockers.append(f"EVIDENCE_VALUE_MISMATCH:{path}:{claim_id}")
         elif cls == "ASSUMPTION" and not rationale:
             blockers.append(f"ASSUMPTION_WITHOUT_RATIONALE:{path}")
         for claim_id in claims:
@@ -225,6 +254,9 @@ def assess_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
     actual = set(seen)
     blockers.extend(f"MISSING_BINDING:{path}" for path in sorted(expected - actual))
     blockers.extend(f"UNEXPECTED_BINDING:{path}" for path in sorted(actual - expected))
+    for path in sorted(required_observed):
+        if path in classes and classes[path] not in {"FACT", "NORMALIZED_FACT"}:
+            blockers.append(f"OBSERVED_INPUT_MUST_BE_FACT:{path}")
 
     try:
         scope_hash = review_scope_sha256(candidate)
@@ -239,6 +271,7 @@ def assess_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
         "ready_for_review": not deduped,
         "review_scope_sha256": scope_hash,
         "material_input_count": len(expected),
+        "required_observed_fact_count": len(required_observed),
         "binding_count": len(bindings),
         "evidence_count": len(evidence_index),
         "blockers": deduped,

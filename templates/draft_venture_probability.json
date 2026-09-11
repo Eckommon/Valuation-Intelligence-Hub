@@ -1,0 +1,17 @@
+{
+  "schema_version": "draft-case-v0.1",
+  "status": "DRAFT_USER_SUPPLIED",
+  "model": "venture_probability",
+  "name": "Example Venture / 예시 벤처",
+  "currency": "USD",
+  "market_price": 2.0,
+  "notes": "Probabilities and terminal assumptions are user-supplied and unverified. / 확률과 종착 가정은 사용자 제공·미검증 값입니다.",
+  "venture": {
+    "holding_period_years": 4.0,
+    "scenarios": [
+      {"name": "FAILURE", "probability": 0.55, "terminal_revenue": 0, "ev_to_sales": 0, "terminal_net_debt": 0, "diluted_shares": 20000000, "discount_rate": 0.30, "recovery_equity_value": 1000000},
+      {"name": "SURVIVAL", "probability": 0.35, "terminal_revenue": 50000000, "ev_to_sales": 2.0, "terminal_net_debt": 10000000, "diluted_shares": 25000000, "discount_rate": 0.25, "recovery_equity_value": 0},
+      {"name": "BREAKOUT", "probability": 0.10, "terminal_revenue": 250000000, "ev_to_sales": 5.0, "terminal_net_debt": 20000000, "diluted_shares": 30000000, "discount_rate": 0.20, "recovery_equity_value": 0}
+    ]
+  }
+}

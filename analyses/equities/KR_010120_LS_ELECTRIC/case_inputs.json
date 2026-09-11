@@ -1,0 +1,123 @@
+{
+  "case_id": "KR_010120_LS_ELECTRIC",
+  "model_version": "reference-equity-fcff-v0.1",
+  "valuation_as_of": "2026-09-10",
+  "currency": "KRW",
+  "market": {
+    "price": 206000,
+    "diluted_shares": 148820000,
+    "debt": 1518700000000,
+    "cash_and_short_term_investments": 740683000000,
+    "minority_interest": 69414000000,
+    "source_claims": [
+      "lsel_market_price_20260910",
+      "lsel_filing_shares_2026h1",
+      "lsel_total_debt_2026h1",
+      "lsel_cash_investments_2026h1",
+      "lsel_minority_interest_2026h1"
+    ]
+  },
+  "ttm": {
+    "revenue": 5694223000000,
+    "ebit": 533330000000,
+    "net_income": 388761000000,
+    "free_cash_flow": -186754000000,
+    "depreciation_amortization": 140747000000,
+    "working_capital_cash_use": 607740000000,
+    "source_claims": [
+      "lsel_ttm_revenue_2026h1",
+      "lsel_ttm_ebit_2026h1",
+      "lsel_ttm_net_income_2026h1",
+      "lsel_ttm_fcf_2026h1",
+      "lsel_ttm_da_2026h1",
+      "lsel_ttm_delta_nwc_cash_use_2026h1"
+    ]
+  },
+  "opening_core_nwc": {
+    "value": 1095303000000,
+    "as_of": "2025-12-31",
+    "source_claim": "lsel_core_operating_nwc_2025"
+  },
+  "wacc_build": {
+    "risk_free_rate": 0.04461,
+    "beta": 1.83,
+    "mature_market_erp": 0.0433,
+    "country_risk_premium": 0.0066,
+    "cost_of_equity_formula": "Rf + beta * mature_market_erp + country_risk_premium",
+    "derived_cost_of_equity": 0.130449,
+    "normalized_pre_tax_cost_of_debt": 0.04,
+    "normalized_tax_rate": 0.25,
+    "derived_market_weighted_wacc": 0.12570777368330432,
+    "base_scenario_wacc_rounded": 0.126,
+    "classification": "ASSUMPTION_WITH_SOURCED_COMPONENTS",
+    "rationale_en": "The country-risk table's 4.33% mature-market baseline and 0.66% South Korea CRP are kept internally consistent. A 4.0% normalized pre-tax debt cost is a simplifying assumption informed by recent cash-interest burden. The calculated market-weighted WACC is rounded to 12.6% for the Base scenario.",
+    "rationale_ko": "국가위험 표의 성숙시장 4.33%와 한국 CRP 0.66%를 동일 데이터셋 안에서 일관되게 사용한다. 세전 부채비용 4.0%는 최근 현금이자 부담을 참고한 단순화 가정이다. 계산된 시장가중 WACC를 Base 시나리오에서는 12.6%로 반올림한다."
+  },
+  "holding_period_years": 4.306639288158795,
+  "holding_period_end": "2030-12-31",
+  "scenario_policy": {
+    "description_en": "Bear/Base/Bull jointly vary revenue, margin, reinvestment intensity, working-capital efficiency, WACC, terminal growth and future net debt. The scenarios are conditional states, not probabilities.",
+    "description_ko": "Bear/Base/Bull은 매출, 마진, 재투자 강도, 운전자본 효율, WACC, 영구성장률, 미래 순부채를 함께 변화시킨 조건부 상태이며 확률값이 아니다."
+  },
+  "scenarios": {
+    "BEAR": {
+      "wacc": 0.14,
+      "terminal_growth": 0.02,
+      "future_net_debt": 1000000000000,
+      "future_minority_interest": 0,
+      "rationale_en": "Consensus-low 2026 revenue anchor; slower normalization, heavier reinvestment and working-capital needs, higher capital cost.",
+      "rationale_ko": "2026 컨센서스 하단 매출을 출발점으로 성장 둔화, 높은 재투자·운전자본 부담, 높은 자본비용을 가정한다.",
+      "years": [
+        {"year":2026,"revenue":6100000000000,"ebit_margin":0.10,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.042,"nwc_to_sales":0.25},
+        {"year":2027,"revenue":6832000000000,"ebit_margin":0.102,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.04,"nwc_to_sales":0.25},
+        {"year":2028,"revenue":7378560000000,"ebit_margin":0.103,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.038,"nwc_to_sales":0.245},
+        {"year":2029,"revenue":7821273600000,"ebit_margin":0.102,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.036,"nwc_to_sales":0.24},
+        {"year":2030,"revenue":8134124544000,"ebit_margin":0.10,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.035,"nwc_to_sales":0.235}
+      ]
+    },
+    "BASE": {
+      "wacc": 0.126,
+      "terminal_growth": 0.025,
+      "future_net_debt": 600000000000,
+      "future_minority_interest": 0,
+      "rationale_en": "Consensus-average 2026 anchor; continued data-center/power-cycle growth with gradual margin expansion and working-capital normalization.",
+      "rationale_ko": "2026 컨센서스 평균 매출을 출발점으로 데이터센터·전력 사이클 성장 지속, 점진적 마진 확대와 운전자본 정상화를 가정한다.",
+      "years": [
+        {"year":2026,"revenue":6500000000000,"ebit_margin":0.106,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.038,"nwc_to_sales":0.235},
+        {"year":2027,"revenue":7670000000000,"ebit_margin":0.115,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.035,"nwc_to_sales":0.23},
+        {"year":2028,"revenue":8743800000000,"ebit_margin":0.123,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.033,"nwc_to_sales":0.22},
+        {"year":2029,"revenue":9618180000000,"ebit_margin":0.128,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.031,"nwc_to_sales":0.21},
+        {"year":2030,"revenue":10387634400000,"ebit_margin":0.132,"tax_rate":0.25,"da_to_sales":0.0245,"capex_to_sales":0.03,"nwc_to_sales":0.20}
+      ]
+    },
+    "BULL": {
+      "wacc": 0.105,
+      "terminal_growth": 0.03,
+      "future_net_debt": 200000000000,
+      "future_minority_interest": 0,
+      "rationale_en": "Consensus-high 2026 anchor; sustained high-growth execution, major mix/productivity improvement and strong capital-efficiency normalization.",
+      "rationale_ko": "2026 컨센서스 상단 매출을 출발점으로 높은 성장 지속, 제품 믹스·생산성 개선, 자본효율의 강한 정상화를 가정한다.",
+      "years": [
+        {"year":2026,"revenue":6800000000000,"ebit_margin":0.11,"tax_rate":0.25,"da_to_sales":0.025,"capex_to_sales":0.035,"nwc_to_sales":0.22},
+        {"year":2027,"revenue":8296000000000,"ebit_margin":0.125,"tax_rate":0.25,"da_to_sales":0.025,"capex_to_sales":0.033,"nwc_to_sales":0.21},
+        {"year":2028,"revenue":9789280000000,"ebit_margin":0.138,"tax_rate":0.25,"da_to_sales":0.025,"capex_to_sales":0.031,"nwc_to_sales":0.20},
+        {"year":2029,"revenue":11159779200000,"ebit_margin":0.148,"tax_rate":0.25,"da_to_sales":0.025,"capex_to_sales":0.029,"nwc_to_sales":0.185},
+        {"year":2030,"revenue":12387354912000,"ebit_margin":0.155,"tax_rate":0.25,"da_to_sales":0.025,"capex_to_sales":0.028,"nwc_to_sales":0.175}
+      ]
+    }
+  },
+  "sensitivity": {
+    "scenario": "BASE",
+    "wacc_values": [0.105,0.115,0.126,0.135,0.145],
+    "terminal_growth_values": [0.015,0.02,0.025,0.03,0.035]
+  },
+  "reverse": {
+    "scenario": "BASE",
+    "target_value_per_share": 206000,
+    "solve": "proportional_revenue_and_revenue_linked_cash_economics_scale",
+    "low": 0.1,
+    "high": 10.0,
+    "warning_en": "This is a mechanical market-implied stress diagnostic, not a forecast. It scales revenue and revenue-linked D&A, CAPEX and ΔNWC while holding margins and capital-cost assumptions fixed.",
+    "warning_ko": "이는 전망치가 아니라 기계적 시장 내재 스트레스 진단이다. 마진과 자본비용은 고정하고 매출 및 매출 연동 D&A·CAPEX·ΔNWC를 비례 확대한다."
+  }
+}

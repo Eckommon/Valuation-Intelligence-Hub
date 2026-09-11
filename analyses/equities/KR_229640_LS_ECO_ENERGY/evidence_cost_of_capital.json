@@ -1,0 +1,17 @@
+{
+  "case_id": "KR_229640_LS_ECO_ENERGY",
+  "claims": [
+    {"claim_id":"kr10y_20260910","class":"FACT","metric":"risk_free_rate","value":0.04461,"unit":"rate","as_of":"2026-09-10","status":"CURRENT","source":{"publisher":"Investing.com","type":"sovereign_yield_history","locator":"https://www.investing.com/rates-bonds/south-korea-10-year-bond-yield-historical-data","tier":"B"},"extraction_note":"South Korea 10-year yield close on 2026-09-10."},
+    {"claim_id":"damodaran_mature_erp_2026h2","class":"FACT","metric":"mature_market_erp","value":0.0433,"unit":"rate","as_of":"2026-07-01","status":"CURRENT","source":{"publisher":"Aswath Damodaran / NYU Stern","type":"country_risk_dataset","locator":"https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.htm","tier":"B"},"extraction_note":"Mature-market ERP embedded in the July 2026 country-risk table."},
+    {"claim_id":"damodaran_korea_crp_2026h2","class":"FACT","metric":"country_risk_premium","value":0.0066,"unit":"rate","as_of":"2026-07-01","status":"CURRENT","source":{"publisher":"Aswath Damodaran / NYU Stern","type":"country_risk_dataset","locator":"https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.htm","tier":"B"},"extraction_note":"South Korea CRP 0.66%, rating Aa2."},
+    {"claim_id":"lsee_beta_5y","class":"FACT","metric":"beta","value":1.63,"unit":"ratio","as_of":"2026-09-04","status":"CURRENT","source":{"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"market_statistics","locator":"https://stockanalysis.com/quote/krx/229640/","tier":"B"}},
+    {"claim_id":"lsee_normalized_cost_of_debt","class":"ASSUMPTION","metric":"pre_tax_cost_of_debt","value":0.05,"unit":"rate","as_of":"2026-09-10","status":"CURRENT","source":null,"rationale_en":"Normalized 5.0% pre-tax debt cost is informed by the latest TTM cash-interest burden relative to debt and rounded for scenario use.","rationale_ko":"세전 부채비용 5.0%는 최신 TTM 현금이자 부담과 부채 규모를 참고해 시나리오용으로 반올림한 정규화 가정이다."},
+    {"claim_id":"lsee_normalized_tax_rate","class":"ASSUMPTION","metric":"tax_rate","value":0.25,"unit":"rate","as_of":"2026-09-10","status":"CURRENT","source":{"publisher":"Aswath Damodaran / NYU Stern","type":"country_risk_dataset","locator":"https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.htm","tier":"B"},"rationale_en":"25% normalized rate is used for long-run NOPAT rather than a single-period effective tax rate.","rationale_ko":"단일기간 실효세율 대신 장기 NOPAT 계산을 위해 25% 정규화 세율을 사용한다."}
+  ],
+  "derived": {
+    "cost_of_equity": 0.121789,
+    "formula_cost_of_equity": "Rf + beta * mature_market_erp + Korea_CRP",
+    "market_weighted_wacc": 0.1130053116,
+    "base_scenario_wacc": 0.113
+  }
+}

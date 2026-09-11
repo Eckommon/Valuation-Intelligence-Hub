@@ -1,0 +1,13 @@
+{
+  "case_id":"US_JTAI_JET_AI",
+  "valuation_as_of":"2026-09-09",
+  "claims":[
+    {"claim_id":"jtai_market_price_20260909","class":"FACT","metric":"market_price","value":1.28,"unit":"USD/share","as_of":"2026-09-09","status":"CURRENT","source":{"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"historical_market_price","locator":"https://stockanalysis.com/stocks/jtai/history/","tier":"B"},"extraction_note":"Latest reliable regular-session close available in the evidence snapshot."},
+    {"claim_id":"jtai_shares_20260909","class":"NORMALIZED_FACT","metric":"shares_outstanding","value":3560000,"unit":"shares","as_of":"2026-09-09","status":"CURRENT","source":{"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"market_statistics","locator":"https://stockanalysis.com/stocks/jtai/statistics/","tier":"B"}},
+    {"claim_id":"jtai_market_cap_20260909","class":"NORMALIZED_FACT","metric":"market_cap","value":4550000,"unit":"USD","as_of":"2026-09-09","status":"CURRENT","source":{"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"market_statistics","locator":"https://stockanalysis.com/stocks/jtai/statistics/","tier":"B"}},
+    {"claim_id":"jtai_share_change_qoq","class":"NORMALIZED_FACT","metric":"shares_change_qoq","value":2.3047,"unit":"rate","as_of":"2026-09-09","status":"CURRENT","source":{"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"market_statistics","locator":"https://stockanalysis.com/stocks/jtai/statistics/","tier":"B"},"extraction_note":"+230.47% quarter-over-quarter share-count change."},
+    {"claim_id":"jtai_reverse_split_20260408","class":"FACT","metric":"reverse_stock_split","value":"1:200","unit":"ratio","as_of":"2026-04-08","status":"CURRENT","source":{"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"market_statistics","locator":"https://stockanalysis.com/stocks/jtai/statistics/","tier":"B"}}
+  ],
+  "reconciliation_note_en":"Historical per-share data must be interpreted after the 1-for-200 reverse split and rapid subsequent issuance. Current shares are therefore a snapshot, not a stable denominator.",
+  "reconciliation_note_ko":"과거 주당 데이터는 1:200 역분할과 이후 급격한 신규발행을 반영해 해석해야 한다. 현재 주식수는 안정적인 분모가 아니라 시점 스냅샷이다."
+}

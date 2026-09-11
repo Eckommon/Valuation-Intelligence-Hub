@@ -1,0 +1,11 @@
+{
+  "case_id": "KR_229640_LS_ECO_ENERGY",
+  "valuation_as_of": "2026-09-10",
+  "claims": [
+    {"claim_id":"lsee_market_price_20260910","class":"FACT","metric":"market_price","value":47900,"unit":"KRW/share","as_of":"2026-09-10","status":"CURRENT","source":{"publisher":"Investing.com","type":"historical_market_price","locator":"https://kr.investing.com/equities/ls-cable-system-asia-ltd-historical-data","tier":"B"},"extraction_note":"Regular-session close on 2026-09-10."},
+    {"claim_id":"lsee_shares_2026h1","class":"FACT","metric":"shares_outstanding","value":30620000,"unit":"shares","as_of":"2026-06-30","status":"CURRENT","source":{"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"market_statistics","locator":"https://stockanalysis.com/quote/krx/229640/statistics/","tier":"B"},"extraction_note":"30.62 million shares outstanding."},
+    {"claim_id":"lsee_beta_5y","class":"FACT","metric":"beta","value":1.63,"unit":"ratio","as_of":"2026-09-04","status":"CURRENT","source":{"publisher":"S&P Global Market Intelligence via StockAnalysis","type":"market_statistics","locator":"https://stockanalysis.com/quote/krx/229640/","tier":"B"},"extraction_note":"Five-year beta used only as a cost-of-equity input."}
+  ],
+  "reconciliation_note_en":"The market-price source and share-count source are kept separate. Market price is a dated market observation; share count is the latest reported vendor-normalized figure available for the case snapshot.",
+  "reconciliation_note_ko":"시장가격과 주식수 출처를 분리한다. 시장가격은 날짜가 명시된 시장 관측치이며 주식수는 사례 스냅샷에서 이용 가능한 최신 보고 기반 정규화 수치다."
+}

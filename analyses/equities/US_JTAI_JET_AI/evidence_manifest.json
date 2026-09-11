@@ -1,0 +1,13 @@
+{
+  "case_id":"US_JTAI_JET_AI",
+  "status":"EVIDENCE_RECONCILED_READY_FOR_VENTURE_MODEL",
+  "currency":"USD",
+  "valuation_as_of":"2026-09-09",
+  "canonical_bundles":["evidence_market.json","evidence_financials.json","evidence_transactions.json"],
+  "material_facts":{"market_price":1.28,"shares":3560000,"market_cap":4550000,"proforma_2025_revenue":2979839,"proforma_2025_operating_income":-4594736,"pre_spin_cash_2026h1":10608614,"cash_transferred_to_spinco":5300000,"h1_atm_gross_proceeds":27721874,"going_concern":true},
+  "model_selection":"PROBABILITY_WEIGHTED_VENTURE_OPTION_MODEL",
+  "model_rejection":{"standard_per_dcf":"REJECTED","reason_en":"Reported historical earnings and TTM revenue cross a business-perimeter discontinuity; continuing operations are loss-making, financing-dependent and subject to extreme dilution. Conventional PER or historical FCFF extrapolation would be economically misleading.","reason_ko":"과거 보고이익과 TTM 매출은 사업범위 단절을 가로지르며 계속사업은 적자·자금조달 의존·극심한 희석위험 상태다. 전통적 PER 또는 과거 FCFF 연장은 경제적으로 오도할 수 있다."},
+  "reconciliation_notes":{"cash":"June 30 cash of $10.609m is pre-spin consolidated cash; $5.3m was transferred to SpinCo at closing, so the headline net-cash figure is not treated as a downside floor.","dilution":"Current 3.56m shares are only a snapshot; H1 ATM financing and +230.47% QoQ share change require explicit future diluted-share assumptions.","business_perimeter":"SEC Separation pro-forma financials are preferred to historical consolidated results for continuing-business economics.","transactions":"FLYX distribution is historical shareholder consideration, while the July 15 RTO LOI is non-binding and excluded from core expected value."},
+  "pending_material_inputs":[],
+  "promotion_gate":"PASS_VENTURE_MODEL_INPUTS_RECONCILED"
+}

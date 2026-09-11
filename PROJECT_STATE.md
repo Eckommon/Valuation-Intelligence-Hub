@@ -9,59 +9,78 @@
 - Repository / 저장소: `Eckommon/Valuation-Intelligence-Hub`
 - Purpose / 목적: Cross-asset, evidence-grounded valuation intelligence system / 범자산 근거 기반 가치분석 인텔리전스 시스템
 - Documentation rule / 문서 원칙: English + Korean bilingual canonical documentation / 정식 문서 영한문 병기
+- Product strategy / 제품 전략: **Web-first hybrid** — Web UI primary, CLI/local secondary, one shared kernel / **웹 우선 하이브리드** — Web UI 주 인터페이스, CLI·로컬 보조, 단일 공통 커널
 
 ## Canonical baseline / 정식 기준선
 
-### Bootstrap v0.1 / Bootstrap v0.1
-
-Merged to `main` via:
-
+### Bootstrap v0.1
 `1d9881bcffb2499fdb72204070d058ef86676841`
 
-Established Foundation, Methodology, AI Grounding Policy, valuation-case schema, tested valuation primitives, CI-ready repository structure, and three public-equity reference-case skeletons.
-
-Foundation, Methodology, AI Grounding Policy, 가치평가 사례 스키마, 검증 가치평가 원시함수, CI 준비 구조, 세 개 상장기업 기준 사례 골격을 확립했다.
-
 ### M1 Evidence grounding + public-equity normalization / M1 근거화 + 상장기업 정규화
-
-Merged to `main` via:
-
 `e3a11259c0e248f055ee16466e08ccfef2a4d13e`
+Issue `#1`: `COMPLETED`
 
-M1 established:
-
-M1은 다음을 확립했다.
-
-- bilingual evidence/provenance policy / 영한문 근거·출처 정책
-- machine-readable evidence schema / 기계 판독 근거 스키마
-- fail-closed canonical evidence-promotion gate / fail-closed 정식 근거 승격 게이트
-- public-equity normalization primitives / 상장기업 정규화 원시함수
-- Python 3.11/3.12 GitHub Actions CI / Python 3.11/3.12 GitHub Actions CI
-- executable product end-state / 사용자 실행형 제품 최종 목표
-
-Issue `#1` is `COMPLETED`.
-
-Issue `#1`은 `COMPLETED` 상태다.
+### M2 Scenario + reverse valuation engines / M2 시나리오 + 역산 가치평가 엔진
+`2b6d7522e7d847673a7310b9e7f4346cd26cb59e`
+Issue `#2`: `COMPLETED`
 
 ## Active mission / 활성 미션
 
-- Issue: `#2 [M2] Scenario + reverse valuation engines / 시나리오 + 역산 가치평가 엔진`
-- Branch: `mission/m2-scenario-reverse-valuation-v01`
-- Status: `ACTIVE`
+- Issue: `#3 [M3] Re-source 3 equity reference cases / 3개 상장기업 기준 사례 재수집`
+- Branch: `mission/m3-reference-cases-evidence-rebuild-v01`
+- Status: `READY_FOR_PR_CI_VALIDATION`
 
-### Implemented on active branch / 활성 브랜치 구현 내역
+## Current M3 progress / 현재 M3 진행상태
 
-- `src/valuation_hub/scenario.py` — explicit-period FCFF scenario runner and sensitivity grid / 명시기간 FCFF 시나리오 실행기·민감도 표
-- `src/valuation_hub/reverse.py` — deterministic bisection solver, terminal-growth and revenue-scale reverse valuation / 결정론적 이분법 솔버, 영구성장·매출스케일 역산
-- `tests/test_scenario_reverse.py` — scenario and reverse regression tests / 시나리오·역산 회귀 테스트
-- `docs/SCENARIO_REVERSE_POLICY.md` — bilingual scenario/reverse-valuation governance / 영한문 시나리오·역산 가치평가 정책
-- `PROJECT_STATE.md` — updated canonical handoff / 정식 인계 갱신
+### Case 1 — LS ELECTRIC
+
+Status: `REFERENCE_RESULT_READY_ON_BRANCH`
+
+- Model / 모델: `reference-equity-fcff-v0.1`
+- Evidence gate / 근거 게이트: `PASS_MATERIAL_INPUTS_RECONCILED`
+- Snapshot price / 스냅샷 가격: KRW 206,000
+- Bear / Base / Bull intrinsic value/share: ~KRW 13,705 / 41,475 / 88,458
+- Classification / 분류: `MARKET_PRICE_ABOVE_MODELED_BULL`
+- Reverse Base stress / Base 역산 스트레스: ~4.62x proportional revenue/cash-economics scale
+- Regression lock / 회귀 잠금: `tests/test_reference_ls_electric.py`
+
+### Case 2 — LS Eco Energy / LS에코에너지
+
+Status: `REFERENCE_RESULT_READY_ON_BRANCH`
+
+- Model / 모델: `reference-equity-fcff-v0.1`
+- Evidence gate / 근거 게이트: `PASS_MATERIAL_INPUTS_RECONCILED`
+- Snapshot price / 스냅샷 가격: KRW 47,900
+- Bear / Base / Bull intrinsic value/share: ~KRW 4,445 / 27,326 / 57,748
+- Classification / 분류: `MARKET_PRICE_BETWEEN_MODELED_BASE_AND_BULL`
+- Reverse Base stress / Base 역산 스트레스: ~1.67x proportional revenue/cash-economics scale
+- Regression lock / 회귀 잠금: `tests/test_reference_ls_eco_energy.py`
+
+### Case 3 — Jet.AI
+
+Status: `REFERENCE_RESULT_READY_ON_BRANCH`
+
+- Model / 모델: `reference-venture-probability-v0.1`
+- Evidence gate / 근거 게이트: `PASS_VENTURE_MODEL_INPUTS_RECONCILED`
+- Model selection / 모델선택: `PROBABILITY_WEIGHTED_VENTURE_OPTION_MODEL`
+- Snapshot price / 스냅샷 가격: USD 1.28
+- Failure / Survival / Breakout probabilities: 60% / 30% / 10%
+- Probability-weighted present value/share / 확률가중 현재 주당가치: ~USD 3.247
+- Reverse diagnostic / 역산 진단: Survival 30% 고정 시 시장가격에 필요한 Breakout 확률 ~2.20%
+- Classification / 분류: `OPTION_LIKE_EXPECTED_VALUE_ABOVE_MARKET_WITH_EXTREME_MODEL_RISK`
+- Standard historical P/E/FCFF extrapolation / 역사적 PER·FCFF 단순연장: `REJECTED`
+- Regression lock / 회귀 잠금: `tests/test_reference_jet_ai.py`
+
+The three cases intentionally represent three different valuation regimes: market-implied Hyper-Bull pressure, Base-versus-Bull growth economics, and dilution-aware venture optionality.
+
+세 사례는 의도적으로 서로 다른 가치평가 체계를 대표한다: 시장 내재 Hyper-Bull 압력, Base 대 Bull 성장경제성, 희석을 반영한 벤처 옵션가치.
+
+## New reusable kernel added in M3 / M3 신규 공통 커널
+
+- `src/valuation_hub/venture.py` — probability-weighted venture/option valuation with explicit dilution / 명시적 희석을 포함한 확률가중 벤처·옵션 가치평가
+- `tests/test_venture.py` — probability, dilution and reverse-probability invariants / 확률·희석·역산확률 불변조건
 
 ## Grounding authority / 근거화 권위
-
-For project-state recovery, use this order:
-
-프로젝트 상태 복구 시 다음 순서를 사용한다.
 
 1. `main` canonical files and merged decisions / `main` 정식 파일·병합 결정
 2. This `PROJECT_STATE.md` and active mission records / 본 상태파일·활성 미션 기록
@@ -76,12 +95,12 @@ If repository state and AI recollection disagree, repository state wins unless a
 
 ## Product end-state / 제품 최종 목표
 
-The project must eventually deliver a user-executable valuation tool, not only documentation or libraries. The intended path is shared kernel → stable case format → CLI → user-friendly Web UI → optional API/automation, all using the same valuation kernel.
+The project must deliver a **web-first hybrid valuation product**. Non-developers use a human-friendly Web UI; advanced/private/batch workflows use CLI/local execution. Web, CLI, API and any future desktop shell must use the same kernel, schemas, evidence gates and model registry.
 
-프로젝트는 최종적으로 문서나 라이브러리뿐 아니라 사용자가 직접 실행할 수 있는 가치분석 도구를 제공해야 한다. 동일 가치평가 커널을 공유하며 커널 → 안정적 사례 포맷 → CLI → 사용자 친화 Web UI → 선택적 API·자동화 순으로 발전한다.
+프로젝트는 **웹 우선 하이브리드 가치분석 제품**을 제공해야 한다. 비개발자는 사용자 친화 Web UI를 사용하고 고급·비공개·대량 작업은 CLI·로컬 실행을 사용한다. Web, CLI, API, 향후 데스크톱 셸은 동일 커널·스키마·근거게이트·모델 레지스트리를 사용해야 한다.
 
 ## Exact resume point / 정확한 재개점
 
-Complete M2 by validating the scenario and reverse-valuation implementation under CI, opening and reviewing the M2 pull request, and verifying Issue #2 acceptance criteria. Do not canonicalize the three numerical reference cases until M2 is merged.
+Open the M3 pull request, run the full Python 3.11/3.12 CI suite, inspect failures if any, and merge only if all three reference cases and the shared venture engine pass. After merge, close Issue #3 and define the next productization mission: a stable case registry plus executable CLI foundation that uses the same kernels without duplicating valuation logic.
 
-CI에서 시나리오·역산 가치평가 구현을 검증하고 M2 PR을 개설·검토하며 Issue #2 완료조건을 확인해 M2를 완료한다. M2 병합 전에는 세 기준 사례 수치 결과를 정식 승격하지 않는다.
+M3 PR을 개설하고 Python 3.11/3.12 전체 CI를 실행하며 실패가 있으면 원인을 조정한다. 세 기준 사례와 공통 Venture Engine이 모두 통과할 때만 병합한다. 병합 후 Issue #3을 종료하고 다음 제품화 미션인 안정적 사례 레지스트리 + 실행형 CLI 기반을 정의한다. CLI는 기존 가치평가 로직을 복제하지 않고 동일 커널을 사용해야 한다.

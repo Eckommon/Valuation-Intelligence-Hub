@@ -1,0 +1,25 @@
+{
+  "case_id":"KR_229640_LS_ECO_ENERGY",
+  "model_version":"reference-equity-fcff-v0.1",
+  "valuation_as_of":"2026-09-10",
+  "currency":"KRW",
+  "status":"CANONICAL_REFERENCE_RESULT_V0_1",
+  "market_price":47900,
+  "diluted_shares":30620000,
+  "five_lenses":{"market_cap_to_sales":1.3128,"market_cap_to_ebit":20.034,"price_to_earnings":33.107,"price_to_fcf":"N/M_NEGATIVE_TTM_FCF","reverse_dcf":"BASE_REQUIRES_1.6725X_REVENUE_CASH_ECONOMICS_SCALE"},
+  "scenario_results":{
+    "BEAR":{"forecast_fcff":[-34877000000,22704200000,37498896000,44776791360,42279291101],"current_intrinsic_value_per_share":4445,"2030_terminal_value_per_share":8231,"annualized_return_to_2030_terminal_value":-0.3356},
+    "BASE":{"forecast_fcff":[-21547000000,42006250000,74331400000,91547820000,109195493680],"current_intrinsic_value_per_share":27326,"2030_terminal_value_per_share":38272,"annualized_return_to_2030_terminal_value":-0.0508},
+    "BULL":{"forecast_fcff":[-16187000000,55476000000,97807500000,136194750000,161041500000],"current_intrinsic_value_per_share":57748,"2030_terminal_value_per_share":77704,"annualized_return_to_2030_terminal_value":0.1189}
+  },
+  "base_sensitivity_value_per_share":{
+    "wacc_9.5%":{"g_1.5%":32171,"g_2.0%":34238,"g_2.5%":36600,"g_3.0%":39326,"g_3.5%":42506},
+    "wacc_10.5%":{"g_1.5%":27603,"g_2.0%":29166,"g_2.5%":30925,"g_3.0%":32918,"g_3.5%":35196},
+    "wacc_11.3%":{"g_1.5%":24632,"g_2.0%":25907,"g_2.5%":27326,"g_3.0%":28917,"g_3.5%":30712},
+    "wacc_12.0%":{"g_1.5%":22412,"g_2.0%":23491,"g_2.5%":24684,"g_3.0%":26009,"g_3.5%":27490},
+    "wacc_13.0%":{"g_1.5%":19721,"g_2.0%":20585,"g_2.5%":21532,"g_3.0%":22574,"g_3.5%":23725}
+  },
+  "reverse_dcf":{"target_market_price":47900,"base_case_proportional_revenue_cash_economics_scale_required":1.67251017,"implied_2030_revenue_at_that_scale":3266166038802,"interpretation_en":"Mechanical expectation diagnostic: with Base margins, WACC and terminal growth fixed, the Base revenue and revenue-linked cash economics need about 1.67x scaling to match the snapshot market price.","interpretation_ko":"기계적 기대 진단이다. Base 마진, WACC, 영구성장률을 고정하면 스냅샷 시장가격을 맞추기 위해 Base 매출 및 매출 연동 현금경제성을 약 1.67배 확대해야 한다."},
+  "classification":{"business_quality":"GROWTH_WITH_MARGIN_EXPANSION_OPTION","valuation_state":"MARKET_PRICE_BETWEEN_MODELED_BASE_AND_BULL","decision_note_en":"The market price requires economics materially stronger than Base but remains below the modeled Bull value. The central question is whether high-value cable/busduct mix can sustain margin and working-capital improvement without disproportionate reinvestment.","decision_note_ko":"시장가격은 Base보다 상당히 강한 경제성을 요구하지만 모델링된 Bull 가치보다는 낮다. 핵심 질문은 고부가 케이블·버스덕트 믹스가 과도한 재투자 없이 마진과 운전자본 효율 개선을 지속할 수 있는가이다."},
+  "provenance":{"input_file":"case_inputs.json","evidence_manifest":"evidence_manifest.json","promotion_gate":"PASS_MATERIAL_INPUTS_RECONCILED"}
+}

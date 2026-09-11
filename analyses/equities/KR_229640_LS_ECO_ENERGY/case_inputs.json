@@ -1,0 +1,35 @@
+{
+  "case_id":"KR_229640_LS_ECO_ENERGY",
+  "model_version":"reference-equity-fcff-v0.1",
+  "valuation_as_of":"2026-09-10",
+  "currency":"KRW",
+  "market":{"price":47900,"diluted_shares":30620000,"debt":170624000000,"cash_and_short_term_investments":73865000000,"minority_interest":19036000000},
+  "ttm":{"revenue":1117230000000,"ebit":73207000000,"net_income":44300000000,"free_cash_flow":-2627000000,"depreciation_amortization":7283000000,"working_capital_cash_use":64217000000},
+  "opening_core_nwc":{"value":227728000000,"as_of":"2025-12-31"},
+  "wacc_build":{"risk_free_rate":0.04461,"beta":1.63,"mature_market_erp":0.0433,"country_risk_premium":0.0066,"derived_cost_of_equity":0.121789,"normalized_pre_tax_cost_of_debt":0.05,"normalized_tax_rate":0.25,"derived_market_weighted_wacc":0.1130053116,"base_scenario_wacc_rounded":0.113,"classification":"ASSUMPTION_WITH_SOURCED_COMPONENTS"},
+  "holding_period_years":4.306639288158795,
+  "holding_period_end":"2030-12-31",
+  "scenario_policy":{"description_en":"Bear/Base/Bull jointly vary revenue, margin, reinvestment intensity, working-capital efficiency, WACC and terminal growth. Historical negative TTM FCF is not extrapolated because working-capital absorption is modeled explicitly.","description_ko":"Bear/Base/Bull은 매출, 마진, 재투자 강도, 운전자본 효율, WACC, 영구성장률을 함께 변화시킨다. 최근 음수 TTM FCF는 운전자본 흡수를 별도 모델링하므로 그대로 연장하지 않는다."},
+  "scenarios":{
+    "BEAR":{"wacc":0.13,"terminal_growth":0.02,"future_net_debt":120000000000,"future_minority_interest":20000000000,"years":[
+      {"year":2026,"revenue":1220000000000,"ebit_margin":0.067,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.022,"nwc_to_sales":0.25},
+      {"year":2027,"revenue":1317600000000,"ebit_margin":0.067,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.021,"nwc_to_sales":0.25},
+      {"year":2028,"revenue":1396656000000,"ebit_margin":0.066,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.020,"nwc_to_sales":0.245},
+      {"year":2029,"revenue":1452522240000,"ebit_margin":0.065,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.020,"nwc_to_sales":0.24},
+      {"year":2030,"revenue":1496097907200,"ebit_margin":0.065,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.020,"nwc_to_sales":0.24}]},
+    "BASE":{"wacc":0.113,"terminal_growth":0.025,"future_net_debt":80000000000,"future_minority_interest":20000000000,"years":[
+      {"year":2026,"revenue":1300000000000,"ebit_margin":0.073,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.018,"nwc_to_sales":0.235},
+      {"year":2027,"revenue":1495000000000,"ebit_margin":0.079,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.017,"nwc_to_sales":0.225},
+      {"year":2028,"revenue":1674400000000,"ebit_margin":0.084,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.016,"nwc_to_sales":0.21},
+      {"year":2029,"revenue":1825096000000,"ebit_margin":0.088,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.015,"nwc_to_sales":0.20},
+      {"year":2030,"revenue":1952852720000,"ebit_margin":0.09,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.015,"nwc_to_sales":0.19}]},
+    "BULL":{"wacc":0.098,"terminal_growth":0.03,"future_net_debt":40000000000,"future_minority_interest":20000000000,"years":[
+      {"year":2026,"revenue":1380000000000,"ebit_margin":0.077,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.016,"nwc_to_sales":0.225},
+      {"year":2027,"revenue":1656000000000,"ebit_margin":0.086,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.015,"nwc_to_sales":0.21},
+      {"year":2028,"revenue":1904400000000,"ebit_margin":0.095,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.014,"nwc_to_sales":0.195},
+      {"year":2029,"revenue":2133000000000,"ebit_margin":0.103,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.014,"nwc_to_sales":0.18},
+      {"year":2030,"revenue":2346300000000,"ebit_margin":0.11,"tax_rate":0.25,"da_to_sales":0.0065,"capex_to_sales":0.014,"nwc_to_sales":0.17}]}
+  },
+  "sensitivity":{"scenario":"BASE","wacc_values":[0.095,0.105,0.113,0.12,0.13],"terminal_growth_values":[0.015,0.02,0.025,0.03,0.035]},
+  "reverse":{"scenario":"BASE","target_value_per_share":47900,"solve":"proportional_revenue_and_revenue_linked_cash_economics_scale","low":0.1,"high":10.0}
+}

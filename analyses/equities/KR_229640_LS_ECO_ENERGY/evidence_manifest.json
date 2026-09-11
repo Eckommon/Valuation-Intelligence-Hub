@@ -1,0 +1,17 @@
+{
+  "case_id":"KR_229640_LS_ECO_ENERGY",
+  "status":"EVIDENCE_RECONCILED_READY_FOR_MODEL",
+  "currency":"KRW",
+  "valuation_as_of":"2026-09-10",
+  "canonical_bundles":["evidence_market.json","evidence_financials.json","evidence_cost_of_capital.json"],
+  "material_facts":{"market_price":47900,"shares":30620000,"ttm_revenue":1117230000000,"ttm_ebit":73207000000,"ttm_net_income":44300000000,"ttm_fcf":-2627000000,"cash":73865000000,"debt":170624000000,"opening_core_nwc":227728000000,"base_wacc":0.113},
+  "reconciliation_notes":{
+    "net_income":"Official FY2025 provisional net profit (KRW 48.5bn) and vendor-attributed net income differ by definition; TTM valuation lenses use the normalized vendor series while the official figure remains preserved as Tier-A evidence.",
+    "working_capital":"TTM FCF is not extrapolated because the latest period contains KRW 64.217bn of working-capital cash use. Forecast Delta-NWC is rebuilt from explicit NWC/sales paths.",
+    "capex":"Historical capex is unusually light. Scenario capex ratios are deliberately raised above the trailing level to avoid treating growth as free.",
+    "minority_interest":"Latest directly retrievable minority interest is KRW 19.036bn at 2026-Q1; scenario bridge rounds future minority claim to KRW 20bn rather than silently omitting it.",
+    "wacc":"WACC is constructed from sourced risk-free, beta and country-risk evidence plus an explicit normalized debt-cost assumption."
+  },
+  "pending_material_inputs":[],
+  "promotion_gate":"PASS_MATERIAL_INPUTS_RECONCILED"
+}

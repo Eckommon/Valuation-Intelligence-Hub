@@ -28,11 +28,7 @@ Issue `#2`: `COMPLETED`
 
 - Issue: `#3 [M3] Re-source 3 equity reference cases / 3개 상장기업 기준 사례 재수집`
 - Branch: `mission/m3-reference-cases-evidence-rebuild-v01`
-- Status: `ACTIVE`
-- Required order / 필수 순서:
-  1. LS ELECTRIC
-  2. LS Eco Energy / LS에코에너지
-  3. Jet.AI
+- Status: `READY_FOR_PR_CI_VALIDATION`
 
 ## Current M3 progress / 현재 M3 진행상태
 
@@ -40,55 +36,51 @@ Issue `#2`: `COMPLETED`
 
 Status: `REFERENCE_RESULT_READY_ON_BRANCH`
 
-Evidence/model/result files / 근거·모델·결과 파일:
-
-- `analyses/equities/KR_010120_LS_ELECTRIC/evidence_manifest.json`
-- `evidence_market.json`
-- `evidence_financials.json`
-- `evidence_cost_of_capital.json`
-- `case_inputs.json`
-- `valuation_result.json`
-- `REPORT.md`
-- `tests/test_reference_ls_electric.py`
-
-Evidence gate / 근거 게이트: `PASS_MATERIAL_INPUTS_RECONCILED`
-
-Reference model / 기준 모델: `reference-equity-fcff-v0.1`
-
-Reference-case outputs / 기준사례 산출:
-
-- Bear intrinsic value/share / Bear 현재 내재가치: ~KRW 13,705
-- Base intrinsic value/share / Base 현재 내재가치: ~KRW 41,475
-- Bull intrinsic value/share / Bull 현재 내재가치: ~KRW 88,458
-- Market price in snapshot / 스냅샷 시장가격: KRW 206,000
+- Model / 모델: `reference-equity-fcff-v0.1`
+- Evidence gate / 근거 게이트: `PASS_MATERIAL_INPUTS_RECONCILED`
+- Snapshot price / 스냅샷 가격: KRW 206,000
+- Bear / Base / Bull intrinsic value/share: ~KRW 13,705 / 41,475 / 88,458
 - Classification / 분류: `MARKET_PRICE_ABOVE_MODELED_BULL`
-- Base reverse stress diagnostic / Base 역산 스트레스 진단: ~4.62x proportional revenue/cash-economics scale required under fixed Base margins/WACC/g.
-
-These outputs are versioned model results, not forecasts or recommendations. The regression test locks stored values against the shared scenario engine.
-
-위 산출물은 버전 관리된 모델 결과이며 전망 또는 투자권고가 아니다. 회귀테스트는 저장 결과가 공통 시나리오 엔진과 일치하도록 고정한다.
+- Reverse Base stress / Base 역산 스트레스: ~4.62x proportional revenue/cash-economics scale
+- Regression lock / 회귀 잠금: `tests/test_reference_ls_electric.py`
 
 ### Case 2 — LS Eco Energy / LS에코에너지
 
-Status: `NEXT`
+Status: `REFERENCE_RESULT_READY_ON_BRANCH`
 
-Rebuild evidence bundles and case inputs under the same M1/M2 contracts. Do not copy prior-chat exploratory values into canonical files.
-
-동일한 M1/M2 계약 아래 근거 묶음과 사례 입력을 재구축한다. 이전 채팅의 탐색 수치를 정식 파일로 복사하지 않는다.
+- Model / 모델: `reference-equity-fcff-v0.1`
+- Evidence gate / 근거 게이트: `PASS_MATERIAL_INPUTS_RECONCILED`
+- Snapshot price / 스냅샷 가격: KRW 47,900
+- Bear / Base / Bull intrinsic value/share: ~KRW 4,445 / 27,326 / 57,748
+- Classification / 분류: `MARKET_PRICE_BETWEEN_MODELED_BASE_AND_BULL`
+- Reverse Base stress / Base 역산 스트레스: ~1.67x proportional revenue/cash-economics scale
+- Regression lock / 회귀 잠금: `tests/test_reference_ls_eco_energy.py`
 
 ### Case 3 — Jet.AI
 
-Status: `QUEUED`
+Status: `REFERENCE_RESULT_READY_ON_BRANCH`
 
-Use dilution-aware probability/venture logic where conventional FCFF DCF is economically inappropriate.
+- Model / 모델: `reference-venture-probability-v0.1`
+- Evidence gate / 근거 게이트: `PASS_VENTURE_MODEL_INPUTS_RECONCILED`
+- Model selection / 모델선택: `PROBABILITY_WEIGHTED_VENTURE_OPTION_MODEL`
+- Snapshot price / 스냅샷 가격: USD 1.28
+- Failure / Survival / Breakout probabilities: 60% / 30% / 10%
+- Probability-weighted present value/share / 확률가중 현재 주당가치: ~USD 3.247
+- Reverse diagnostic / 역산 진단: Survival 30% 고정 시 시장가격에 필요한 Breakout 확률 ~2.20%
+- Classification / 분류: `OPTION_LIKE_EXPECTED_VALUE_ABOVE_MARKET_WITH_EXTREME_MODEL_RISK`
+- Standard historical P/E/FCFF extrapolation / 역사적 PER·FCFF 단순연장: `REJECTED`
+- Regression lock / 회귀 잠금: `tests/test_reference_jet_ai.py`
 
-전통적 FCFF DCF가 경제적으로 부적합한 구간에서는 희석·확률을 반영한 벤처/옵션형 논리를 사용한다.
+The three cases intentionally represent three different valuation regimes: market-implied Hyper-Bull pressure, Base-versus-Bull growth economics, and dilution-aware venture optionality.
+
+세 사례는 의도적으로 서로 다른 가치평가 체계를 대표한다: 시장 내재 Hyper-Bull 압력, Base 대 Bull 성장경제성, 희석을 반영한 벤처 옵션가치.
+
+## New reusable kernel added in M3 / M3 신규 공통 커널
+
+- `src/valuation_hub/venture.py` — probability-weighted venture/option valuation with explicit dilution / 명시적 희석을 포함한 확률가중 벤처·옵션 가치평가
+- `tests/test_venture.py` — probability, dilution and reverse-probability invariants / 확률·희석·역산확률 불변조건
 
 ## Grounding authority / 근거화 권위
-
-For project-state recovery, use this order:
-
-프로젝트 상태 복구 시 다음 순서를 사용한다.
 
 1. `main` canonical files and merged decisions / `main` 정식 파일·병합 결정
 2. This `PROJECT_STATE.md` and active mission records / 본 상태파일·활성 미션 기록
@@ -109,6 +101,6 @@ The project must deliver a **web-first hybrid valuation product**. Non-developer
 
 ## Exact resume point / 정확한 재개점
 
-Rebuild **LS Eco Energy / LS에코에너지** as M3 Case 2: source primary/authoritative financial, market, capital-structure and cost-of-capital evidence; reconcile material inputs; construct versioned Bear/Base/Bull inputs; run FCFF/sensitivity/reverse valuation; store regression-locked outputs and bilingual report. Then proceed to Jet.AI. Do not close Issue #3 or merge M3 until all three cases pass CI and acceptance criteria.
+Open the M3 pull request, run the full Python 3.11/3.12 CI suite, inspect failures if any, and merge only if all three reference cases and the shared venture engine pass. After merge, close Issue #3 and define the next productization mission: a stable case registry plus executable CLI foundation that uses the same kernels without duplicating valuation logic.
 
-M3 Case 2인 **LS에코에너지**를 재구축한다. 1차·권위 재무, 시장, 자본구조, 자본비용 근거를 수집하고 중요 입력을 조정한 뒤 버전 관리 Bear/Base/Bull 입력을 구성하고 FCFF·민감도·역산 가치평가를 실행하며 회귀 고정 결과와 영한문 보고서를 저장한다. 이후 Jet.AI로 진행한다. 세 사례가 모두 CI와 완료조건을 통과하기 전에는 Issue #3을 종료하거나 M3를 병합하지 않는다.
+M3 PR을 개설하고 Python 3.11/3.12 전체 CI를 실행하며 실패가 있으면 원인을 조정한다. 세 기준 사례와 공통 Venture Engine이 모두 통과할 때만 병합한다. 병합 후 Issue #3을 종료하고 다음 제품화 미션인 안정적 사례 레지스트리 + 실행형 CLI 기반을 정의한다. CLI는 기존 가치평가 로직을 복제하지 않고 동일 커널을 사용해야 한다.

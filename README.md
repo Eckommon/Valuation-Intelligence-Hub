@@ -10,10 +10,10 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded cross-asset valu
 - Facts ≠ assumptions / 사실 ≠ 가정
 - Official source ≠ automatic canonical fact / 공식 출처 ≠ 자동 정식 사실
 - Arithmetic ≠ authority promotion / 산술 ≠ 권위 승격
+- Similar accounting labels ≠ semantic equivalence / 유사 회계항목 ≠ 의미 동일성
 - Every material fact needs provenance / 모든 중요 사실은 출처 필요
 - Repository canonical state > AI recollection / 저장소 정식 상태 > AI 기억
 - Same versioned inputs + model ⇒ reproducible output / 동일 버전 입력·모델 ⇒ 재현 결과
-- One kernel, multiple interfaces / 하나의 커널, 여러 인터페이스
 
 ## Authority flow / 권위 흐름
 
@@ -25,6 +25,8 @@ IMMUTABLE SOURCE SNAPSHOT / NOT CANONICAL
 UNREVIEWED EVIDENCE CANDIDATE / NOT CANONICAL
         ↓
 PERIOD NORMALIZATION / TTM / NOT CANONICAL
+        ↓
+DRAFT BINDING PROPOSAL / NOT CANONICAL
         ↓
 DRAFT + EVIDENCE GOVERNANCE
         ↓
@@ -39,7 +41,7 @@ PR + FULL CI + REVIEWED MERGE
 CANONICAL
 ```
 
-## Reference valuation methods / 가치평가 방법
+## Valuation methods / 가치평가 방법
 
 Operating-company FCFF:
 
@@ -47,9 +49,7 @@ Operating-company FCFF:
 FCFF = EBIT(1-T) + D\&A - CAPEX - \Delta NWC
 \]
 
-The Hub also supports reverse valuation and probability-weighted venture valuation.
-
-Reference cases: LS ELECTRIC, LS Eco Energy, and Jet.AI. These are versioned methodology references, not live investment recommendations or target prices.
+The Hub also supports reverse valuation and probability-weighted venture valuation. Reference cases include LS ELECTRIC, LS Eco Energy, and Jet.AI; these are versioned methodology references, not live investment recommendations.
 
 ## Install / 설치
 
@@ -57,7 +57,7 @@ Reference cases: LS ELECTRIC, LS Eco Energy, and Jet.AI. These are versioned met
 python -m pip install -e ".[dev]"
 ```
 
-## Canonical cases / 정식 사례
+## Canonical execution / 정식 실행
 
 ```bash
 vih list
@@ -68,36 +68,18 @@ vih report US_JTAI_JET_AI
 
 ## User Draft → Canonical / 사용자 Draft → 정식
 
-```bash
-vih draft-template equity_fcff > workspace/user_cases/my_company.json
-vih draft-validate workspace/user_cases/my_company.json
-vih draft-run workspace/user_cases/my_company.json
-
-vih candidate-build workspace/user_cases/my_company.json > workspace/user_cases/candidate.json
-vih candidate-validate workspace/user_cases/candidate.json
-vih promotion-check workspace/user_cases/candidate.json
-
-vih package-build workspace/user_cases/candidate.json \
-  --case-id KR_EXAMPLE_COMPANY --name-en "Example Company" --name-ko "예시회사" \
-  --asset-class public_equity > workspace/user_cases/package.json
-
-vih admission-build workspace/user_cases/package.json > workspace/user_cases/admission.json
-vih admission-validate workspace/user_cases/admission.json
-```
-
-M12 repository apply is restricted to explicit `admission/*` branches/worktrees and remains PR/CI/review gated.
+The governed workflow remains Draft → evidence-governed Candidate → human review → deterministic package → admission proposal → guarded `admission/*` apply → PR/CI/reviewed merge.
 
 ## M13 — SEC CompanyFacts live evidence
 
 ```bash
-vih sec-fetch 0000320193 \
-  --user-agent "Valuation-Intelligence-Hub contact@example.com" \
+vih sec-fetch 0000320193 --user-agent "Valuation-Intelligence-Hub contact@example.com" \
   --output workspace/source_snapshots/AAPL-companyfacts.json
 vih sec-snapshot-validate workspace/source_snapshots/AAPL-companyfacts.json
 vih sec-extract workspace/source_snapshots/AAPL-companyfacts.json revenue
 ```
 
-SEC responses are immutable noncanonical snapshots. Extracted facts remain unreviewed candidates.
+SEC responses are immutable noncanonical snapshots; extracted values remain unreviewed evidence candidates.
 
 ## M14 — OpenDART financial evidence
 
@@ -108,36 +90,22 @@ vih dart-snapshot-validate workspace/source_snapshots/dart.json
 vih dart-extract workspace/source_snapshots/dart.json revenue --statement-section IS
 ```
 
-OpenDART controls include transport-only API keys, sanitized locators, exact request identity, CFS/OFS separation, statement-section boundaries, exact account mapping, immutable raw-body/snapshot hashes, and fail-closed conflicts.
+API keys are transport-only. Persistent locators are sanitized, CFS/OFS and statement-section boundaries are explicit, account matching is exact, and conflicts fail closed.
 
 ## M15 — Financial evidence normalization + TTM
-
-M15 converts raw SEC/OpenDART evidence candidates into period-aware observations without upgrading evidence authority.
 
 ```text
 FACT           → NORMALIZED_FACT
 FACT_CANDIDATE → NORMALIZED_FACT_CANDIDATE
 ```
 
-Supported period kinds:
-
-- `INSTANT`
-- `DURATION_QUARTER`
-- `DURATION_YTD`
-- `DURATION_ANNUAL`
-- `DURATION_TTM`
-
-SEC 10-Q duration facts require explicit quarter/YTD declaration. OpenDART uses report code plus `CURRENT`/`CUMULATIVE` amount basis. Exact dates are not invented where only report-stage semantics exist.
-
-CLI:
+Period kinds: `INSTANT`, `DURATION_QUARTER`, `DURATION_YTD`, `DURATION_ANNUAL`, `DURATION_TTM`.
 
 ```bash
 vih normalize-sec sec-candidate.json --period-kind DURATION_QUARTER
 vih normalize-dart dart-candidate.json --amount-basis CURRENT
-vih normalize-validate observation.json
 vih ttm-four-quarters q1.json q2.json q3.json q4.json
 vih ttm-annual-bridge prior-fy.json current-ytd.json prior-ytd.json
-vih ttm-validate ttm.json
 vih normalize-reconcile observation-a.json observation-b.json
 ```
 
@@ -148,9 +116,40 @@ TTM = Q[-3] + Q[-2] + Q[-1] + Q[0]
 TTM = PRIOR_FY + CURRENT_YTD - PRIOR_COMPARABLE_YTD
 ```
 
-Metric, entity, financial scope, unit, fiscal continuity, and comparable YTD stage are enforced. Conflicts are never averaged.
+M15 never invents missing period semantics or averages conflicts.
 
-See [`docs/FINANCIAL_NORMALIZATION.md`](docs/FINANCIAL_NORMALIZATION.md).
+## M16 — Governed evidence → Draft binding proposal
+
+M16 classifies normalized financial evidence against the 13 material equity-FCFF Draft inputs without mutating a Draft.
+
+Binding states:
+
+- `DIRECT_BIND`
+- `REFERENCE_ONLY`
+- `NEEDS_DERIVATION`
+- `NEEDS_ASSUMPTION`
+- `MISSING_REQUIRED`
+- `CONFLICT_BLOCKED`
+- `STALE_BLOCKED`
+
+Semantic equivalence is mandatory:
+
+```text
+liabilities        ≠ debt
+shares_outstanding ≠ diluted_shares
+historical/TTM revenue ≠ forecast revenue
+```
+
+v0.1 deliberately permits only one kind of `DIRECT_BIND`: reviewed `NORMALIZED_FACT` + fresh exact-date `INSTANT cash` → `equity.cash`. Candidate evidence and report-stage-only freshness remain reference-only.
+
+```bash
+vih binding-build observations.json --as-of 2026-09-11 --max-age-days 550 > binding.json
+vih binding-validate binding.json
+```
+
+The proposal is SHA-256 locked and always `canonical=false`. M16 has no Draft apply operation.
+
+See [`docs/DRAFT_BINDING.md`](docs/DRAFT_BINDING.md).
 
 ## Web product / Web 제품
 
@@ -164,17 +163,19 @@ Default: `http://127.0.0.1:8765`
 /source       — SEC snapshot validation + extraction
 /dart-source  — OpenDART snapshot validation + extraction
 /normalize    — financial normalization + TTM + reconciliation
+/binding      — evidence → Draft binding proposal build + validation
 ```
 
-These source/normalization surfaces are read-only. There is no browser-origin live-fetch, credential storage, normalization write, promotion, admission, or canonical-write endpoint.
+These surfaces are read/compute/proposal-only. There is no browser-origin source fetch, credential storage, binding apply, Draft mutation, promotion, admission, or canonical-write endpoint in M16.
 
 ## Milestones / 마일스톤
 
 - [x] M1–M12 evidence governance, valuation kernels, product workflow, canonical admission/apply
 - [x] M13 immutable SEC CompanyFacts acquisition
 - [x] M14 immutable OpenDART financial-statement acquisition
-- [ ] **M15 financial evidence normalization + period semantics + TTM — active finalization**
-- [ ] governed normalized-evidence → model-input binding
+- [x] M15 financial evidence normalization + period semantics + TTM
+- [ ] **M16 governed normalized-evidence → Draft binding proposal — active finalization**
+- [ ] explicit human-approved binding application to a noncanonical Draft
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
@@ -191,6 +192,6 @@ These source/normalization surfaces are read-only. There is no browser-origin li
 - [`docs/LIVE_EVIDENCE_SEC.md`](docs/LIVE_EVIDENCE_SEC.md)
 - [`docs/LIVE_EVIDENCE_OPENDART.md`](docs/LIVE_EVIDENCE_OPENDART.md)
 - [`docs/FINANCIAL_NORMALIZATION.md`](docs/FINANCIAL_NORMALIZATION.md)
-- [`docs/M15_ACCEPTANCE.md`](docs/M15_ACCEPTANCE.md)
-- [`docs/M15_IMPLEMENTATION_SUMMARY.md`](docs/M15_IMPLEMENTATION_SUMMARY.md)
+- [`docs/DRAFT_BINDING.md`](docs/DRAFT_BINDING.md)
+- [`docs/M16_ACCEPTANCE.md`](docs/M16_ACCEPTANCE.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

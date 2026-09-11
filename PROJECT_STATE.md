@@ -27,173 +27,144 @@
 | M12 Guarded admission apply | `a40e92c196c39b40172711f38f7231f5e8812d52` | #26 |
 | M13 Immutable SEC live evidence | `372b8b0b26307730c3e91afea97c979b59906042` | #28 |
 | M14 Immutable OpenDART financial evidence | `1fff272cc583ec294226f5f530ebe483c2957fb5` | #30 |
+| M15 Financial evidence normalization + TTM | `a99a6f24fa6736b01b270a2eeeb4592e8b673563` | #32 |
 
-M14 post-merge `main` CI run `34575650004` completed `success` on Python 3.11/3.12.
+M15 final PR CI `34580046404` and post-merge `main` CI `34580118315` completed `success` on Python 3.11/3.12.
 
-## Canonical authority model / 정식 권위모델
+## Authority model / 권위모델
 
 ```text
-OFFICIAL / USER SOURCE
-        ↓
-IMMUTABLE SOURCE SNAPSHOT / NOT CANONICAL
-        ↓
-UNREVIEWED EVIDENCE CANDIDATE / NOT CANONICAL
-        ↓
-PERIOD NORMALIZATION / TTM / NOT CANONICAL
-        ↓
+SOURCE
+  ↓
+IMMUTABLE SNAPSHOT / NOT CANONICAL
+  ↓
+EVIDENCE CANDIDATE / NOT CANONICAL
+  ↓
+NORMALIZED OBSERVATION / TTM / NOT CANONICAL
+  ↓
+DRAFT BINDING PROPOSAL / NOT CANONICAL
+  ↓
 DRAFT + EVIDENCE GOVERNANCE
-        ↓
-HUMAN SHA-256 REVIEW LOCK
-        ↓
-PROMOTION PACKAGE → ADMISSION PROPOSAL
-        ↓
-GUARDED admission/* BRANCH APPLY
-        ↓
-PR + FULL CI + REVIEWED MERGE
-        ↓
+  ↓
+HUMAN REVIEW → PACKAGE → ADMISSION → guarded branch apply → PR/CI merge
+  ↓
 CANONICAL
 ```
 
-Normalization and arithmetic never upgrade evidence authority.
+Neither arithmetic nor a binding proposal upgrades evidence authority.
 
-정규화와 산술은 근거 권위를 승격하지 않는다.
+산술과 바인딩 제안은 근거 권위를 승격하지 않는다.
 
 ## Active mission / 활성 미션
 
-- Issue: `#32 [M15] Financial evidence normalization + period semantics + TTM transforms`
-- PR: `#33 M15 Financial evidence normalization + TTM`
-- Branch: `mission/m15-financial-normalization-v01`
+- Issue: `#34 [M16] Governed normalized-evidence → Draft binding proposal`
+- PR: `#37 M16 Governed evidence → Draft binding proposal`
+- Branch: `mission/m16-evidence-draft-binding-v01`
 - Status: `ACTIVE_FINALIZATION`
-- Kernel checkpoint CI run `34576216890`: Python 3.11/3.12 `success`
-- CLI/Web checkpoint head: `f050a68badbfbf080379c4e4e968ee26ac40177e`
+- Core checkpoint head: `000aba154af381c4e29b707e8ffecc24e166f822`
+- Core checkpoint CI: `34580452455` — Python 3.11/3.12 `success`
 
-## M15 kernel / M15 커널
+## M16 objective / M16 목표
 
-Primary service:
+Classify normalized financial evidence against all 13 material `equity_fcff` Draft inputs without mutating a Draft or confusing facts with assumptions.
 
-```text
-src/valuation_hub/financial_normalization.py
-```
+정규화 재무근거를 13개 `equity_fcff` 핵심 Draft 입력과 비교·분류하되 Draft를 변경하거나 사실과 가정을 혼동하지 않는다.
 
-Schemas:
+## Semantic non-equivalence / 의미 비동일성
 
-```text
-schemas/financial_observation.schema.json
-schemas/financial_ttm.schema.json
-```
-
-Authority propagation:
+Regression-blocked:
 
 ```text
-FACT           → NORMALIZED_FACT
-FACT_CANDIDATE → NORMALIZED_FACT_CANDIDATE
+liabilities        ≠ debt
+shares_outstanding ≠ diluted_shares
+historical/TTM revenue ≠ forecast revenue
+historical operating evidence ≠ forecast EBIT margin
+historical tax evidence ≠ forecast tax assumption
 ```
 
-All normalized observations and TTM results remain `canonical=false`.
+## Binding states / 바인딩 상태
 
-## Period semantics / 기간 의미
+- `DIRECT_BIND`
+- `REFERENCE_ONLY`
+- `NEEDS_DERIVATION`
+- `NEEDS_ASSUMPTION`
+- `MISSING_REQUIRED`
+- `CONFLICT_BLOCKED`
+- `STALE_BLOCKED`
 
-Supported kinds:
+Every proposal classifies exactly 13 material Draft fields.
 
-- `INSTANT`
-- `DURATION_QUARTER`
-- `DURATION_YTD`
-- `DURATION_ANNUAL`
-- `DURATION_TTM`
+## Direct-binding boundary / 직접바인딩 경계
 
-SEC controls:
-
-- instant metrics cannot have duration start;
-- 10-K duration is annual only inside bounded duration checks;
-- 10-Q duration requires explicit quarter/YTD declaration;
-- value magnitude is never used to guess period semantics.
-
-OpenDART controls:
-
-- BS current amount → instant;
-- nonannual IS/CIS current amount → quarter;
-- nonannual IS/CIS cumulative amount → YTD;
-- annual IS/CIS current amount → annual;
-- report-stage identity is preserved;
-- exact dates are not invented when OpenDART supplies only report semantics.
-
-## TTM / TTM
+M16 v0.1 permits only:
 
 ```text
-TTM = Q[-3] + Q[-2] + Q[-1] + Q[0]
-TTM = PRIOR_FY + CURRENT_YTD - PRIOR_COMPARABLE_YTD
+NORMALIZED_FACT
++ cash
++ INSTANT
++ EXACT date precision
++ FRESH under explicit as_of/max_age policy
+→ equity.cash
 ```
 
-Compatibility guards require the same metric, entity, financial scope, and unit. Four-quarter inputs must be contiguous. Annual bridge requires comparable fiscal years and identical YTD stages.
+`NORMALIZED_FACT_CANDIDATE` cannot direct-bind. Report-stage-only date precision cannot receive automatic freshness approval.
 
-Every transform records exact component values and input observation SHA-256 lineage.
+## Identity, freshness, conflicts / 식별·최신성·충돌
 
-## Reconciliation / 조정
+- one entity + one financial scope per proposal
+- one monetary unit across monetary observations
+- explicit `as_of` + `max_age_days`
+- future-dated evidence fails closed
+- unknown exact date precision is surfaced
+- differing same-metric observations conflict-block until upstream reconciliation
+- no averaging
 
-Same-period observations must represent identical metric/entity/scope/unit/period identity. Equal values reconcile deterministically, preferring reviewed `NORMALIZED_FACT`; conflicting values fail closed as `UNKNOWN_CONFLICT`. No averaging is allowed.
+## Integrity / 무결성
+
+- source observation SHA-256 list recorded
+- complete proposal locked by `proposal_sha256`
+- policy/context/decision/identity mutation fails validation
+- proposal always `canonical=false`
 
 ## Interfaces / 인터페이스
 
 CLI:
 
 ```text
-normalize-sec
-normalize-dart
-normalize-validate
-ttm-four-quarters
-ttm-annual-bridge
-ttm-validate
-normalize-reconcile
+binding-build observations.json --as-of YYYY-MM-DD [--max-age-days N]
+binding-validate proposal.json
 ```
 
 Web:
 
 ```text
-/normalize
-POST /api/normalize/one
-POST /api/normalize/validate
-POST /api/normalize/ttm-four
-POST /api/normalize/ttm-bridge
-POST /api/normalize/reconcile
-POST /api/normalize/ttm-validate
+/binding
+POST /api/binding/build
+POST /api/binding/validate
 ```
 
-The Web layer is calculate-only. It has no live-fetch, file-write, promotion, admission, or canonical-write endpoint and rejects credential-bearing payloads.
+There is deliberately no binding apply, Draft mutation, file write, promotion, admission, or canonical-write endpoint.
 
-## Tests / 테스트
+## Files / 파일
 
-- `tests/test_financial_normalization.py`
-- `tests/test_m15_interfaces.py`
-
-Coverage includes:
-
-- authority propagation
-- SEC ambiguous 10-Q fail-closed behavior
-- OpenDART current/cumulative semantics
-- observation hash tamper detection
-- quarter continuity and compatibility
-- annual-bridge stage guards
-- conflict blocking
-- CLI TTM execution
-- Web read-only boundaries
-- Web credential rejection
-
-## Documentation / 문서
-
-- `docs/FINANCIAL_NORMALIZATION.md`
-- `docs/M15_ACCEPTANCE.md`
-- `docs/M15_IMPLEMENTATION_SUMMARY.md`
+- `src/valuation_hub/draft_binding.py`
+- `schemas/draft_binding_proposal.schema.json`
+- `src/valuation_hub/web_binding.py`
+- `tests/test_draft_binding.py`
+- `tests/test_m16_interfaces.py`
+- `docs/DRAFT_BINDING.md`
+- `docs/M16_ACCEPTANCE.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. immutable source snapshots + normalized observation/TTM lineage
+3. immutable source snapshots + normalized/TTM/binding SHA lineage
 4. current chat
 5. AI recollection
 
 ## Exact resume point / 정확한 재개점
 
-Run a fresh full Python 3.11/3.12 CI on the final PR #33 head after all M15 docs/interfaces are committed. Merge #33 only if period semantics, authority propagation, hash integrity, TTM compatibility, reconciliation conflict blocking, CLI/Web read-only boundaries, M13/M14 source behavior, and all M1–M15 regressions pass. After merge, verify the `main` push CI and Issue #32 closure.
+Run a fresh full Python 3.11/3.12 CI on the final PR #37 head after all M16 interfaces/docs are committed. Merge only if semantic non-equivalence guards, candidate-authority blocking, freshness/identity/conflict controls, proposal SHA integrity, CLI/Web proposal-only boundaries, and all M1–M16 regressions pass. Then verify post-merge `main` CI and Issue #34 closure.
 
-If M15 closes cleanly, the next mission should be **governed normalized-evidence → valuation-model input binding**, not another raw-source adapter. It should define explicit mappings from reviewed normalized observations into Draft material inputs, completeness/staleness gates, source/perimeter compatibility, override provenance, and human review before any canonical admission.
+If M16 closes cleanly, the next mission should be an explicit **human-approved binding application to a noncanonical Draft**, applying only SHA-locked `DIRECT_BIND` decisions while leaving derivations/assumptions unresolved and auditable. It must remain separate from canonical admission.

@@ -1,3 +1,5 @@
+import pytest
+
 from valuation_hub.public_equity import EquityBridgeInputs
 from valuation_hub.reference_case import (
     RatioForecastYear,
@@ -53,4 +55,4 @@ def test_terminal_exit_price_and_irr():
         future_net_debt=100.0,
     )
     assert price == 11.0
-    assert exit_irr(10.0, 11.0, 1.0) == 0.1
+    assert exit_irr(10.0, 11.0, 1.0) == pytest.approx(0.1)

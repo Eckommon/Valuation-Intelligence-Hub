@@ -35,7 +35,7 @@ from valuation_hub.financial_normalization import (
     validate_financial_observation,
     validate_ttm_result,
 )
-from valuation_hub.web_sources import serve as serve_web
+from valuation_hub.web_normalization import serve as serve_web
 
 DART_COMMANDS = {"dart-fetch", "dart-snapshot-validate", "dart-extract"}
 NORMALIZATION_COMMANDS = {

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/financial_ttm.schema.json",
+  "title": "Financial TTM Transform / 재무 TTM 변환",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","period","transform","ttm_sha256"],
+  "properties": {
+    "schema_version": {"const": "financial-ttm-v0.1"},
+    "status": {"const": "FINANCIAL_TTM_NORMALIZED"},
+    "canonical": {"const": false},
+    "class": {"enum": ["NORMALIZED_FACT","NORMALIZED_FACT_CANDIDATE"]},
+    "metric": {"type": "string"},
+    "value": {"type": "number"},
+    "unit": {"type": "string", "minLength": 1},
+    "entity": {"type": "object"},
+    "period": {"type": "object"},
+    "transform": {"type": "object"},
+    "ttm_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

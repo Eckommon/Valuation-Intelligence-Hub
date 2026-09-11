@@ -3,45 +3,35 @@
 > **Separate price from economic value, make assumptions explicit, and make valuation reproducible.**  
 > **가격과 경제적 가치를 분리하고, 가정을 명시하며, 가치평가를 재현 가능하게 만든다.**
 
-Valuation-Intelligence-Hub is a reproducible, evidence-grounded cross-asset valuation intelligence system connecting official/user evidence, period normalization, valuation kernels, review governance, and repository-controlled canonicalization.
+Valuation-Intelligence-Hub is a reproducible, evidence-grounded cross-asset valuation intelligence system connecting source evidence, financial normalization, valuation Draft preparation, human review, and repository-controlled canonicalization.
 
-## Principles / 원칙
-
-- Facts ≠ assumptions / 사실 ≠ 가정
-- Official source ≠ automatic canonical fact / 공식 출처 ≠ 자동 정식 사실
-- Arithmetic ≠ authority promotion / 산술 ≠ 권위 승격
-- Similar accounting labels ≠ semantic equivalence / 유사 회계항목 ≠ 의미 동일성
-- Every material fact needs provenance / 모든 중요 사실은 출처 필요
-- Repository canonical state > AI recollection / 저장소 정식 상태 > AI 기억
-- Same versioned inputs + model ⇒ reproducible output / 동일 버전 입력·모델 ⇒ 재현 결과
-
-## Authority flow / 권위 흐름
+## Core authority flow / 핵심 권위 흐름
 
 ```text
 OFFICIAL / USER SOURCE
         ↓
-IMMUTABLE SOURCE SNAPSHOT / NOT CANONICAL
+IMMUTABLE SNAPSHOT / NOT CANONICAL
         ↓
-UNREVIEWED EVIDENCE CANDIDATE / NOT CANONICAL
+EVIDENCE CANDIDATE / NOT CANONICAL
         ↓
-PERIOD NORMALIZATION / TTM / NOT CANONICAL
+NORMALIZED OBSERVATION / TTM / NOT CANONICAL
         ↓
 DRAFT BINDING PROPOSAL / NOT CANONICAL
         ↓
-DRAFT + EVIDENCE GOVERNANCE
+HUMAN APPROVAL LOCK
         ↓
-HUMAN SHA-256 REVIEW LOCK
+BOUND DRAFT RESULT / NOT CANONICAL
         ↓
-PROMOTION PACKAGE → ADMISSION PROPOSAL
+DRAFT EVIDENCE GOVERNANCE + HUMAN REVIEW
         ↓
-GUARDED admission/* APPLY
-        ↓
-PR + FULL CI + REVIEWED MERGE
+PROMOTION PACKAGE → ADMISSION → guarded branch apply → PR/CI merge
         ↓
 CANONICAL
 ```
 
-## Valuation methods / 가치평가 방법
+Facts, calculations, binding proposals, and Draft application are intentionally separate authority states.
+
+## Valuation kernels / 가치평가 커널
 
 Operating-company FCFF:
 
@@ -49,7 +39,7 @@ Operating-company FCFF:
 FCFF = EBIT(1-T) + D\&A - CAPEX - \Delta NWC
 \]
 
-The Hub also supports reverse valuation and probability-weighted venture valuation. Reference cases include LS ELECTRIC, LS Eco Energy, and Jet.AI; these are versioned methodology references, not live investment recommendations.
+The Hub also supports reverse valuation and probability-weighted venture valuation. Existing LS ELECTRIC, LS Eco Energy, and Jet.AI cases are versioned methodology references, not live investment recommendations.
 
 ## Install / 설치
 
@@ -57,99 +47,56 @@ The Hub also supports reverse valuation and probability-weighted venture valuati
 python -m pip install -e ".[dev]"
 ```
 
-## Canonical execution / 정식 실행
+## Existing governed capabilities / 기존 거버넌스 기능
+
+- M1–M12: valuation kernels, evidence governance, Draft/Candidate review, deterministic promotion/admission, guarded `admission/*` repository apply
+- M13: immutable SEC CompanyFacts source acquisition
+- M14: immutable OpenDART financial-statement acquisition
+- M15: period semantics, financial normalization, reconciliation, TTM
+- M16: normalized-evidence → equity-FCFF Draft binding proposal
+
+## M17 — Human-approved noncanonical Draft binding application
+
+M17 takes an M16 binding proposal and an existing valid `equity_fcff` Draft, requires an explicit SHA-locked human approval, and returns a **new in-memory Draft result**. It does not overwrite the input Draft and does not create canonical state.
+
+### Approval lock / 승인 잠금
+
+`binding-approval-v0.1` binds:
+
+- reviewer
+- timezone-aware approval timestamp
+- exact M16 proposal SHA-256
+- exact target Draft-before SHA-256
+- asserted entity ID + financial scope
+- exact approved DIRECT_BIND field list
+- approval SHA-256
+
+Changing any locked element invalidates approval.
+
+### Apply boundary / 적용 경계
+
+Only M16 `DIRECT_BIND` decisions can be approved/applied. In v0.1 this currently means eligible `equity.cash` only.
+
+The target Draft must match the proposal's monetary unit and explicitly asserted entity/scope. `REFERENCE_ONLY`, `NEEDS_DERIVATION`, `NEEDS_ASSUMPTION`, missing, stale, or conflict fields cannot be applied.
+
+### CLI
 
 ```bash
-vih list
-vih validate KR_010120_LS_ELECTRIC
-vih run KR_229640_LS_ECO_ENERGY
-vih report US_JTAI_JET_AI
+vih binding-approval-build binding.json draft.json \
+  --reviewer "Reviewer" \
+  --target-entity-id DART_CORP:00126380 \
+  --target-financial-scope CFS \
+  --approved-field equity.cash \
+  --approved-at 2026-09-11T17:50:00+09:00 > approval.json
+
+vih binding-approval-validate approval.json binding.json draft.json
+vih binding-apply binding.json draft.json approval.json > bound-result.json
+vih bound-draft-validate bound-result.json
 ```
 
-## User Draft → Canonical / 사용자 Draft → 정식
+`bound-draft-result-v0.1` embeds the proposal, approval, Draft before/after, exact applied diffs with source observation hashes, unresolved binding matrix, and result SHA-256. It remains `canonical=false`.
 
-The governed workflow remains Draft → evidence-governed Candidate → human review → deterministic package → admission proposal → guarded `admission/*` apply → PR/CI/reviewed merge.
-
-## M13 — SEC CompanyFacts live evidence
-
-```bash
-vih sec-fetch 0000320193 --user-agent "Valuation-Intelligence-Hub contact@example.com" \
-  --output workspace/source_snapshots/AAPL-companyfacts.json
-vih sec-snapshot-validate workspace/source_snapshots/AAPL-companyfacts.json
-vih sec-extract workspace/source_snapshots/AAPL-companyfacts.json revenue
-```
-
-SEC responses are immutable noncanonical snapshots; extracted values remain unreviewed evidence candidates.
-
-## M14 — OpenDART financial evidence
-
-```bash
-vih dart-fetch 00126380 --bsns-year 2026 --reprt-code 11012 --fs-div CFS \
-  --api-key <LOCAL_SECRET> --output workspace/source_snapshots/dart.json
-vih dart-snapshot-validate workspace/source_snapshots/dart.json
-vih dart-extract workspace/source_snapshots/dart.json revenue --statement-section IS
-```
-
-API keys are transport-only. Persistent locators are sanitized, CFS/OFS and statement-section boundaries are explicit, account matching is exact, and conflicts fail closed.
-
-## M15 — Financial evidence normalization + TTM
-
-```text
-FACT           → NORMALIZED_FACT
-FACT_CANDIDATE → NORMALIZED_FACT_CANDIDATE
-```
-
-Period kinds: `INSTANT`, `DURATION_QUARTER`, `DURATION_YTD`, `DURATION_ANNUAL`, `DURATION_TTM`.
-
-```bash
-vih normalize-sec sec-candidate.json --period-kind DURATION_QUARTER
-vih normalize-dart dart-candidate.json --amount-basis CURRENT
-vih ttm-four-quarters q1.json q2.json q3.json q4.json
-vih ttm-annual-bridge prior-fy.json current-ytd.json prior-ytd.json
-vih normalize-reconcile observation-a.json observation-b.json
-```
-
-TTM formulas:
-
-```text
-TTM = Q[-3] + Q[-2] + Q[-1] + Q[0]
-TTM = PRIOR_FY + CURRENT_YTD - PRIOR_COMPARABLE_YTD
-```
-
-M15 never invents missing period semantics or averages conflicts.
-
-## M16 — Governed evidence → Draft binding proposal
-
-M16 classifies normalized financial evidence against the 13 material equity-FCFF Draft inputs without mutating a Draft.
-
-Binding states:
-
-- `DIRECT_BIND`
-- `REFERENCE_ONLY`
-- `NEEDS_DERIVATION`
-- `NEEDS_ASSUMPTION`
-- `MISSING_REQUIRED`
-- `CONFLICT_BLOCKED`
-- `STALE_BLOCKED`
-
-Semantic equivalence is mandatory:
-
-```text
-liabilities        ≠ debt
-shares_outstanding ≠ diluted_shares
-historical/TTM revenue ≠ forecast revenue
-```
-
-v0.1 deliberately permits only one kind of `DIRECT_BIND`: reviewed `NORMALIZED_FACT` + fresh exact-date `INSTANT cash` → `equity.cash`. Candidate evidence and report-stage-only freshness remain reference-only.
-
-```bash
-vih binding-build observations.json --as-of 2026-09-11 --max-age-days 550 > binding.json
-vih binding-validate binding.json
-```
-
-The proposal is SHA-256 locked and always `canonical=false`. M16 has no Draft apply operation.
-
-See [`docs/DRAFT_BINDING.md`](docs/DRAFT_BINDING.md).
+See [`docs/BINDING_APPLICATION.md`](docs/BINDING_APPLICATION.md).
 
 ## Web product / Web 제품
 
@@ -160,38 +107,48 @@ vih web
 Default: `http://127.0.0.1:8765`
 
 ```text
-/source       — SEC snapshot validation + extraction
-/dart-source  — OpenDART snapshot validation + extraction
-/normalize    — financial normalization + TTM + reconciliation
-/binding      — evidence → Draft binding proposal build + validation
+/source        — SEC snapshot validation + extraction
+/dart-source   — OpenDART snapshot validation + extraction
+/normalize     — financial normalization + TTM + reconciliation
+/binding       — evidence → Draft binding proposal
+/binding-apply — human approval + in-memory Draft binding application
 ```
 
-These surfaces are read/compute/proposal-only. There is no browser-origin source fetch, credential storage, binding apply, Draft mutation, promotion, admission, or canonical-write endpoint in M16.
+The M17 Web apply endpoint returns JSON only. It has no filesystem Draft overwrite, promotion, admission, or canonical-write operation.
+
+## Key semantic guardrails / 핵심 의미 안전장치
+
+```text
+liabilities        ≠ debt
+shares_outstanding ≠ diluted_shares
+historical/TTM revenue ≠ forecast revenue
+```
+
+The system prefers explicit unresolved states and human assumptions over invented mappings.
 
 ## Milestones / 마일스톤
 
-- [x] M1–M12 evidence governance, valuation kernels, product workflow, canonical admission/apply
-- [x] M13 immutable SEC CompanyFacts acquisition
-- [x] M14 immutable OpenDART financial-statement acquisition
-- [x] M15 financial evidence normalization + period semantics + TTM
-- [ ] **M16 governed normalized-evidence → Draft binding proposal — active finalization**
-- [ ] explicit human-approved binding application to a noncanonical Draft
+- [x] M1–M12 valuation/evidence governance + canonical admission/apply
+- [x] M13 immutable SEC acquisition
+- [x] M14 immutable OpenDART acquisition
+- [x] M15 financial normalization + TTM
+- [x] M16 governed evidence → Draft binding proposal
+- [ ] **M17 human-approved binding application to noncanonical Draft — active finalization**
+- [ ] governed derivation adapters for semantically derivable model inputs
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
 
-- [`docs/FOUNDATION.md`](docs/FOUNDATION.md)
-- [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)
 - [`docs/EVIDENCE_POLICY.md`](docs/EVIDENCE_POLICY.md)
-- [`docs/AI_GROUNDING_POLICY.md`](docs/AI_GROUNDING_POLICY.md)
 - [`docs/USER_DRAFTS.md`](docs/USER_DRAFTS.md)
 - [`docs/PROMOTION_PROTOCOL.md`](docs/PROMOTION_PROTOCOL.md)
-- [`docs/PROMOTION_PACKAGE.md`](docs/PROMOTION_PACKAGE.md)
 - [`docs/CANONICAL_ADMISSION.md`](docs/CANONICAL_ADMISSION.md)
 - [`docs/GUARDED_ADMISSION_APPLY.md`](docs/GUARDED_ADMISSION_APPLY.md)
 - [`docs/LIVE_EVIDENCE_SEC.md`](docs/LIVE_EVIDENCE_SEC.md)
 - [`docs/LIVE_EVIDENCE_OPENDART.md`](docs/LIVE_EVIDENCE_OPENDART.md)
 - [`docs/FINANCIAL_NORMALIZATION.md`](docs/FINANCIAL_NORMALIZATION.md)
 - [`docs/DRAFT_BINDING.md`](docs/DRAFT_BINDING.md)
-- [`docs/M16_ACCEPTANCE.md`](docs/M16_ACCEPTANCE.md)
+- [`docs/BINDING_APPLICATION.md`](docs/BINDING_APPLICATION.md)
+- [`docs/M17_ACCEPTANCE.md`](docs/M17_ACCEPTANCE.md)
+- [`docs/M17_IMPLEMENTATION_SUMMARY.md`](docs/M17_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

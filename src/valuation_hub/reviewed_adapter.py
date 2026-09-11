@@ -1,8 +1,9 @@
 """Versioned reviewed-Draft canonical adapter helpers / 검토 Draft 정식 adapter 도우미.
 
-This module defines adapter identity and lossless runtime normalization. It does
-not own valuation formulas; reviewed Draft execution is delegated to the M8
-Draft service, which already routes to the shared FCFF/Venture kernels.
+This module defines adapter identity, admission compatibility profiles, and
+lossless runtime normalization. It does not own valuation formulas; reviewed
+Draft execution is delegated to the M8 Draft service, which already routes to
+the shared FCFF/Venture kernels.
 """
 
 from __future__ import annotations
@@ -17,6 +18,14 @@ MODEL_TO_REVIEWED_ADAPTER = {
 }
 REVIEWED_ADAPTER_TO_MODEL = {value: key for key, value in MODEL_TO_REVIEWED_ADAPTER.items()}
 REVIEWED_ADMISSION_GATE = "PASS_REVIEWED_DRAFT_PACKAGE_ADMISSION"
+
+# v0.1 canonical admission deliberately preserves the scenario names expected by
+# the existing Web/product contract. Generic user Drafts remain free to use other
+# names; only canonical admission through these adapter versions is constrained.
+CANONICAL_SCENARIO_PROFILES = {
+    "equity_fcff": ("BEAR", "BASE", "BULL"),
+    "venture_probability": ("FAILURE", "SURVIVAL", "BREAKOUT"),
+}
 
 
 def adapter_for_model(model: str) -> str:
@@ -33,7 +42,33 @@ def model_for_adapter(adapter: str) -> str:
         raise ValueError(f"unsupported reviewed-Draft adapter: {adapter}") from exc
 
 
-def normalize_reviewed_runtime(draft: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+def validate_canonical_profile(draft: dict[str, Any]) -> None:
+    """Fail closed when a reviewed Draft cannot satisfy the v0.1 product contract."""
+    model = str(draft.get("model", ""))
+    expected = CANONICAL_SCENARIO_PROFILES.get(model)
+    if expected is None:
+        raise ValueError(f"unsupported reviewed-Draft model: {model}")
+    if model == "equity_fcff":
+        equity = draft.get("equity")
+        scenarios = equity.get("scenarios") if isinstance(equity, dict) else None
+        actual = tuple(scenarios.keys()) if isinstance(scenarios, dict) else ()
+        if set(actual) != set(expected) or len(actual) != len(expected):
+            raise ValueError(
+                "reviewed equity canonical admission requires exactly BEAR/BASE/BULL scenarios"
+            )
+    else:
+        venture = draft.get("venture")
+        rows = venture.get("scenarios") if isinstance(venture, dict) else None
+        actual = tuple(str(item.get("name", "")) for item in rows) if isinstance(rows, list) else ()
+        if set(actual) != set(expected) or len(actual) != len(expected):
+            raise ValueError(
+                "reviewed venture canonical admission requires exactly FAILURE/SURVIVAL/BREAKOUT scenarios"
+            )
+
+
+def normalize_reviewed_runtime(
+    draft: dict[str, Any], *, require_canonical_profile: bool = False
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     """Validate exact reviewed Draft and normalize runtime to canonical service shape.
 
     Returns `(normalized_draft, draft_result, canonical_runtime)`.
@@ -44,6 +79,8 @@ def normalize_reviewed_runtime(draft: dict[str, Any]) -> tuple[dict[str, Any], d
     from valuation_hub.draft_service import run_draft, validate_draft
 
     normalized = validate_draft(draft)
+    if require_canonical_profile:
+        validate_canonical_profile(normalized)
     result = run_draft(normalized)
     if normalized["model"] == "equity_fcff":
         runtime = result["runtime"]["scenarios"]

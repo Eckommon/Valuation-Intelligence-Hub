@@ -36,6 +36,14 @@ from valuation_hub.promotion_package import (
     validate_materialized_package,
     validate_promotion_package,
 )
+from valuation_hub.sec_live import (
+    METRIC_SPECS,
+    capture_companyfacts_snapshot,
+    extract_sec_evidence_candidate,
+    load_source_snapshot,
+    materialize_source_snapshot,
+    validate_source_snapshot,
+)
 from valuation_hub.web_prprep import serve as serve_web
 
 
@@ -96,6 +104,18 @@ def _parser() -> argparse.ArgumentParser:
     admission_apply.add_argument("plan", type=Path)
     admission_apply.add_argument("admission", type=Path)
     admission_apply.add_argument("--target-repo", type=Path, required=True)
+
+    sec_fetch = sub.add_parser("sec-fetch", help="Fetch official SEC CompanyFacts into immutable noncanonical snapshot / SEC CompanyFacts 비정식 snapshot 수집")
+    sec_fetch.add_argument("cik", help="SEC CIK, 1-10 digits / SEC CIK 1~10자리")
+    sec_fetch.add_argument("--user-agent", required=True, help="Identifying SEC User-Agent including contact email / 연락 이메일 포함 User-Agent")
+    sec_fetch.add_argument("--output", type=Path, required=True, help="Output under workspace/source_snapshots / 출력 경로")
+    sec_validate = sub.add_parser("sec-snapshot-validate", help="Validate immutable SEC source snapshot / SEC source snapshot 검증")
+    sec_validate.add_argument("file", type=Path)
+    sec_extract = sub.add_parser("sec-extract", help="Extract unreviewed evidence candidate from SEC snapshot / SEC snapshot에서 미검토 근거후보 추출")
+    sec_extract.add_argument("file", type=Path)
+    sec_extract.add_argument("metric", choices=tuple(METRIC_SPECS))
+    sec_extract.add_argument("--form", default=None, help="Optional filing form filter, e.g. 10-Q / 선택 filing form")
+    sec_extract.add_argument("--period-end", default=None, help="Optional YYYY-MM-DD period-end filter / 선택 기간말 필터")
 
     web = sub.add_parser("web", help="Run local Web application / 로컬 Web 앱 실행")
     web.add_argument("--host", default="127.0.0.1", help="Bind host / 바인드 호스트")
@@ -220,6 +240,16 @@ def _human_apply(result: dict[str, Any]) -> None:
     print(result["next_action_ko"])
 
 
+def _human_snapshot(result: dict[str, Any]) -> None:
+    print(result["status"])
+    print("CANONICAL / 정식: FALSE")
+    if result.get("cik"):
+        print(f"CIK: {result['cik']}")
+    if result.get("path"):
+        print(f"Snapshot / snapshot: {result['path']}")
+    print(f"Snapshot SHA-256: {result['snapshot_sha256']}")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
@@ -302,6 +332,20 @@ def main(argv: list[str] | None = None) -> int:
             bundle = _load_json(args.admission, "admission bundle")
             result = apply_repository_change_plan(plan, bundle, args.target_repo)
             _dump(result) if args.as_json else _human_apply(result)
+            return 0
+        if args.command == "sec-fetch":
+            snapshot = capture_companyfacts_snapshot(args.cik, user_agent=args.user_agent)
+            result = materialize_source_snapshot(snapshot, args.output, args.root)
+            _dump(result) if args.as_json else _human_snapshot(result)
+            return 0
+        if args.command == "sec-snapshot-validate":
+            result = validate_source_snapshot(load_source_snapshot(args.file))
+            _dump(result) if args.as_json else _human_snapshot(result)
+            return 0
+        if args.command == "sec-extract":
+            snapshot = load_source_snapshot(args.file)
+            result = extract_sec_evidence_candidate(snapshot, args.metric, form=args.form, period_end=args.period_end)
+            _dump(result)
             return 0
         if args.command == "web":
             if args.as_json:

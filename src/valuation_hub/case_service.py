@@ -1,29 +1,34 @@
 """Executable case service layer / 실행형 사례 서비스 계층.
 
-This module is the shared application-service boundary for CLI, future Web UI,
-and future API adapters. It routes versioned case files into already-tested
-valuation kernels; it must not reimplement valuation formulas.
-
-본 모듈은 CLI, 향후 Web UI, API가 공유하는 애플리케이션 서비스 경계다.
-버전 관리 사례 파일을 기존 검증 가치평가 커널로 라우팅하며 계산공식을
-재구현해서는 안 된다.
+The service supports legacy reference cases and explicitly versioned reviewed-Draft
+canonical adapters. Interface consumers receive a stable external runtime shape;
+valuation formulas remain in the shared FCFF/Venture kernels.
 """
 
 from __future__ import annotations
 
 import json
+from numbers import Real
 from pathlib import Path
 from typing import Any
 
+from valuation_hub.reviewed_adapter import (
+    REVIEWED_ADAPTER_TO_MODEL,
+    REVIEWED_ADMISSION_GATE,
+    normalize_reviewed_runtime,
+)
 from valuation_hub.scenario import ForecastYear, ScenarioDefinition, run_fcff_scenario
 from valuation_hub.venture import VentureScenario, probability_weighted_venture_value
 
-
 SUPPORTED_MODELS = {"equity_fcff", "venture_probability"}
-PASS_GATES = {"PASS_MATERIAL_INPUTS_RECONCILED", "PASS_VENTURE_MODEL_INPUTS_RECONCILED"}
+PASS_GATES = {
+    "PASS_MATERIAL_INPUTS_RECONCILED",
+    "PASS_VENTURE_MODEL_INPUTS_RECONCILED",
+    REVIEWED_ADMISSION_GATE,
+}
 DEFAULT_DRIFT_TOLERANCE = {
-    "equity_fcff": 1.0,           # one currency unit/share; e.g. KRW 1
-    "venture_probability": 1e-6, # sub-cent precision for USD option-like cases
+    "equity_fcff": 1.0,
+    "venture_probability": 1e-6,
 }
 
 
@@ -32,7 +37,6 @@ class CaseServiceError(RuntimeError):
 
 
 def find_repo_root(start: Path | None = None) -> Path:
-    """Find repository root by versioned case registry / 사례 레지스트리로 저장소 루트 탐색."""
     current = (start or Path.cwd()).resolve()
     for candidate in (current, *current.parents):
         if (candidate / "registry" / "cases.json").is_file():
@@ -45,11 +49,14 @@ def find_repo_root(start: Path | None = None) -> Path:
 
 def _read_json(path: Path) -> dict[str, Any]:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
         raise CaseServiceError(f"required file missing / 필수 파일 누락: {path}") from exc
     except json.JSONDecodeError as exc:
         raise CaseServiceError(f"invalid JSON / JSON 오류: {path}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise CaseServiceError(f"JSON object required / JSON 객체 필요: {path}")
+    return payload
 
 
 def load_registry(root: Path | None = None) -> dict[str, Any]:
@@ -58,7 +65,7 @@ def load_registry(root: Path | None = None) -> dict[str, Any]:
     cases = registry.get("cases")
     if not isinstance(cases, list) or not cases:
         raise CaseServiceError("case registry is empty or malformed / 사례 레지스트리 오류")
-    ids = [item.get("case_id") for item in cases]
+    ids = [item.get("case_id") if isinstance(item, dict) else None for item in cases]
     if any(not value for value in ids) or len(ids) != len(set(ids)):
         raise CaseServiceError("case registry has missing/duplicate IDs / 사례 ID 누락·중복")
     return registry
@@ -71,19 +78,127 @@ def list_cases(root: Path | None = None) -> list[dict[str, Any]]:
 def _case_entry(case_id: str, root: Path) -> dict[str, Any]:
     for entry in load_registry(root)["cases"]:
         if entry["case_id"] == case_id:
-            if entry.get("model") not in SUPPORTED_MODELS:
-                raise CaseServiceError(f"unsupported model / 미지원 모델: {entry.get('model')}")
+            model = entry.get("model")
+            if model not in SUPPORTED_MODELS:
+                raise CaseServiceError(f"unsupported model / 미지원 모델: {model}")
+            adapter = entry.get("adapter")
+            if adapter is not None:
+                expected_model = REVIEWED_ADAPTER_TO_MODEL.get(str(adapter))
+                if expected_model is None:
+                    raise CaseServiceError(f"unsupported adapter / 미지원 adapter: {adapter}")
+                if expected_model != model:
+                    raise CaseServiceError(
+                        f"adapter/model mismatch / adapter·model 불일치: {adapter} -> {expected_model}, registry={model}"
+                    )
             return entry
     raise CaseServiceError(f"unknown case / 알 수 없는 사례: {case_id}")
 
 
 def _case_dir(entry: dict[str, Any], root: Path) -> Path:
-    path = (root / entry["path"]).resolve()
+    raw_path = entry.get("path")
+    if not isinstance(raw_path, str) or not raw_path:
+        raise CaseServiceError("case path missing / 사례 경로 누락")
+    path = (root / raw_path).resolve()
     try:
         path.relative_to(root.resolve())
     except ValueError as exc:
         raise CaseServiceError("case path escapes repository root / 사례 경로가 저장소 밖을 가리킵니다") from exc
     return path
+
+
+def _validate_reviewed_case(
+    case_id: str,
+    entry: dict[str, Any],
+    directory: Path,
+    inputs: dict[str, Any],
+    manifest: dict[str, Any],
+    stored: dict[str, Any],
+) -> None:
+    adapter = str(entry["adapter"])
+    model = str(entry["model"])
+    if inputs.get("model_version") != adapter or stored.get("model_version") != adapter:
+        raise CaseServiceError("reviewed adapter model_version mismatch / 검토 adapter model_version 불일치")
+    if inputs.get("canonical") is not True or manifest.get("canonical") is not True or stored.get("canonical") is not True:
+        raise CaseServiceError("reviewed canonical files must declare canonical=true / 검토 정식 파일 canonical=true 필요")
+    if manifest.get("promotion_gate") != REVIEWED_ADMISSION_GATE:
+        raise CaseServiceError("reviewed admission gate mismatch / 검토 Draft 수용게이트 불일치")
+    if manifest.get("canonical_bundles") != ["evidence_reviewed.json"]:
+        raise CaseServiceError("reviewed evidence bundle contract mismatch / 검토 근거 bundle 계약 불일치")
+
+    source_path = directory / "SOURCE_PACKAGE.json"
+    evidence_path = directory / "evidence_reviewed.json"
+    if not source_path.is_file() or not evidence_path.is_file():
+        raise CaseServiceError("SOURCE_PACKAGE.json and evidence_reviewed.json are required / 원천 패키지·검토 근거 파일 필수")
+    source_package = _read_json(source_path)
+    evidence_reviewed = _read_json(evidence_path)
+
+    # Runtime-local import avoids module initialization cycle: promotion_package
+    # imports CaseServiceError/find_repo_root from this module.
+    from valuation_hub.promotion_package import validate_promotion_package
+
+    repo_root = directory.parents[2]
+    package_validation = validate_promotion_package(
+        source_package, repo_root, check_collision=False
+    )
+    if source_package.get("case_identity", {}).get("case_id") != case_id:
+        raise CaseServiceError("source package case_id mismatch / 원천 패키지 case_id 불일치")
+    if package_validation.get("required_canonical_adapter") != adapter:
+        raise CaseServiceError("source package adapter mismatch / 원천 패키지 adapter 불일치")
+
+    package_sha = source_package.get("package_sha256")
+    candidate_sha = source_package.get("source_review", {}).get("candidate_sha256")
+    review_sha = source_package.get("source_review", {}).get("review_scope_sha256")
+    for label, payload in (("inputs", inputs), ("manifest", manifest), ("result", stored), ("evidence", evidence_reviewed)):
+        if payload.get("source_package_sha256") != package_sha:
+            raise CaseServiceError(f"source package SHA mismatch in {label} / {label} 원천 패키지 SHA 불일치")
+        if payload.get("source_candidate_sha256") != candidate_sha:
+            raise CaseServiceError(f"candidate SHA mismatch in {label} / {label} Candidate SHA 불일치")
+        if payload.get("review_scope_sha256") != review_sha:
+            raise CaseServiceError(f"review scope SHA mismatch in {label} / {label} 검토범위 SHA 불일치")
+
+    candidate = source_package.get("artifacts", {}).get("reviewed_candidate.json")
+    if not isinstance(candidate, dict):
+        raise CaseServiceError("approved candidate missing from source package / 원천 패키지 승인 Candidate 누락")
+    if evidence_reviewed.get("case_id") != case_id:
+        raise CaseServiceError("reviewed evidence case_id mismatch / 검토 근거 case_id 불일치")
+    if evidence_reviewed.get("claims") != candidate.get("evidence"):
+        raise CaseServiceError("reviewed evidence differs from approved package / 검토 근거가 승인 패키지와 다름")
+    if evidence_reviewed.get("input_governance") != candidate.get("input_governance"):
+        raise CaseServiceError("reviewed governance differs from approved package / 검토 거버넌스가 승인 패키지와 다름")
+
+    draft = inputs.get("reviewed_draft")
+    if not isinstance(draft, dict):
+        raise CaseServiceError("reviewed_draft missing / reviewed_draft 누락")
+    try:
+        normalized, _, runtime = normalize_reviewed_runtime(
+            draft, require_canonical_profile=True
+        )
+    except ValueError as exc:
+        raise CaseServiceError(
+            f"reviewed canonical profile mismatch / 검토 정식 프로파일 불일치: {exc}"
+        ) from exc
+    if normalized != draft:
+        raise CaseServiceError("reviewed_draft normalization drift / reviewed_draft 정규화 drift")
+    if draft.get("model") != model:
+        raise CaseServiceError("reviewed_draft model mismatch / reviewed_draft 모델 불일치")
+    packaged_draft = candidate.get("draft")
+    if draft != packaged_draft:
+        raise CaseServiceError("canonical reviewed_draft differs from approved package / 정식 reviewed_draft가 승인 패키지와 다름")
+
+    valuation_as_of = inputs.get("valuation_as_of")
+    if manifest.get("valuation_as_of") != valuation_as_of or stored.get("valuation_as_of") != valuation_as_of:
+        raise CaseServiceError("valuation_as_of drift across canonical files / 정식 파일 간 기준일 불일치")
+    if evidence_reviewed.get("as_of") != valuation_as_of:
+        raise CaseServiceError("reviewed evidence as_of drift / 검토 근거 기준일 불일치")
+    if inputs.get("currency") != draft.get("currency") or stored.get("currency") != draft.get("currency"):
+        raise CaseServiceError("currency drift from reviewed Draft / 검토 Draft 통화 불일치")
+    if stored.get("market_price") != draft.get("market_price"):
+        raise CaseServiceError("market price drift from reviewed Draft / 검토 Draft 시장가격 불일치")
+
+    expected_runtime = stored.get("runtime")
+    if not isinstance(expected_runtime, dict):
+        raise CaseServiceError("stored reviewed runtime missing / 저장된 검토 runtime 누락")
+    _compare_runtime(runtime, expected_runtime, DEFAULT_DRIFT_TOLERANCE[model])
 
 
 def validate_case(case_id: str, root: Path | None = None) -> dict[str, Any]:
@@ -92,6 +207,8 @@ def validate_case(case_id: str, root: Path | None = None) -> dict[str, Any]:
     entry = _case_entry(case_id, repo)
     directory = _case_dir(entry, repo)
     required = ["case_inputs.json", "evidence_manifest.json", "valuation_result.json", "REPORT.md"]
+    if entry.get("adapter") is not None:
+        required.extend(["SOURCE_PACKAGE.json", "evidence_reviewed.json"])
     missing = [name for name in required if not (directory / name).is_file()]
     if missing:
         raise CaseServiceError(f"missing case files / 사례 파일 누락: {', '.join(missing)}")
@@ -107,14 +224,19 @@ def validate_case(case_id: str, root: Path | None = None) -> dict[str, Any]:
     if gate not in PASS_GATES:
         raise CaseServiceError(f"evidence gate is not PASS / 근거 게이트 미통과: {gate}")
     model = entry["model"]
-    expected_prefix = "reference-equity-fcff" if model == "equity_fcff" else "reference-venture-probability"
-    if not str(inputs.get("model_version", "")).startswith(expected_prefix):
-        raise CaseServiceError("model version does not match registry route / 모델 버전-라우터 불일치")
+    adapter = entry.get("adapter")
+    if adapter is None:
+        expected_prefix = "reference-equity-fcff" if model == "equity_fcff" else "reference-venture-probability"
+        if not str(inputs.get("model_version", "")).startswith(expected_prefix):
+            raise CaseServiceError("model version does not match registry route / 모델 버전-라우터 불일치")
+    else:
+        _validate_reviewed_case(case_id, entry, directory, inputs, manifest, stored)
 
     return {
         "case_id": case_id,
         "valid": True,
         "model": model,
+        "adapter": adapter,
         "promotion_gate": gate,
         "model_version": inputs["model_version"],
         "path": entry["path"],
@@ -195,24 +317,27 @@ def _run_venture(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _tolerance(model: str, tolerance: float | None) -> float:
+    allowed = DEFAULT_DRIFT_TOLERANCE[model] if tolerance is None else tolerance
+    if allowed < 0:
+        raise CaseServiceError("drift tolerance cannot be negative / 허용오차는 음수일 수 없습니다")
+    return allowed
+
+
 def _verify_against_stored(
     model: str,
     runtime: dict[str, Any],
     stored: dict[str, Any],
     tolerance: float | None,
 ) -> None:
-    allowed = DEFAULT_DRIFT_TOLERANCE[model] if tolerance is None else tolerance
-    if allowed < 0:
-        raise CaseServiceError("drift tolerance cannot be negative / 허용오차는 음수일 수 없습니다")
-
+    allowed = _tolerance(model, tolerance)
     if model == "equity_fcff":
         for name in ("BEAR", "BASE", "BULL"):
             expected = float(stored["scenario_results"][name]["current_intrinsic_value_per_share"])
             actual = float(runtime[name]["value_per_share"])
             if abs(actual - expected) > allowed:
                 raise CaseServiceError(
-                    f"runtime/stored drift for {name}: {actual} vs {expected}; "
-                    "실행값과 정식 저장값 불일치"
+                    f"runtime/stored drift for {name}: {actual} vs {expected}; 실행값과 정식 저장값 불일치"
                 )
     else:
         expected = float(stored["probability_weighted"]["expected_present_value_per_share"])
@@ -221,6 +346,45 @@ def _verify_against_stored(
             raise CaseServiceError(
                 f"runtime/stored drift: {actual} vs {expected}; 실행값과 정식 저장값 불일치"
             )
+
+
+def _compare_runtime(actual: Any, expected: Any, allowed: float, path: str = "runtime") -> None:
+    if isinstance(actual, bool) or isinstance(expected, bool):
+        if actual != expected:
+            raise CaseServiceError(f"reviewed runtime drift at {path} / 검토 runtime drift")
+        return
+    if isinstance(actual, Real) and isinstance(expected, Real):
+        if abs(float(actual) - float(expected)) > allowed:
+            raise CaseServiceError(
+                f"reviewed runtime drift at {path}: {actual} vs {expected} / 검토 runtime 불일치"
+            )
+        return
+    if isinstance(actual, dict) and isinstance(expected, dict):
+        if set(actual) != set(expected):
+            raise CaseServiceError(f"reviewed runtime keys drift at {path} / 검토 runtime 키 불일치")
+        for key in actual:
+            _compare_runtime(actual[key], expected[key], allowed, f"{path}.{key}")
+        return
+    if isinstance(actual, list) and isinstance(expected, list):
+        if len(actual) != len(expected):
+            raise CaseServiceError(f"reviewed runtime length drift at {path} / 검토 runtime 길이 불일치")
+        for index, (left, right) in enumerate(zip(actual, expected)):
+            _compare_runtime(left, right, allowed, f"{path}[{index}]")
+        return
+    if actual != expected:
+        raise CaseServiceError(f"reviewed runtime drift at {path} / 검토 runtime 불일치")
+
+
+def _verify_reviewed_against_stored(
+    model: str,
+    runtime: dict[str, Any],
+    stored: dict[str, Any],
+    tolerance: float | None,
+) -> None:
+    expected = stored.get("runtime")
+    if not isinstance(expected, dict):
+        raise CaseServiceError("stored reviewed runtime missing / 저장된 검토 runtime 누락")
+    _compare_runtime(runtime, expected, _tolerance(model, tolerance))
 
 
 def run_case(
@@ -236,14 +400,29 @@ def run_case(
     directory = _case_dir(entry, repo)
     case = _read_json(directory / "case_inputs.json")
     stored = _read_json(directory / "valuation_result.json")
-    runtime = _run_equity(case) if entry["model"] == "equity_fcff" else _run_venture(case)
-    _verify_against_stored(entry["model"], runtime, stored, tolerance)
+    adapter = entry.get("adapter")
+    if adapter is None:
+        runtime = _run_equity(case) if entry["model"] == "equity_fcff" else _run_venture(case)
+        _verify_against_stored(entry["model"], runtime, stored, tolerance)
+        market_price = case["market"]["price"]
+    else:
+        try:
+            _, _, runtime = normalize_reviewed_runtime(
+                case["reviewed_draft"], require_canonical_profile=True
+            )
+        except ValueError as exc:
+            raise CaseServiceError(
+                f"reviewed canonical profile mismatch / 검토 정식 프로파일 불일치: {exc}"
+            ) from exc
+        _verify_reviewed_against_stored(entry["model"], runtime, stored, tolerance)
+        market_price = case["reviewed_draft"]["market_price"]
     return {
         "case_id": case_id,
         "model": entry["model"],
+        "adapter": adapter,
         "model_version": case["model_version"],
         "valuation_as_of": case["valuation_as_of"],
-        "market_price": case["market"]["price"],
+        "market_price": market_price,
         "grounded": True,
         "promotion_gate": validation["promotion_gate"],
         "drift_tolerance": DEFAULT_DRIFT_TOLERANCE[entry["model"]] if tolerance is None else tolerance,
@@ -255,5 +434,4 @@ def read_report(case_id: str, root: Path | None = None) -> str:
     repo = root.resolve() if root else find_repo_root()
     entry = _case_entry(case_id, repo)
     validate_case(case_id, repo)
-    path = _case_dir(entry, repo) / "REPORT.md"
-    return path.read_text(encoding="utf-8")
+    return (_case_dir(entry, repo) / "REPORT.md").read_text(encoding="utf-8")

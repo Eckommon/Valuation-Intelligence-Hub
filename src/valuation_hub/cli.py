@@ -15,7 +15,7 @@ from valuation_hub.case_service import (
     run_case,
     validate_case,
 )
-from valuation_hub.web import serve as serve_web
+from valuation_hub.web_product import serve as serve_web
 
 
 def _parser() -> argparse.ArgumentParser:

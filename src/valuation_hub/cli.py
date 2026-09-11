@@ -15,6 +15,7 @@ from valuation_hub.case_service import (
     run_case,
     validate_case,
 )
+from valuation_hub.web import serve as serve_web
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -33,6 +34,9 @@ def _parser() -> argparse.ArgumentParser:
     ):
         p = sub.add_parser(command, help=help_text)
         p.add_argument("case_id")
+    web = sub.add_parser("web", help="Run local Web application / 로컬 Web 앱 실행")
+    web.add_argument("--host", default="127.0.0.1", help="Bind host / 바인드 호스트")
+    web.add_argument("--port", type=int, default=8765, help="Bind port / 바인드 포트")
     return parser
 
 
@@ -95,8 +99,13 @@ def main(argv: list[str] | None = None) -> int:
             report = read_report(args.case_id, args.root)
             _dump({"case_id": args.case_id, "report": report}) if args.as_json else print(report)
             return 0
+        if args.command == "web":
+            if args.as_json:
+                raise CaseServiceError("--json is not valid with web / web 명령은 --json을 지원하지 않습니다")
+            serve_web(host=args.host, port=args.port, root=args.root)
+            return 0
         raise CaseServiceError(f"unsupported command / 미지원 명령: {args.command}")
-    except CaseServiceError as exc:
+    except (CaseServiceError, ValueError) as exc:
         if args.as_json:
             _dump({"ok": False, "error": str(exc)})
         else:

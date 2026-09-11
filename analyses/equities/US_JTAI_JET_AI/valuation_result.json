@@ -1,0 +1,20 @@
+{
+  "case_id":"US_JTAI_JET_AI",
+  "model_version":"reference-venture-probability-v0.1",
+  "valuation_as_of":"2026-09-09",
+  "currency":"USD",
+  "status":"CANONICAL_REFERENCE_RESULT_V0_1",
+  "market_price":1.28,
+  "shares_snapshot":3560000,
+  "five_lenses":{"market_cap_to_2025_proforma_continuing_sales":1.5269,"market_cap_to_operating_income":"N/M_NEGATIVE_PROFORMA_OPERATING_INCOME","price_to_earnings":"N/M_NORMALIZED_CONTINUING_OPERATIONS_LOSS_MAKING","price_to_fcf":"N/M_CORE_CASH_GENERATION_NEGATIVE_AND_PERIMETER_CHANGED","reverse_valuation":"MARKET_PRICE_IMPLIES_BREAKOUT_PROBABILITY_ABOUT_2.20_PERCENT_WITH_SURVIVAL_FIXED_AT_30_PERCENT"},
+  "scenario_results":{
+    "FAILURE":{"probability":0.60,"terminal_enterprise_value":0,"terminal_equity_value":0,"terminal_value_per_share":0,"present_value_per_share":0,"probability_weighted_present_value_per_share":0,"conditional_annualized_return_to_2030":-1.0},
+    "SURVIVAL":{"probability":0.30,"terminal_enterprise_value":100000000,"terminal_equity_value":90000000,"terminal_value_per_share":7.5,"present_value_per_share":2.4229717226,"probability_weighted_present_value_per_share":0.7268915168,"conditional_annualized_return_to_2030":0.5076300233},
+    "BREAKOUT":{"probability":0.10,"terminal_enterprise_value":800000000,"terminal_equity_value":780000000,"terminal_value_per_share":78.0,"present_value_per_share":25.1989059155,"probability_weighted_present_value_per_share":2.5198905916,"conditional_annualized_return_to_2030":1.5968659441}
+  },
+  "probability_weighted":{"expected_present_value_per_share":3.2467821083,"expected_terminal_payoff_per_share":10.05,"descriptive_cagr_to_expected_terminal_payoff":0.6136467337,"valuation_gap_vs_market":1.5365485221,"warning_en":"The descriptive CAGR to probability-weighted terminal payoff is not a conventional deterministic IRR and must not be read as a forecast return.","warning_ko":"확률가중 종착 지급액까지의 설명용 CAGR은 전통적 결정론적 IRR이 아니며 전망수익률로 해석해서는 안 된다."},
+  "reverse_probability":{"target_market_price":1.28,"fixed_survival_probability":0.30,"required_breakout_probability":0.0219497023,"implied_failure_probability":0.6780502977,"interpretation_en":"With the Survival probability fixed at 30% and conditional present values unchanged, only about 2.20% Breakout probability is mechanically required to equal the snapshot market price; the remaining probability is Failure. This result is highly assumption-sensitive.","interpretation_ko":"Survival 확률을 30%로 고정하고 조건부 현재가치를 유지하면 스냅샷 시장가격과 같아지기 위해 기계적으로 필요한 Breakout 확률은 약 2.20%이며 나머지는 Failure 확률이다. 결과는 가정에 매우 민감하다."},
+  "transaction_overlays":{"rto_loi":{"status":"EXCLUDED_NON_BINDING","company_stated_approx_value_per_share":10.0},"flyx_distribution":{"status":"EXCLUDED_ALREADY_DISTRIBUTED_SEPARATE_VALUE"}},
+  "classification":{"business_quality":"EARLY_TRANSITION_HIGH_EXECUTION_RISK","valuation_state":"OPTION_LIKE_EXPECTED_VALUE_ABOVE_MARKET_WITH_EXTREME_MODEL_RISK","model_risk":"VERY_HIGH","decision_note_en":"The reference case demonstrates why a conditional Bull value is not sufficient. Dilution, financing survival, business-perimeter discontinuity and explicit probabilities dominate. The probability-weighted value exceeds the snapshot market price under the selected assumptions, but small changes in breakout probability, dilution, or terminal multiple can materially reverse the conclusion.","decision_note_ko":"이 기준 사례는 조건부 Bull 가치만으로 충분하지 않은 이유를 보여준다. 희석, 자금조달 생존, 사업범위 단절, 명시적 확률이 가치를 지배한다. 선택한 가정에서는 확률가중 가치가 스냅샷 시장가격보다 높지만 Breakout 확률, 희석, 종착 배수의 작은 변화만으로 결론이 크게 뒤집힐 수 있다."},
+  "provenance":{"input_file":"case_inputs.json","evidence_manifest":"evidence_manifest.json","promotion_gate":"PASS_VENTURE_MODEL_INPUTS_RECONCILED"}
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/dart_source_snapshot.schema.json",
+  "title": "OpenDART Immutable Source Snapshot / OpenDART 불변 Source Snapshot",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "adapter", "source", "request", "response", "raw_text", "snapshot_sha256"],
+  "properties": {
+    "schema_version": {"const": "dart-source-snapshot-v0.1"},
+    "status": {"const": "SOURCE_SNAPSHOT_CAPTURED"},
+    "canonical": {"const": false},
+    "adapter": {"const": "opendart-fnltt-singl-acnt-all-v0.1"},
+    "source": {
+      "type": "object",
+      "required": ["publisher", "source_type", "tier", "requested_locator", "final_locator"],
+      "properties": {
+        "publisher": {"const": "Financial Supervisory Service, Republic of Korea"},
+        "source_type": {"const": "official_opendart_financial_statements_api"},
+        "tier": {"const": "A"},
+        "requested_locator": {"type": "string", "format": "uri"},
+        "final_locator": {"type": "string", "format": "uri"}
+      },
+      "additionalProperties": false
+    },
+    "request": {
+      "type": "object",
+      "required": ["method", "corp_code", "bsns_year", "reprt_code", "fs_div", "api_key_provided"],
+      "properties": {
+        "method": {"const": "GET"},
+        "corp_code": {"type": "string", "pattern": "^[0-9]{8}$"},
+        "bsns_year": {"type": "string", "pattern": "^[0-9]{4}$"},
+        "reprt_code": {"enum": ["11013", "11012", "11014", "11011"]},
+        "fs_div": {"enum": ["CFS", "OFS"]},
+        "api_key_provided": {"const": true}
+      },
+      "additionalProperties": false
+    },
+    "response": {
+      "type": "object",
+      "required": ["http_status", "content_type", "fetched_at", "body_bytes", "body_sha256", "etag", "last_modified"],
+      "properties": {
+        "http_status": {"const": 200},
+        "content_type": {"type": "string"},
+        "fetched_at": {"type": "string"},
+        "body_bytes": {"type": "integer", "minimum": 2},
+        "body_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "etag": {"type": ["string", "null"]},
+        "last_modified": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "raw_text": {"type": "string"},
+    "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

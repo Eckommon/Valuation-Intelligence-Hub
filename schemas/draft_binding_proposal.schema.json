@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/draft_binding_proposal.schema.json",
+  "title": "Draft Binding Proposal v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "target", "policy", "identity", "baseline_context", "conflicts", "draft_input_matrix", "completeness", "source_observation_sha256", "proposal_sha256"],
+  "properties": {
+    "schema_version": {"const": "draft-binding-proposal-v0.1"},
+    "status": {"const": "DRAFT_BINDING_PROPOSED"},
+    "canonical": {"const": false},
+    "target": {
+      "type": "object",
+      "required": ["draft_schema_version", "model"],
+      "properties": {
+        "draft_schema_version": {"const": "draft-case-v0.1"},
+        "model": {"const": "equity_fcff"}
+      },
+      "additionalProperties": false
+    },
+    "policy": {"type": "object"},
+    "identity": {"type": "object"},
+    "baseline_context": {"type": "object"},
+    "conflicts": {"type": "object"},
+    "draft_input_matrix": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {
+        "type": "object",
+        "required": ["field", "state", "rationale"],
+        "properties": {
+          "field": {"type": "string"},
+          "state": {"enum": ["DIRECT_BIND", "REFERENCE_ONLY", "NEEDS_DERIVATION", "NEEDS_ASSUMPTION", "MISSING_REQUIRED", "CONFLICT_BLOCKED", "STALE_BLOCKED"]},
+          "rationale": {"type": "string"}
+        }
+      }
+    },
+    "completeness": {"type": "object"},
+    "source_observation_sha256": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

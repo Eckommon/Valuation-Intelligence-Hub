@@ -7,60 +7,57 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded **cross-asset va
 
 Valuation-Intelligence-Hub는 시장가격, 재무제표, 사업경제성, 불확실성, 명시적 가정을 내재가치, 시장 내재 기대, 기대수익률, 의사결정 관련 위험으로 변환하는 재현 가능하고 근거 중심의 **범자산 가치분석 인텔리전스 시스템**입니다.
 
-## What this repository is / 이 저장소의 정체성
+## Core principles / 핵심 원칙
 
-This is **not** merely a stock screener, target-price generator, or one-model DCF calculator. Public equities are the first validated domain. The long-term objective is one common valuation architecture with asset-specific adapters for public/private companies, startups, real estate, infrastructure, projects, IP/technology, and other economic assets.
-
-이 저장소는 단순 종목 스크리너, 목표주가 생성기, 단일 DCF 계산기가 아닙니다. 상장기업은 첫 검증 도메인일 뿐이며 장기적으로는 상장·비상장기업, 스타트업, 부동산, 인프라, 프로젝트, IP·기술 등 다양한 경제자산을 하나의 공통 가치분석 아키텍처와 자산별 어댑터로 분석하는 것을 목표로 합니다.
-
-## Core questions / 핵심 질문
-
-1. **What is the asset worth? / 이 자산의 경제적 가치는 얼마인가?**
-2. **What facts support the valuation? / 어떤 사실이 가치평가를 뒷받침하는가?**
-3. **Which assumptions drive the result? / 어떤 가정이 결과를 좌우하는가?**
-4. **What future economics are implied by the current price? / 현재 가격은 어떤 미래 경제성을 요구하는가?**
-5. **How does value change across coherent scenarios? / 일관된 시나리오에서 가치는 어떻게 달라지는가?**
-6. **What would invalidate the thesis? / 어떤 조건이 분석 논리를 무효화하는가?**
+- **Facts ≠ assumptions / 사실 ≠ 가정**
+- **Every material fact needs provenance / 모든 중요 사실은 출처를 가져야 함**
+- **Repository canonical state > AI recollection / 저장소 정식 상태 > AI 기억**
+- **Growth must reconcile with reinvestment / 성장은 재투자와 일치해야 함**
+- **Choose the model for the asset / 자산에 맞는 모델 선택**
+- **Uncertainty must be modeled / 불확실성은 모델링**
+- **Same versioned inputs + same model ⇒ reproducible output / 동일 버전 입력·모델 ⇒ 재현 가능한 결과**
+- **Runtime drift from canonical results is an error / 실행값의 정식 결과 drift는 오류**
+- **Draft ≠ Candidate ≠ Staged package ≠ Canonical / Draft ≠ Candidate ≠ 스테이징 패키지 ≠ 정식**
+- **Human-reviewed state cannot survive reviewed-scope mutation / 검토범위 변경 시 인간 승인 무효**
+- **One kernel, multiple interfaces / 하나의 커널, 여러 인터페이스**
 
 ## Canonical analytical flow / 표준 분석 흐름
 
 ```text
-OBJECT / 분석대상
+OBJECT
   ↓
-MARKET VALUE / 시장가치
+MARKET VALUE
   ↓
-EVIDENCE & FACTS / 근거·사실
+EVIDENCE & FACTS
   ↓
-NORMALIZATION / 정규화
+NORMALIZATION
   ↓
-BUSINESS ECONOMICS / 사업경제성
+BUSINESS ECONOMICS
   ↓
-VALUATION KERNEL / 가치평가 커널
+VALUATION KERNEL
   ↓
-SCENARIO / APPROPRIATE OUTCOME MODEL / 시나리오·적합 결과모델
+SCENARIO / APPROPRIATE OUTCOME MODEL
   ↓
-REVERSE VALUATION / 역산 가치평가
+REVERSE VALUATION
   ↓
-PROBABILITY & RISK / 확률·위험
+PROBABILITY & RISK
   ↓
-EXPECTED RETURN / 기대수익률
+EXPECTED RETURN
   ↓
-THESIS · INVALIDATORS · DECISION / 논리·무효화조건·판단
+THESIS · INVALIDATORS · DECISION
 ```
 
 ## Evidence-grounded AI / GitHub 기반 AI 환각 방지
 
-The repository is the canonical grounding layer for GPT, Codex, Astra, and future agents working on the project. Repository-grounded state outranks model recollection.
+The repository is the canonical grounding layer for GPT, Codex, Astra, and future agents. Material claims are classified as:
 
-이 저장소는 GPT, Codex, Astra 및 향후 AI 에이전트의 정식 근거화 계층입니다. 저장소의 정식 상태는 모델의 기억보다 높은 권위를 가집니다.
-
-Material claims are classified as:
+이 저장소는 GPT, Codex, Astra 및 향후 AI 에이전트의 정식 근거화 계층입니다. 중요 주장은 다음과 같이 분류합니다.
 
 `FACT / NORMALIZED_FACT / ASSUMPTION / DERIVED / INTERPRETATION / UNKNOWN`
 
 Missing, conflicting, stale, or unsupported material inputs fail closed instead of being silently invented or promoted.
 
-누락·충돌·노후·미지원 중요 입력은 암묵적으로 생성하거나 승격하지 않고 fail-closed합니다.
+누락·충돌·노후·미지원 중요 입력은 암묵적으로 생성·승격하지 않고 fail-closed합니다.
 
 ## Valuation methods / 가치평가 방법
 
@@ -70,13 +67,9 @@ Missing, conflicting, stale, or unsupported material inputs fail closed instead 
 FCFF = EBIT(1-T) + D\&A - CAPEX - \Delta NWC
 \]
 
-Growth is reconciled with reinvestment, working capital, margins, and capital efficiency rather than treated as a free narrative input.
-
-성장률은 독립적 서사 가정이 아니라 재투자, 운전자본, 마진, 자본효율과 함께 일관성을 검증합니다.
-
 ### Reverse valuation / 역산 가치평가
 
-The Hub can work from market price backward to the operating economics required to justify that price.
+The Hub can work backward from market price to the operating economics required to justify that price.
 
 Hub는 시장가격에서 역으로 출발해 그 가격을 정당화하는 데 필요한 사업경제성을 계산합니다.
 
@@ -84,7 +77,7 @@ Hub는 시장가격에서 역으로 출발해 그 가격을 정당화하는 데 
 
 One DCF is not forced onto every asset. Option-like or financing-dependent assets can use probability-weighted venture logic; future adapters may use project, real-estate, asset-based, or real-option methods.
 
-모든 자산에 하나의 DCF를 강제하지 않습니다. 옵션형·자금조달 의존 자산에는 확률가중 벤처 논리를 사용하고 향후 프로젝트·부동산·자산가치·실물옵션 어댑터를 확장할 수 있습니다.
+모든 자산에 하나의 DCF를 강제하지 않습니다. 옵션형·자금조달 의존 자산에는 확률가중 벤처 논리를 사용하며 향후 프로젝트·부동산·자산가치·실물옵션 어댑터로 확장할 수 있습니다.
 
 ## Validated reference cases / 검증 기준 사례
 
@@ -113,12 +106,6 @@ vih run KR_229640_LS_ECO_ENERGY
 vih report US_JTAI_JET_AI
 ```
 
-Machine-readable output / 기계판독 출력:
-
-```bash
-vih --json run KR_010120_LS_ELECTRIC
-```
-
 ## Product Web / 제품 Web
 
 ```bash
@@ -127,13 +114,13 @@ vih web
 
 Default / 기본: `http://127.0.0.1:8765`
 
-The local-first Web product includes canonical case dashboards, valuation visualization, evidence browsing, scenario preview, user Draft analysis, and M9 promotion review.
+The local-first Web product includes canonical dashboards, valuation visualization, evidence browsing, scenario preview, the user Draft Lab, Promotion Review Lab, and M10 Promotion Package Lab.
 
-로컬 우선 Web 제품은 정식 사례 대시보드, 가치 시각화, 근거 탐색, 시나리오 preview, 사용자 Draft 분석, M9 승격 검토를 제공합니다.
+로컬 우선 Web 제품은 정식 대시보드, 가치 시각화, 근거 탐색, 시나리오 preview, 사용자 Draft 랩, 승격 검토 랩, M10 승격 패키지 랩을 제공합니다.
 
-## User Draft workflow / 사용자 Draft 흐름
+## User Draft workflow / 사용자 Draft 흐름 — M8
 
-All user-created/imported cases begin as:
+Every user-created/imported case starts as:
 
 ```text
 DRAFT_USER_SUPPLIED / NOT_CANONICAL / USER_SUPPLIED_UNVERIFIED
@@ -145,11 +132,7 @@ vih draft-validate workspace/user_cases/my_company.json
 vih draft-run workspace/user_cases/my_company.json
 ```
 
-Draft execution uses the same valuation kernels as canonical cases but does not auto-register or write canonical state.
-
-Draft는 정식 사례와 같은 가치평가 커널을 사용하지만 정식 상태를 자동 등록·기록하지 않습니다.
-
-See / 상세: [`docs/USER_DRAFTS.md`](docs/USER_DRAFTS.md)
+See [`docs/USER_DRAFTS.md`](docs/USER_DRAFTS.md).
 
 ## Reviewed promotion workflow / 검토 기반 승격 흐름 — M9
 
@@ -161,36 +144,99 @@ CANDIDATE_REVIEW
 HUMAN REVIEW + SHA-256 SCOPE LOCK
         ↓
 REVIEW_APPROVED_READY_FOR_PR
-        ↓ separate reviewed PR + CI + merge
-CANONICAL
 ```
 
-M9 deliberately stops at `REVIEW_APPROVED_READY_FOR_PR`. It cannot directly write canonical analysis files or insert a case into `registry/cases.json`.
+M9 stops at PR readiness and never assigns canonical state.
 
-M9은 의도적으로 `REVIEW_APPROVED_READY_FOR_PR`에서 멈춥니다. 정식 분석 파일을 직접 기록하거나 `registry/cases.json`에 사례를 삽입할 수 없습니다.
+M9은 PR 준비상태에서 멈추며 정식 상태를 직접 부여하지 않습니다.
 
 ```bash
 vih candidate-build workspace/user_cases/my_company.json > workspace/user_cases/my_candidate.json
 vih candidate-validate workspace/user_cases/my_candidate.json
-# Human reviews the exact candidate scope and records APPROVE + returned SHA-256.
+# Human reviews the exact scope and records APPROVE + returned SHA-256.
 vih promotion-check workspace/user_cases/my_candidate.json
 ```
 
-Promotion controls include:
+See [`docs/PROMOTION_PROTOCOL.md`](docs/PROMOTION_PROTOCOL.md).
 
-- every material numeric input is explicitly governed / 모든 중요 숫자 입력 명시적 거버넌스
-- observed values cannot be reclassified as assumptions to evade evidence / 관측값의 가정 분류 우회 차단
-- FACT/NORMALIZED_FACT requires linked evidence / 사실·정규화사실 연결 근거 필수
-- evidence values must reconcile with model inputs / 근거값·모델입력 조정 필수
-- stale/conflicting/unsupported evidence fails closed / 노후·충돌·미지원 근거 차단
-- human review is SHA-256 scope-locked / 인간 검토범위 SHA-256 잠금
-- post-review mutation invalidates approval / 검토 후 변경 시 승인 무효화
+## Deterministic promotion package / 결정론적 승격 패키지 — M10
 
-See / 상세: [`docs/PROMOTION_PROTOCOL.md`](docs/PROMOTION_PROTOCOL.md)
+M10 converts an already human-approved M9 Candidate into deterministic, tamper-evident **review material**, not a canonical case.
+
+M10은 이미 인간 승인된 M9 Candidate를 결정론적·변조탐지형 **검토 자료**로 변환하며 정식 사례로 만들지 않습니다.
+
+```text
+REVIEW_APPROVED_READY_FOR_PR
+        ↓
+PROMOTION_PACKAGE_STAGED / NOT_CANONICAL
+        ↓
+explicit reviewed-draft canonical adapter required
+        ↓
+SEPARATE GOVERNED PR + CI + HUMAN REVIEW + MERGE
+        ↓
+CANONICAL
+```
+
+### Why M10 does not fabricate legacy canonical inputs / 기존 입력을 억지 생성하지 않는 이유
+
+M8 generic equity Drafts preserve forecast D&A, CAPEX, and ΔNWC as absolute values, while current reference-equity cases use revenue-linked ratios plus opening core NWC. Those formats are not losslessly equivalent.
+
+M8 일반 equity Draft는 전망 D&A·CAPEX·ΔNWC 절대값을 보존하지만 현재 reference-equity 사례는 매출연동 비율과 opening core NWC를 사용합니다. 두 형식은 손실 없이 동등하지 않습니다.
+
+Therefore every staged package declares:
+
+```text
+NOT_EXECUTABLE_UNTIL_CANONICAL_ADAPTER
+```
+
+Current required adapters:
+
+- `equity_fcff` → `reviewed-draft-equity-fcff-v0.1`
+- `venture_probability` → `reviewed-draft-venture-probability-v0.1`
+
+### Package build / 패키지 생성
+
+Build in-memory/JSON only:
+
+```bash
+vih package-build workspace/user_cases/my_candidate.json \
+  --case-id KR_EXAMPLE_COMPANY \
+  --name-en "Example Company" \
+  --name-ko "예시회사" \
+  --asset-class public_equity > workspace/user_cases/package.json
+```
+
+Explicit local materialization:
+
+```bash
+vih package-build workspace/user_cases/my_candidate.json \
+  --case-id KR_EXAMPLE_COMPANY \
+  --name-en "Example Company" \
+  --name-ko "예시회사" \
+  --asset-class public_equity \
+  --output-dir workspace/promotion_packages/KR_EXAMPLE_COMPANY
+```
+
+Validate:
+
+```bash
+vih package-validate workspace/user_cases/package.json
+vih package-validate workspace/promotion_packages/KR_EXAMPLE_COMPANY
+```
+
+M10 guarantees:
+
+- exact approved Candidate preservation / 승인 Candidate 정확 보존
+- shared-kernel valuation reproduction / 공통커널 가치 재현
+- per-artifact + package SHA-256 / 산출물별·전체 SHA-256
+- canonical case-ID collision rejection / 정식 case ID 충돌 거부
+- repository-internal output only under `workspace/promotion_packages/` / 저장소 내부 출력경로 제한
+- `REGISTRY_PROPOSAL.json` stays `registration_blocked=true` / 레지스트리 제안 차단 유지
+- no `analyses/` or `registry/` write / 정식 경로 기록 없음
+
+See [`docs/PROMOTION_PACKAGE.md`](docs/PROMOTION_PACKAGE.md).
 
 ## Product architecture / 제품 아키텍처
-
-The product direction is **Web-first hybrid**.
 
 ```text
                      Shared Valuation Kernels
@@ -203,9 +249,9 @@ The product direction is **Web-first hybrid**.
    일반사용자 중심      로컬·고급·대량        자동화·연결
 ```
 
-Web, CLI, and API adapters must reuse shared kernels, evidence gates, schemas, and service contracts. Interface layers must not create alternate valuation formulas.
+Interface layers must reuse shared kernels/evidence gates and must not create alternate valuation formulas.
 
-Web, CLI, API 어댑터는 공통 커널·근거게이트·스키마·서비스 계약을 재사용해야 하며 인터페이스 계층은 별도 가치평가 공식을 만들 수 없습니다.
+인터페이스 계층은 공통 커널·근거게이트를 재사용해야 하며 별도 가치평가 공식을 만들 수 없습니다.
 
 ## Repository architecture / 저장소 구조
 
@@ -214,27 +260,14 @@ Valuation-Intelligence-Hub/
 ├── docs/                  # Governance, methodology, execution / 거버넌스·방법론·실행
 ├── schemas/               # Versioned contracts / 버전 관리 계약
 ├── templates/             # User Draft templates / 사용자 Draft 템플릿
-├── registry/              # Canonical executable case registry / 정식 실행 사례 레지스트리
+├── registry/              # Canonical executable registry / 정식 실행 레지스트리
 ├── src/valuation_hub/     # Kernels + services + adapters / 커널·서비스·어댑터
 ├── tests/                 # Invariants, regression, integration / 불변·회귀·통합 테스트
-├── workspace/             # Local user workspace guidance / 로컬 사용자 작업공간 안내
-└── analyses/              # Canonical evidence, inputs, results, reports / 정식 근거·입력·결과·보고서
-    └── equities/
+├── workspace/
+│   ├── user_cases/        # local Drafts / 로컬 Draft
+│   └── promotion_packages/# local staged packages / 로컬 스테이징 패키지
+└── analyses/              # Canonical evidence, inputs, results / 정식 근거·입력·결과
 ```
-
-## Core principles / 핵심 원칙
-
-- **Facts ≠ assumptions / 사실 ≠ 가정**
-- **Every material fact needs provenance / 모든 중요 사실은 출처를 가져야 함**
-- **Repository canonical state > AI recollection / 저장소 정식 상태 > AI 기억**
-- **Growth must reconcile with reinvestment / 성장은 재투자와 일치해야 함**
-- **Choose the model for the asset / 자산에 맞는 모델 선택**
-- **Uncertainty must be modeled / 불확실성은 모델링**
-- **Same versioned inputs + same model ⇒ reproducible output / 동일 버전 입력·모델 ⇒ 재현 가능한 결과**
-- **Runtime drift from canonical results is an error / 실행값의 정식 결과 drift는 오류**
-- **Draft ≠ Candidate ≠ Canonical / Draft ≠ Candidate ≠ 정식**
-- **Human-reviewed promotion cannot survive reviewed-scope mutation / 검토범위 변경 시 인간 승인 무효**
-- **One kernel, multiple interfaces / 하나의 커널, 여러 인터페이스**
 
 ## Development milestones / 개발 마일스톤
 
@@ -249,8 +282,9 @@ Valuation-Intelligence-Hub/
 - [x] Interactive preview + evidence browser / 인터랙티브 preview + 근거 탐색 — M6
 - [x] Product UX + valuation visualization / 제품 UX + 가치 시각화 — M7
 - [x] User Draft workflow / 사용자 Draft 흐름 — M8
-- [ ] Reviewed Draft→Candidate→Canonical promotion protocol / 검토 기반 승격 프로토콜 — **M9 active / 진행 중**
-- [ ] Deterministic reviewed-PR materialization / 검토 PR용 결정론적 materialization
+- [x] Reviewed Draft→Candidate promotion protocol / 검토 기반 승격 프로토콜 — M9
+- [ ] Deterministic reviewed promotion-package staging / 검토 완료 승격 패키지 스테이징 — **M10 active / 진행 중**
+- [ ] Versioned reviewed-Draft canonical adapter + admission / 버전 검토 Draft 정식 adapter + 수용
 - [ ] Live evidence/data ingestion / 실시간 근거·데이터 수집
 - [ ] First non-equity adapter / 첫 비주식 자산 어댑터
 
@@ -263,23 +297,15 @@ Valuation-Intelligence-Hub/
 - [`docs/SCENARIO_REVERSE_POLICY.md`](docs/SCENARIO_REVERSE_POLICY.md)
 - [`docs/PRODUCT_VISION.md`](docs/PRODUCT_VISION.md)
 - [`docs/EXECUTION.md`](docs/EXECUTION.md)
-- [`docs/WEB_MVP.md`](docs/WEB_MVP.md)
-- [`docs/INTERACTIVE_PREVIEW.md`](docs/INTERACTIVE_PREVIEW.md)
-- [`docs/PRODUCT_UX.md`](docs/PRODUCT_UX.md)
 - [`docs/USER_DRAFTS.md`](docs/USER_DRAFTS.md)
 - [`docs/PROMOTION_PROTOCOL.md`](docs/PROMOTION_PROTOCOL.md)
-- [`PROJECT_STATE.md`](PROJECT_STATE.md) — exact repository-grounded resume point / 저장소 기반 정확한 재개점
-
-## Language policy / 언어 원칙
-
-Canonical user-facing documentation is bilingual in English and Korean. English preserves interoperable technical vocabulary; Korean is an equally authoritative interpretation. Code identifiers remain English unless interoperability requires otherwise.
-
-정식 사용자 대상 문서는 영어와 한국어를 병기합니다. 영어는 기술용어의 상호운용성을 유지하고 한국어는 동등한 권위의 해석을 제공합니다. 코드 식별자는 특별한 사유가 없으면 영어를 사용합니다.
+- [`docs/PROMOTION_PACKAGE.md`](docs/PROMOTION_PACKAGE.md)
+- [`PROJECT_STATE.md`](PROJECT_STATE.md) — exact repository-grounded resume point / 정확한 저장소 기반 재개점
 
 ## Current status / 현재 상태
 
-**M9 — Reviewed Draft→Candidate→Canonical promotion protocol / 검토 기반 승격 프로토콜 — ACTIVE**
+**M10 — Deterministic reviewed promotion package staging / 검토 완료 승격 패키지 결정론적 스테이징 — ACTIVE**
 
-M8 is canonical on `main`. M9 is implementing explicit input governance, evidence reconciliation, SHA-256 human-review scope locking, and PR-readiness verification without automatic canonical write-back.
+M9 is canonical on `main`. M10 preserves reviewed economics without lossy conversion, creates deterministic hash-locked staging packages, and still refuses canonical write-back or registry admission.
 
-M8은 `main`의 정식 상태입니다. M9은 정식 자동 write-back 없이 명시적 입력 거버넌스, 근거 조정, SHA-256 인간 검토범위 잠금, PR 준비도 검증을 구현하고 있습니다.
+M9은 `main`의 정식 상태입니다. M10은 검토 경제값을 손실 변환 없이 보존하고 결정론적 해시 잠금 스테이징 패키지를 생성하며 정식 write-back·레지스트리 수용은 계속 거부합니다.

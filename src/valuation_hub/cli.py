@@ -22,7 +22,14 @@ from valuation_hub.promotion import (
     promotion_check,
     validate_candidate,
 )
-from valuation_hub.web_promotion import serve as serve_web
+from valuation_hub.promotion_package import (
+    build_promotion_package,
+    load_package_file,
+    materialize_promotion_package,
+    validate_materialized_package,
+    validate_promotion_package,
+)
+from valuation_hub.web_package import serve as serve_web
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -55,6 +62,16 @@ def _parser() -> argparse.ArgumentParser:
     candidate_validate.add_argument("file", type=Path)
     promotion = sub.add_parser("promotion-check", help="Verify reviewed PR readiness / 인간검토 PR 준비 확인")
     promotion.add_argument("file", type=Path)
+
+    package_build = sub.add_parser("package-build", help="Build deterministic reviewed promotion package / 검토 완료 승격 패키지 생성")
+    package_build.add_argument("file", type=Path, help="Approved candidate JSON / 승인 Candidate JSON")
+    package_build.add_argument("--case-id", required=True)
+    package_build.add_argument("--name-en", required=True)
+    package_build.add_argument("--name-ko", required=True)
+    package_build.add_argument("--asset-class", required=True)
+    package_build.add_argument("--output-dir", type=Path, default=None, help="Optional explicit materialization directory / 선택적 명시 출력 디렉터리")
+    package_validate = sub.add_parser("package-validate", help="Validate package JSON or materialized directory / 패키지 JSON·materialized 디렉터리 검증")
+    package_validate.add_argument("path", type=Path)
 
     web = sub.add_parser("web", help="Run local Web application / 로컬 Web 앱 실행")
     web.add_argument("--host", default="127.0.0.1", help="Bind host / 바인드 호스트")
@@ -142,6 +159,17 @@ def _human_promotion(result: dict[str, Any]) -> None:
     print(result["next_action_ko"])
 
 
+def _human_package(result: dict[str, Any]) -> None:
+    print(result["status"])
+    print("CANONICAL / 정식: FALSE")
+    print(f"Case ID / 사례 ID: {result['case_id']}")
+    print(f"Package SHA-256 / 패키지 SHA-256: {result['package_sha256']}")
+    print(f"Canonical adapter / 정식 adapter: {result['required_canonical_adapter']}")
+    if result.get("materialized"):
+        print(f"Output / 출력: {result['output_dir']}")
+    print(result["next_action_ko"])
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
@@ -184,13 +212,35 @@ def main(argv: list[str] | None = None) -> int:
             result = promotion_check(load_candidate_file(args.file))
             _dump(result) if args.as_json else _human_promotion(result)
             return 0
+        if args.command == "package-build":
+            package = build_promotion_package(
+                load_candidate_file(args.file),
+                case_id=args.case_id,
+                display_name_en=args.name_en,
+                display_name_ko=args.name_ko,
+                asset_class=args.asset_class,
+                root=args.root,
+            )
+            if args.output_dir is None:
+                _dump(package)
+            else:
+                result = materialize_promotion_package(package, args.output_dir, args.root)
+                _dump(result) if args.as_json else _human_package(result)
+            return 0
+        if args.command == "package-validate":
+            if args.path.is_dir():
+                result = validate_materialized_package(args.path, args.root)
+            else:
+                result = validate_promotion_package(load_package_file(args.path), args.root)
+            _dump(result) if args.as_json else _human_package(result)
+            return 0
         if args.command == "web":
             if args.as_json:
                 raise CaseServiceError("--json is not valid with web / web 명령은 --json을 지원하지 않습니다")
             serve_web(host=args.host, port=args.port, root=args.root)
             return 0
         raise CaseServiceError(f"unsupported command / 미지원 명령: {args.command}")
-    except (CaseServiceError, ValueError) as exc:
+    except (CaseServiceError, ValueError, OSError) as exc:
         if args.as_json:
             _dump({"ok": False, "error": str(exc)})
         else:

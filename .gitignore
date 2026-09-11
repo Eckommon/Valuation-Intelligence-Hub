@@ -2,6 +2,10 @@
 /workspace/user_cases/**
 !/workspace/user_cases/.gitkeep
 
+# User-local promotion packages / 사용자 로컬 승격 패키지
+/workspace/promotion_packages/**
+!/workspace/promotion_packages/.gitkeep
+
 # Python / Python 임시파일
 __pycache__/
 *.py[cod]

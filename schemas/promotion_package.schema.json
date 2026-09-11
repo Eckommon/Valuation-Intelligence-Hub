@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/promotion_package.schema.json",
+  "title": "Valuation Intelligence Hub Promotion Package / 승격 스테이징 패키지",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "case_identity", "source_review", "adapter_requirement", "artifacts", "artifact_sha256", "package_sha256"],
+  "properties": {
+    "schema_version": {"const": "promotion-package-v0.1"},
+    "status": {"const": "PROMOTION_PACKAGE_STAGED"},
+    "canonical": {"const": false},
+    "case_identity": {
+      "type": "object",
+      "required": ["case_id", "display_name_en", "display_name_ko", "asset_class"],
+      "properties": {
+        "case_id": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_]{2,79}$"},
+        "display_name_en": {"type": "string", "minLength": 1, "maxLength": 160},
+        "display_name_ko": {"type": "string", "minLength": 1, "maxLength": 160},
+        "asset_class": {"type": "string", "minLength": 1, "maxLength": 80}
+      },
+      "additionalProperties": false
+    },
+    "source_review": {
+      "type": "object",
+      "required": ["candidate_sha256", "review_scope_sha256", "reviewer", "reviewed_at"],
+      "properties": {
+        "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "review_scope_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "reviewer": {"type": "string", "minLength": 1},
+        "reviewed_at": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "adapter_requirement": {
+      "type": "object",
+      "required": ["source_model", "required_canonical_adapter", "compatibility_status", "reason_en", "reason_ko"],
+      "properties": {
+        "source_model": {"enum": ["equity_fcff", "venture_probability"]},
+        "required_canonical_adapter": {"type": "string", "minLength": 1},
+        "compatibility_status": {"const": "NOT_EXECUTABLE_UNTIL_CANONICAL_ADAPTER"},
+        "reason_en": {"type": "string", "minLength": 1},
+        "reason_ko": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {"type": "object", "minProperties": 5},
+    "artifact_sha256": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

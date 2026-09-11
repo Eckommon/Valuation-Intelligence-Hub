@@ -16,7 +16,13 @@ from valuation_hub.case_service import (
     validate_case,
 )
 from valuation_hub.draft_service import load_draft_file, run_draft, template, validate_draft
-from valuation_hub.web_draft import serve as serve_web
+from valuation_hub.promotion import (
+    build_candidate,
+    load_candidate_file,
+    promotion_check,
+    validate_candidate,
+)
+from valuation_hub.web_promotion import serve as serve_web
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -42,6 +48,13 @@ def _parser() -> argparse.ArgumentParser:
     draft_validate.add_argument("file", type=Path)
     draft_run = sub.add_parser("draft-run", help="Run a user Draft JSON file / 사용자 Draft JSON 실행")
     draft_run.add_argument("file", type=Path)
+
+    candidate_build = sub.add_parser("candidate-build", help="Build a review candidate from Draft JSON / Draft에서 검토 Candidate 생성")
+    candidate_build.add_argument("file", type=Path)
+    candidate_validate = sub.add_parser("candidate-validate", help="Validate evidence-governed candidate / 근거 거버넌스 Candidate 검증")
+    candidate_validate.add_argument("file", type=Path)
+    promotion = sub.add_parser("promotion-check", help="Verify reviewed PR readiness / 인간검토 PR 준비 확인")
+    promotion.add_argument("file", type=Path)
 
     web = sub.add_parser("web", help="Run local Web application / 로컬 Web 앱 실행")
     web.add_argument("--host", default="127.0.0.1", help="Bind host / 바인드 호스트")
@@ -113,6 +126,22 @@ def _human_draft_run(result: dict[str, Any]) -> None:
             print(f"{name}: p={item['probability']:.2%}, PV/share={item['present_value_per_share']:.4f}")
 
 
+def _human_candidate_validate(result: dict[str, Any]) -> None:
+    print("PASS CANDIDATE / Candidate 검토게이트 통과")
+    print(f"Material inputs / 중요 입력: {result['material_input_count']}")
+    print(f"Evidence records / 근거 레코드: {result['evidence_count']}")
+    print(f"Review scope SHA-256 / 검토범위 해시: {result['review_scope_sha256']}")
+    print("Next / 다음: perform explicit human review and copy this exact hash into review.scope_sha256.")
+
+
+def _human_promotion(result: dict[str, Any]) -> None:
+    print(result["status"])
+    print("CANONICAL / 정식: FALSE")
+    print(f"Reviewer / 검토자: {result['reviewer']}")
+    print(f"Review scope SHA-256 / 검토범위 해시: {result['review_scope_sha256']}")
+    print(result["next_action_ko"])
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
@@ -142,6 +171,18 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "draft-run":
             result = run_draft(load_draft_file(args.file))
             _dump(result) if args.as_json else _human_draft_run(result)
+            return 0
+        if args.command == "candidate-build":
+            result = build_candidate(load_draft_file(args.file))
+            _dump(result)
+            return 0
+        if args.command == "candidate-validate":
+            result = validate_candidate(load_candidate_file(args.file))
+            _dump(result) if args.as_json else _human_candidate_validate(result)
+            return 0
+        if args.command == "promotion-check":
+            result = promotion_check(load_candidate_file(args.file))
+            _dump(result) if args.as_json else _human_promotion(result)
             return 0
         if args.command == "web":
             if args.as_json:

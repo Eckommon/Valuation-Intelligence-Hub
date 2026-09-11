@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/bound_draft_result.schema.json",
+  "title": "Bound Draft Result v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","binding_proposal","approval","draft_before","draft_before_sha256","applied_diffs","draft_after","draft_after_sha256","unresolved_binding_matrix","result_sha256"],
+  "properties": {
+    "schema_version": {"const":"bound-draft-result-v0.1"},
+    "status": {"const":"BOUND_DRAFT_RESULT"},
+    "canonical": {"const":false},
+    "binding_proposal": {"type":"object"},
+    "approval": {"type":"object"},
+    "draft_before": {"type":"object"},
+    "draft_before_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "applied_diffs": {"type":"array","items":{"type":"object"}},
+    "draft_after": {"type":"object"},
+    "draft_after_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "unresolved_binding_matrix": {"type":"array"},
+    "result_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/draft_case.schema.json",
+  "title": "Valuation Intelligence Hub User Draft Case / 사용자 Draft 사례",
+  "type": "object",
+  "required": ["schema_version", "status", "model", "name", "currency", "market_price"],
+  "properties": {
+    "schema_version": {"const": "draft-case-v0.1"},
+    "status": {"const": "DRAFT_USER_SUPPLIED"},
+    "model": {"enum": ["equity_fcff", "venture_probability"]},
+    "name": {"type": "string", "minLength": 1, "maxLength": 160},
+    "currency": {"type": "string", "minLength": 3, "maxLength": 8},
+    "market_price": {"type": "number", "minimum": 0},
+    "notes": {"type": "string", "maxLength": 4000},
+    "equity": {
+      "type": "object",
+      "required": ["diluted_shares", "scenarios"],
+      "properties": {
+        "diluted_shares": {"type": "number", "exclusiveMinimum": 0},
+        "debt": {"type": "number", "minimum": 0},
+        "cash": {"type": "number", "minimum": 0},
+        "minority_interest": {"type": "number", "minimum": 0},
+        "scenarios": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "required": ["wacc", "terminal_growth", "years"],
+            "properties": {
+              "wacc": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+              "terminal_growth": {"type": "number"},
+              "years": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["year", "revenue", "ebit_margin", "tax_rate", "depreciation_amortization", "capex", "delta_nwc"],
+                  "properties": {
+                    "year": {"type": "integer"},
+                    "revenue": {"type": "number", "minimum": 0},
+                    "ebit_margin": {"type": "number"},
+                    "tax_rate": {"type": "number", "minimum": 0, "exclusiveMaximum": 1},
+                    "depreciation_amortization": {"type": "number"},
+                    "capex": {"type": "number"},
+                    "delta_nwc": {"type": "number"}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "venture": {
+      "type": "object",
+      "required": ["holding_period_years", "scenarios"],
+      "properties": {
+        "holding_period_years": {"type": "number", "exclusiveMinimum": 0},
+        "scenarios": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "probability", "terminal_revenue", "ev_to_sales", "terminal_net_debt", "diluted_shares", "discount_rate"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "probability": {"type": "number", "minimum": 0, "maximum": 1},
+              "terminal_revenue": {"type": "number", "minimum": 0},
+              "ev_to_sales": {"type": "number", "minimum": 0},
+              "terminal_net_debt": {"type": "number"},
+              "diluted_shares": {"type": "number", "exclusiveMinimum": 0},
+              "discount_rate": {"type": "number", "minimum": 0, "exclusiveMaximum": 1},
+              "recovery_equity_value": {"type": "number", "minimum": 0}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {"if": {"properties": {"model": {"const": "equity_fcff"}}}, "then": {"required": ["equity"]}},
+    {"if": {"properties": {"model": {"const": "venture_probability"}}}, "then": {"required": ["venture"]}}
+  ]
+}

@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Any
 
 from valuation_hub.admission import build_admission_bundle, validate_admission_bundle
+from valuation_hub.admission_apply import (
+    apply_repository_change_plan,
+    build_repository_change_plan,
+    load_json_object,
+    validate_repository_change_plan,
+)
 from valuation_hub.case_service import (
     CaseServiceError,
     list_cases,
@@ -30,7 +36,7 @@ from valuation_hub.promotion_package import (
     validate_materialized_package,
     validate_promotion_package,
 )
-from valuation_hub.web_admission import serve as serve_web
+from valuation_hub.web_prprep import serve as serve_web
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -79,6 +85,18 @@ def _parser() -> argparse.ArgumentParser:
     admission_validate = sub.add_parser("admission-validate", help="Validate proposed canonical admission bundle / 정식 수용 제안 bundle 검증")
     admission_validate.add_argument("file", type=Path)
 
+    admission_plan = sub.add_parser("admission-plan", help="Build deterministic PR-ready repository change plan / PR 준비 저장소 변경계획 생성")
+    admission_plan.add_argument("admission", type=Path, help="M11 admission bundle JSON / M11 수용 bundle JSON")
+    admission_plan.add_argument("--target-repo", type=Path, required=True, help="Explicit target checkout/worktree / 명시적 대상 checkout/worktree")
+    admission_plan_validate = sub.add_parser("admission-plan-validate", help="Validate repository change plan against current baseline / 현재 기준선 대비 변경계획 검증")
+    admission_plan_validate.add_argument("plan", type=Path)
+    admission_plan_validate.add_argument("admission", type=Path)
+    admission_plan_validate.add_argument("--target-repo", type=Path, required=True)
+    admission_apply = sub.add_parser("admission-apply", help="Guardedly apply exact admission bytes on admission/* branch / admission/* 브랜치 안전 적용")
+    admission_apply.add_argument("plan", type=Path)
+    admission_apply.add_argument("admission", type=Path)
+    admission_apply.add_argument("--target-repo", type=Path, required=True)
+
     web = sub.add_parser("web", help="Run local Web application / 로컬 Web 앱 실행")
     web.add_argument("--host", default="127.0.0.1", help="Bind host / 바인드 호스트")
     web.add_argument("--port", type=int, default=8765, help="Bind port / 바인드 포트")
@@ -89,16 +107,8 @@ def _dump(payload: Any) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
 
 
-def _load_json_object(path: Path, label: str) -> dict[str, Any]:
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError as exc:
-        raise CaseServiceError(f"{label} file not found / {label} 파일 없음: {path}") from exc
-    except json.JSONDecodeError as exc:
-        raise CaseServiceError(f"invalid {label} JSON / {label} JSON 오류: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise CaseServiceError(f"{label} must be a JSON object / {label}는 JSON 객체여야 합니다")
-    return payload
+def _load_json(path: Path, label: str) -> dict[str, Any]:
+    return load_json_object(path, label)
 
 
 def _human_list(cases: list[dict[str, Any]]) -> None:
@@ -106,10 +116,7 @@ def _human_list(cases: list[dict[str, Any]]) -> None:
     for item in cases:
         adapter = item.get("adapter")
         suffix = f" | {adapter}" if adapter else ""
-        print(
-            f"- {item['case_id']} | {item['display_name_en']} / {item['display_name_ko']} "
-            f"| {item['model']}{suffix}"
-        )
+        print(f"- {item['case_id']} | {item['display_name_en']} / {item['display_name_ko']} | {item['model']}{suffix}")
 
 
 def _human_validate(result: dict[str, Any]) -> None:
@@ -130,15 +137,9 @@ def _human_run(result: dict[str, Any]) -> None:
         for name in ("BEAR", "BASE", "BULL"):
             print(f"{name}: value/share = {runtime[name]['value_per_share']:.2f}")
     else:
-        print(
-            "Probability-weighted present value/share / 확률가중 현재 주당가치: "
-            f"{runtime['expected_present_value_per_share']:.4f}"
-        )
+        print(f"Probability-weighted present value/share / 확률가중 현재 주당가치: {runtime['expected_present_value_per_share']:.4f}")
         for name, item in runtime["scenarios"].items():
-            print(
-                f"{name}: p={item['probability']:.2%}, "
-                f"PV/share={item['present_value_per_share']:.4f}"
-            )
+            print(f"{name}: p={item['probability']:.2%}, PV/share={item['present_value_per_share']:.4f}")
 
 
 def _human_draft_validate(result: dict[str, Any]) -> None:
@@ -161,8 +162,6 @@ def _human_draft_run(result: dict[str, Any]) -> None:
             print(f"{name}: value/share = {item['value_per_share']:.4f}")
     else:
         print(f"Expected PV/share / 기대 현재 주당가치: {runtime['expected_present_value_per_share']:.4f}")
-        for name, item in runtime["scenarios"].items():
-            print(f"{name}: p={item['probability']:.2%}, PV/share={item['present_value_per_share']:.4f}")
 
 
 def _human_candidate_validate(result: dict[str, Any]) -> None:
@@ -170,7 +169,6 @@ def _human_candidate_validate(result: dict[str, Any]) -> None:
     print(f"Material inputs / 중요 입력: {result['material_input_count']}")
     print(f"Evidence records / 근거 레코드: {result['evidence_count']}")
     print(f"Review scope SHA-256 / 검토범위 해시: {result['review_scope_sha256']}")
-    print("Next / 다음: perform explicit human review and copy this exact hash into review.scope_sha256.")
 
 
 def _human_promotion(result: dict[str, Any]) -> None:
@@ -199,6 +197,26 @@ def _human_admission(result: dict[str, Any]) -> None:
     print(f"Adapter / 어댑터: {result['adapter']}")
     print(f"Valuation as of / 기준일: {result['valuation_as_of']}")
     print(f"Admission bundle SHA-256 / 수용 bundle SHA-256: {result['bundle_sha256']}")
+    print(result["next_action_ko"])
+
+
+def _human_plan(result: dict[str, Any]) -> None:
+    print(result["status"])
+    print("CANONICAL / 정식: FALSE")
+    print(f"Case ID / 사례 ID: {result['case_id']}")
+    print(f"Plan SHA-256 / 계획 SHA-256: {result['plan_sha256']}")
+    print(f"Registry baseline / registry 기준선: {result['expected_registry_sha256']}")
+    print(f"Planned registry / 계획 registry: {result['planned_registry_sha256']}")
+    print(f"Required branch / 필요 브랜치: {result['branch_required']}")
+
+
+def _human_apply(result: dict[str, Any]) -> None:
+    print(result["status"])
+    print("CANONICAL / 정식: FALSE — branch working tree only / 브랜치 working tree만 적용")
+    print(f"Case ID / 사례 ID: {result['case_id']}")
+    print(f"Branch / 브랜치: {result['branch']}")
+    print(f"Plan SHA-256 / 계획 SHA-256: {result['plan_sha256']}")
+    print(f"Post-apply validation / 적용 후 검증: {result['post_apply_validation']}")
     print(result["next_action_ko"])
 
 
@@ -233,8 +251,7 @@ def main(argv: list[str] | None = None) -> int:
             _dump(result) if args.as_json else _human_draft_run(result)
             return 0
         if args.command == "candidate-build":
-            result = build_candidate(load_draft_file(args.file))
-            _dump(result)
+            _dump(build_candidate(load_draft_file(args.file)))
             return 0
         if args.command == "candidate-validate":
             result = validate_candidate(load_candidate_file(args.file))
@@ -260,20 +277,31 @@ def main(argv: list[str] | None = None) -> int:
                 _dump(result) if args.as_json else _human_package(result)
             return 0
         if args.command == "package-validate":
-            if args.path.is_dir():
-                result = validate_materialized_package(args.path, args.root)
-            else:
-                result = validate_promotion_package(load_package_file(args.path), args.root)
+            result = validate_materialized_package(args.path, args.root) if args.path.is_dir() else validate_promotion_package(load_package_file(args.path), args.root)
             _dump(result) if args.as_json else _human_package(result)
             return 0
         if args.command == "admission-build":
-            package = _load_json_object(args.file, "promotion package")
-            _dump(build_admission_bundle(package, args.root))
+            _dump(build_admission_bundle(_load_json(args.file, "promotion package"), args.root))
             return 0
         if args.command == "admission-validate":
-            bundle = _load_json_object(args.file, "admission bundle")
-            result = validate_admission_bundle(bundle, args.root)
+            result = validate_admission_bundle(_load_json(args.file, "admission bundle"), args.root)
             _dump(result) if args.as_json else _human_admission(result)
+            return 0
+        if args.command == "admission-plan":
+            bundle = _load_json(args.admission, "admission bundle")
+            _dump(build_repository_change_plan(bundle, args.target_repo))
+            return 0
+        if args.command == "admission-plan-validate":
+            plan = _load_json(args.plan, "repository change plan")
+            bundle = _load_json(args.admission, "admission bundle")
+            result = validate_repository_change_plan(plan, bundle, args.target_repo)
+            _dump(result) if args.as_json else _human_plan(result)
+            return 0
+        if args.command == "admission-apply":
+            plan = _load_json(args.plan, "repository change plan")
+            bundle = _load_json(args.admission, "admission bundle")
+            result = apply_repository_change_plan(plan, bundle, args.target_repo)
+            _dump(result) if args.as_json else _human_apply(result)
             return 0
         if args.command == "web":
             if args.as_json:

@@ -5,10 +5,10 @@
 
 ## Repository identity / 저장소 식별
 
-- Repository / 저장소: `Eckommon/Valuation-Intelligence-Hub`
-- Purpose / 목적: Cross-asset, evidence-grounded valuation intelligence system / 범자산 근거 기반 가치분석 인텔리전스 시스템
-- Product strategy / 제품 전략: Web-first hybrid; one shared valuation/evidence kernel / 웹 우선 하이브리드; 단일 공통 가치·근거 커널
-- Documentation / 문서: English + Korean bilingual / 영한문 병기
+- Repository: `Eckommon/Valuation-Intelligence-Hub`
+- Purpose: cross-asset, evidence-grounded valuation intelligence system / 범자산 근거 기반 가치분석 인텔리전스 시스템
+- Product strategy: Web-first hybrid, one shared valuation/evidence kernel / 웹 우선 하이브리드, 단일 공통 가치·근거 커널
+- Documentation: English + Korean bilingual / 영한문 병기
 
 ## Canonical baseline / 정식 기준선
 
@@ -23,176 +23,166 @@
 - M8 User Draft workflow: `899271709ef3c49d431e0fce716eff48d0b22370` — #18 `COMPLETED`
 - M9 Reviewed promotion protocol: `3e2d0a58b13c6e90ae6e665db72dc2683d5fad3f` — #20 `COMPLETED`
 - M10 Deterministic promotion package staging: `951e6be93a2d98db3e71c7e9f77bc06b90516dd2` — #22 `COMPLETED`
+- M11 Reviewed-Draft canonical adapter + admission: `243f941b2f323ac5fdca31b86e13966950156114` — #24 `COMPLETED`
 
-M10 post-merge `main` CI run `34566368596` completed `success` on Python 3.11/3.12.
+M11 post-merge `main` CI run `34567565614` completed `success` on Python 3.11/3.12.
 
-M10 병합 후 `main` CI run `34566368596`은 Python 3.11/3.12에서 `success` 완료했다.
+M11 병합 후 `main` CI run `34567565614`은 Python 3.11/3.12에서 `success` 완료했다.
 
 ## Canonical product capability / 정식 제품 기능
 
-- Three regression-locked reference cases / 3개 회귀 잠금 기준 사례
-- Shared FCFF and venture-probability kernels / 공통 FCFF·벤처 확률가중 커널
-- Versioned registry + runtime/canonical drift validation / 버전 레지스트리 + runtime drift 검증
-- CLI + local Web product / CLI + 로컬 Web 제품
-- Evidence browser + scenario preview / 근거 탐색 + 시나리오 preview
-- User Draft Lab / 사용자 Draft 랩
-- M9 evidence-governed Candidate + human SHA-256 review lock / M9 근거 거버넌스 Candidate + 인간검토 해시 잠금
-- M10 deterministic tamper-evident promotion package / M10 결정론적 변조탐지 승격 패키지
+The merged product now provides:
+
+- three regression-locked reference cases / 3개 회귀 잠금 기준 사례
+- shared FCFF + venture-probability kernels / 공통 FCFF + 벤처 확률가중 커널
+- versioned registry, CLI, local Web UI, evidence browser, scenario preview / 버전 레지스트리·CLI·Web·근거탐색·preview
+- M8 user Draft workflow / 사용자 Draft
+- M9 evidence-governed Candidate + human SHA-256 review lock / 근거 거버넌스 Candidate + 인간검토 해시 잠금
+- M10 deterministic tamper-evident promotion package / 결정론적 변조탐지 승격 패키지
+- M11 versioned reviewed-Draft canonical adapters + deterministic admission bundle / 버전 검토 Draft 정식 adapter + 결정론적 수용 bundle
+
+M11 can produce exact proposed canonical bytes but intentionally does not place them into a Git working tree.
+
+M11은 정확한 정식 제안 bytes를 생성할 수 있지만 Git working tree에는 의도적으로 직접 기록하지 않는다.
 
 ## Active mission / 활성 미션
 
-- Issue: `#24 [M11] Versioned reviewed-Draft canonical adapter + admission contract / 검토 Draft 정식 adapter + 수용 계약`
-- Branch: `mission/m11-reviewed-draft-canonical-adapter-v01`
-- Status: `ACTIVE_IMPLEMENTATION`
+- Issue: `#26 [M12] Guarded canonical admission applicator + PR-ready change plan / 정식 수용 안전 적용기 + PR 준비 변경계획`
+- Branch: `mission/m12-guarded-admission-applicator-v01`
+- PR: `#27 M12 Guarded canonical admission applicator + PR-ready plan / 정식 수용 안전 적용기`
+- Status: `ACTIVE_FINALIZATION`
+- First PR CI: run `34568018613` — Python 3.11/3.12 `success`
 
-## M11 objective / M11 목표
+## M12 objective / M12 목표
 
-M11 provides a lossless bridge from an M10 reviewed package to proposed canonical repository artifacts while keeping actual canonical authority behind a separate reviewed PR + CI + merge.
+Close the remaining manual-copy gap between a valid M11 admission bundle and a PR-ready working tree without creating a path that can silently modify canonical `main`.
 
-M11은 M10 검토 패키지에서 정식 저장소 제안 산출물까지 무손실 연결하되 실제 정식 권위는 별도 인간 검토 PR + CI + 병합 뒤에 유지한다.
+유효한 M11 admission bundle과 PR 준비 working tree 사이의 수작업 복사 간극을 닫되 정식 `main`을 암묵적으로 변경하는 경로는 만들지 않는다.
 
 ```text
-DRAFT_USER_SUPPLIED
-  ↓ M9 evidence governance + human review lock
-REVIEW_APPROVED_READY_FOR_PR
-  ↓ M10 deterministic staging
-PROMOTION_PACKAGE_STAGED / NOT_CANONICAL
-  ↓ M11 deterministic admission planning
-CANONICAL_ADMISSION_PROPOSED / BUNDLE canonical=false
-  ↓ exact repository PR + full CI + human review + merge
+CANONICAL_ADMISSION_PROPOSED
+        ↓ deterministic registry-baseline-bound plan
+REPOSITORY_CHANGE_PLANNED / canonical=false
+        ↓ explicit guarded apply on admission/* branch/worktree
+GUARDED_BRANCH_APPLIED / canonical=false
+        ↓ human diff review + PR + full CI + merge
 CANONICAL
 ```
 
-## M11 adapters / M11 Adapter
+## M12 repository change plan / 저장소 변경계획
 
-- `reviewed-draft-equity-fcff-v0.1`
-- `reviewed-draft-venture-probability-v0.1`
+- schema: `schemas/repository_change_plan.schema.json`
+- service: `src/valuation_hub/admission_apply.py`
+- plan state: `REPOSITORY_CHANGE_PLANNED`
+- plan flag: `canonical=false`
+- binds exact M11 admission bundle SHA-256 / 정확한 M11 bundle 해시 결합
+- captures current `registry/cases.json` byte SHA-256 / 현재 registry bytes 기준선
+- computes exact post-change registry object + SHA-256 / 변경 후 registry 객체·해시
+- enumerates exact canonical artifact paths + SHA-256 / 정확한 정식 산출물 경로·해시
+- full plan is SHA-256 locked / 전체 plan 해시 잠금
 
-Registry entries without `adapter` continue using the legacy M3 reference route. Existing LS ELECTRIC, LS Eco Energy, and Jet.AI execution remains unchanged.
+A plan is valid only while the target registry bytes remain exactly equal to the planned baseline. Registry drift requires a new plan.
 
-`adapter`가 없는 registry 항목은 기존 M3 reference 경로를 그대로 사용한다. 기존 LS ELECTRIC, LS에코에너지, Jet.AI 실행은 변경되지 않는다.
+계획은 대상 registry bytes가 계획 기준선과 정확히 같을 때만 유효하다. registry drift가 있으면 계획을 다시 생성해야 한다.
 
-## Lossless admission rule / 무손실 수용 규칙
+## Guarded apply boundary / 안전 적용 경계
 
-M8 equity Draft stores absolute forecast D&A/CAPEX/ΔNWC while legacy reference cases reconstruct economics from opening NWC and revenue-linked ratios. M11 therefore embeds the exact reviewed Draft and never reconstructs it into the legacy representation.
-
-M8 equity Draft는 D&A/CAPEX/ΔNWC 전망 절대값을 저장하지만 기존 reference 사례는 opening NWC와 매출연동 비율에서 경제값을 재구축한다. M11은 검토 Draft 원문을 그대로 내장하며 legacy 표현으로 재구축하지 않는다.
-
-## Canonical compatibility profile v0.1 / 정식 호환 프로파일 v0.1
-
-Generic M8 Drafts remain flexible. M11 canonical admission v0.1 requires the scenario names already expected by the current product runtime contract:
-
-일반 M8 Draft는 유연성을 유지하지만 M11 정식 수용 v0.1은 현재 제품 runtime 계약이 기대하는 시나리오 이름을 요구한다.
-
-- equity: exactly `BEAR / BASE / BULL`
-- venture: exactly `FAILURE / SURVIVAL / BREAKOUT`
-
-A valid M8/M10 case may therefore fail M11 admission without losing or rewriting data.
-
-따라서 유효한 M8/M10 사례도 데이터 변경 없이 M11 수용에서 fail-closed될 수 있다.
-
-## Admission bundle / 수용 Bundle
-
-- schema: `schemas/canonical_admission_bundle.schema.json`
-- service: `src/valuation_hub/admission.py`
-- state: `CANONICAL_ADMISSION_PROPOSED`
-- bundle flag: `canonical=false`
-- valuation date: derived from governed `market_price` evidence `as_of`
-- artifacts:
-  1. `SOURCE_PACKAGE.json`
-  2. `case_inputs.json`
-  3. `evidence_manifest.json`
-  4. `evidence_reviewed.json`
-  5. `valuation_result.json`
-  6. `REPORT.md`
-- proposed registry entry contains explicit `adapter`
-- every artifact + full bundle SHA-256 locked / 모든 산출물 + 전체 bundle SHA-256 잠금
-
-The proposed files contain `canonical=true` because they are intended canonical bytes, but they have no canonical authority until the exact PR is merged.
-
-제안 파일은 정식 반영 대상 bytes이므로 `canonical=true`를 포함하지만 정확한 PR 병합 전에는 정식 권위를 갖지 않는다.
-
-## Runtime provenance chain / Runtime 출처 체인
-
-Every admitted reviewed case must revalidate:
+M12 filesystem apply requires an explicit target checkout/worktree whose symbolic Git branch is:
 
 ```text
-SOURCE_PACKAGE
-→ approved Candidate SHA-256
-→ human review-scope SHA-256
-→ exact reviewed_draft
-→ exact evidence + input_governance
-→ adapter/model compatibility
-→ shared-kernel recomputation
-→ stored canonical runtime
+admission/*
 ```
 
-A mismatch blocks `validate_case()` and therefore blocks CLI/Web/API consumption.
+Fail-closed:
 
-불일치가 있으면 `validate_case()`와 그 위의 CLI/Web/API 소비경로가 차단된다.
+- `main` / `master`
+- any other branch prefix / 다른 브랜치
+- detached HEAD
+- missing/invalid Git checkout marker
+- existing registry case ID
+- existing target canonical directory
+- path traversal or symlink escape
+- admission/plan/hash drift
+- registry baseline drift
 
-## Interactive compatibility / 인터랙티브 호환
+M12 v0.1 is new-case admission only; it cannot replace or update an existing canonical case.
 
-- legacy reference cases keep the existing preview route / 기존 reference 사례 preview 경로 유지
-- reviewed equity preview uses absolute Draft economics and proportional D&A/CAPEX/ΔNWC scaling / 검토 equity preview는 절대 Draft 경제값 사용
-- reviewed venture preview reuses the same venture kernel / 검토 venture preview는 동일 벤처 커널 재사용
-- all previews remain `PREVIEW_NOT_CANONICAL` / 모든 preview는 비정식 유지
+M12 v0.1은 신규 사례 수용 전용이며 기존 정식 사례를 교체·수정할 수 없다.
+
+## Ordered transactional apply / 순서형 트랜잭션 적용
+
+M12 does not claim impossible multi-file crash atomicity. It uses a fail-safe order:
+
+```text
+validate plan + admission + baseline
+→ stage all case artifact bytes
+→ verify artifact SHA-256
+→ stage post-change registry bytes
+→ rename complete case directory into final path
+→ replace registry LAST
+→ verify applied bytes
+→ validate_case → run_case → evidence_view → preview_case
+```
+
+Caught failures restore the original registry and remove the newly created case directory. If an OS/process crash occurs in the narrow interval after the directory rename but before registry replacement, an unregistered orphan directory may remain; it has no canonical authority and future M12 planning refuses to overwrite it.
+
+일반 예외는 registry 원본과 신규 case 디렉터리를 롤백한다. 디렉터리 rename 후 registry 교체 전 강제종료 시 미등록 orphan 디렉터리가 남을 수 있으나 registry 권위가 없으며 이후 M12가 이를 덮어쓰지 않고 차단한다.
 
 ## Interfaces / 인터페이스
 
 CLI:
 
 ```bash
-vih admission-build <m10-package.json> > admission.json
-vih admission-validate admission.json
+vih admission-plan <admission.json> --target-repo <checkout> > change-plan.json
+vih admission-plan-validate <change-plan.json> <admission.json> --target-repo <checkout>
+vih admission-apply <change-plan.json> <admission.json> --target-repo <checkout>
 ```
 
-Web:
+Web PR Preparation Lab:
 
 ```text
-/admission
-POST /api/admission/build
-POST /api/admission/validate
+/pr-prep
+POST /api/pr-prep/plan
+POST /api/pr-prep/validate
 ```
 
-Both are read-only with respect to `registry/` and `analyses/`.
+There is deliberately no Web apply endpoint. / Web apply endpoint는 의도적으로 존재하지 않는다.
 
-두 경로 모두 `registry/`와 `analyses/`를 자동 변경하지 않는다.
+## M12 tests / M12 테스트
 
-## Tests / 테스트
+`tests/test_admission_apply.py` and `tests/test_prprep_interfaces.py` cover:
 
-`tests/test_admission.py` covers:
-
-- deterministic admission bundle / 결정론적 bundle
-- equity + venture lossless adapter routing / 두 모델 무손실 adapter 라우팅
-- canonical-profile fail-closed behavior / 정식 프로파일 차단
-- market evidence date derivation / 시장근거 기준일 도출
-- temporary-repository `validate_case → run_case → evidence_view → preview_case → Web` E2E
-- canonical evidence tamper detection / 정식 근거 변조 탐지
-- legacy reference-case regression / 기존 사례 회귀
-- CLI/Web shared admission service / CLI·Web 공통 서비스
-- current canonical byte immutability / 현재 정식 bytes 불변
+- deterministic plan/hash / 결정론적 plan·해시
+- registry optimistic-concurrency drift rejection / registry drift 차단
+- main/master/other branch + detached HEAD rejection / 위험 브랜치·detached HEAD 차단
+- normal checkout + Git worktree branch detection / 일반 checkout·worktree 감지
+- canonical target collision rejection / 정식 대상 충돌 차단
+- path/symlink escape rejection / 경로·symlink 탈출 차단
+- exact equity and venture branch application / equity·venture 정확 적용
+- post-apply `validate_case → run_case → evidence_view → preview_case` / 적용 후 전체 검증
+- forced post-apply failure rollback / 강제 실패 롤백
+- tampered plan/admission rejection / 변조 계획·bundle 차단
+- CLI command contract / CLI 계약
+- Web plan-only/no-apply boundary / Web 계획전용 경계
 
 ## Documentation / 문서
 
-- `docs/PROMOTION_PROTOCOL.md`
-- `docs/PROMOTION_PACKAGE.md`
 - `docs/CANONICAL_ADMISSION.md`
+- `docs/GUARDED_ADMISSION_APPLY.md`
+- `schemas/repository_change_plan.schema.json`
 
 ## Grounding authority / 근거화 권위
 
-1. merged `main` canonical files and decisions / 병합된 `main` 정식 파일·결정
-2. `PROJECT_STATE.md` + active Issue/PR/branch / 상태파일 + 활성 Issue/PR/브랜치
-3. evidence manifests and source packages / 근거 매니페스트·원천 패키지
+1. merged `main` canonical files and decisions / 병합 `main` 정식 파일·결정
+2. `PROJECT_STATE.md` + active Issue/PR/branch / 상태파일 + 활성 Issue·PR·브랜치
+3. source packages, admission bundles, repository plans / 원천 package·수용 bundle·저장소 계획
 4. current chat / 현재 대화
 5. AI recollection / AI 기억
 
 Repository state wins over AI recollection unless newer primary evidence requires explicit reconciliation.
 
-더 최신 1차자료의 명시적 조정이 필요한 경우를 제외하고 저장소 상태가 AI 기억보다 우선한다.
-
 ## Exact resume point / 정확한 재개점
 
-Complete M11 documentation, open the M11 PR, and run the full Python 3.11/3.12 CI matrix. Fix any service, adapter, Web, CLI, schema, or E2E regression from preserved diagnostics. Merge only if both reviewed adapters reproduce the exact M10 economics, temporary canonical admission works through the full read/preview/Web path, legacy cases remain unchanged, tampering fails closed, and admission builders never mutate current canonical files.
+Finalize README/M12 documentation, run a fresh full Python 3.11/3.12 CI on the final PR head, inspect PR mergeability, and merge #27 only if all M1–M12 regressions pass. After merge, verify the `main` push CI and close #26 through the merged PR. The next mission should move from governance plumbing to product value: live evidence/data ingestion with source adapters, while preserving the M9–M12 evidence/promotion/admission boundaries.
 
-M11 문서를 완료하고 M11 PR을 개설한 뒤 Python 3.11/3.12 전체 CI를 실행한다. 보존 진단을 근거로 service·adapter·Web·CLI·schema·E2E 실패를 수정한다. 두 reviewed adapter가 M10 경제값을 정확히 재현하고 임시 정식 수용이 전체 read/preview/Web 경로에서 작동하며 기존 사례가 불변이고 변조가 fail-closed되며 admission builder가 현재 정식 파일을 변경하지 않을 때만 병합한다.
+README와 M12 문서를 최종화하고 최종 PR head에서 Python 3.11/3.12 전체 CI를 다시 실행한다. M1–M12 전체 회귀가 통과할 때만 #27을 병합하고 이후 `main` push CI와 #26 종료를 확인한다. 다음 미션은 거버넌스 배관보다 제품가치로 이동하여, M9–M12 근거·승격·수용 경계를 보존한 실시간 evidence/data ingestion source adapter를 추진하는 것이 적절하다.

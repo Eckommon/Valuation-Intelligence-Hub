@@ -1,8 +1,8 @@
 """Stable CLI entry dispatcher / 안정적 CLI 진입 dispatcher.
 
-M14 keeps the mature M1-M13 parser untouched. New OpenDART commands and the
-extended Web server are intercepted here; every existing command delegates to
-`valuation_hub.cli.main` unchanged.
+M14 keeps the mature M1-M13 parser untouched. M15 extends the thin dispatcher
+with read-only financial normalization and TTM transforms. Existing commands
+continue to delegate to `valuation_hub.cli.main` unchanged.
 """
 
 from __future__ import annotations
@@ -23,17 +23,50 @@ from valuation_hub.dart_live import (
     materialize_dart_snapshot,
     validate_dart_snapshot,
 )
+from valuation_hub.financial_normalization import (
+    DURATION_ANNUAL,
+    DURATION_QUARTER,
+    DURATION_YTD,
+    normalize_dart_candidate,
+    normalize_sec_candidate,
+    reconcile_same_period,
+    ttm_annual_bridge,
+    ttm_four_quarters,
+    validate_financial_observation,
+    validate_ttm_result,
+)
 from valuation_hub.web_sources import serve as serve_web
 
 DART_COMMANDS = {"dart-fetch", "dart-snapshot-validate", "dart-extract"}
+NORMALIZATION_COMMANDS = {
+    "normalize-sec",
+    "normalize-dart",
+    "normalize-validate",
+    "ttm-four-quarters",
+    "ttm-annual-bridge",
+    "ttm-validate",
+    "normalize-reconcile",
+}
 
 
 def _dump(payload: Any) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
 
 
+def _load_object(path: Path, label: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise CaseServiceError(f"{label} file not found / {label} 파일 없음: {path}") from exc
+    except (OSError, json.JSONDecodeError) as exc:
+        raise CaseServiceError(f"{label} read failed / {label} 읽기 실패: {path}") from exc
+    if not isinstance(payload, dict):
+        raise CaseServiceError(f"{label} must be a JSON object / {label} JSON 객체 필요")
+    return payload
+
+
 def _command(argv: list[str]) -> str | None:
-    known = DART_COMMANDS | {"web"}
+    known = DART_COMMANDS | NORMALIZATION_COMMANDS | {"web"}
     for token in argv:
         if token in known:
             return token
@@ -64,6 +97,39 @@ def _dart_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _normalization_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="vih")
+    parser.add_argument("--root", type=Path, default=None)
+    parser.add_argument("--json", action="store_true", dest="as_json")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    sec = sub.add_parser("normalize-sec", help="Normalize one SEC evidence candidate / SEC 근거후보 기간 정규화")
+    sec.add_argument("file", type=Path)
+    sec.add_argument("--period-kind", choices=(DURATION_QUARTER, DURATION_YTD, DURATION_ANNUAL), default=None)
+
+    dart = sub.add_parser("normalize-dart", help="Normalize one OpenDART evidence candidate / OpenDART 근거후보 기간 정규화")
+    dart.add_argument("file", type=Path)
+    dart.add_argument("--amount-basis", choices=("CURRENT", "CUMULATIVE"), default="CURRENT")
+
+    validate = sub.add_parser("normalize-validate", help="Validate normalized financial observation / 정규화 observation 검증")
+    validate.add_argument("file", type=Path)
+
+    four = sub.add_parser("ttm-four-quarters", help="Build TTM from four quarter observations / 4분기 TTM 생성")
+    four.add_argument("files", nargs=4, type=Path)
+
+    bridge = sub.add_parser("ttm-annual-bridge", help="Build TTM from prior FY + current YTD - prior comparable YTD")
+    bridge.add_argument("prior_annual", type=Path)
+    bridge.add_argument("current_ytd", type=Path)
+    bridge.add_argument("prior_ytd", type=Path)
+
+    ttm_validate = sub.add_parser("ttm-validate", help="Validate normalized TTM result / TTM 결과 검증")
+    ttm_validate.add_argument("file", type=Path)
+
+    reconcile = sub.add_parser("normalize-reconcile", help="Reconcile equal same-period observations / 동일기간 observation 조정")
+    reconcile.add_argument("files", nargs="+", type=Path)
+    return parser
+
+
 def _web_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="vih")
     parser.add_argument("--root", type=Path, default=None)
@@ -86,22 +152,52 @@ def _run_dart(argv: list[str]) -> int:
                 args.fs_div,
                 api_key=args.api_key,
             )
-            result = materialize_dart_snapshot(snapshot, args.output, args.root)
-            _dump(result)
+            _dump(materialize_dart_snapshot(snapshot, args.output, args.root))
             return 0
         if args.command == "dart-snapshot-validate":
-            result = validate_dart_snapshot(load_dart_snapshot(args.file))
-            _dump(result)
+            _dump(validate_dart_snapshot(load_dart_snapshot(args.file)))
             return 0
         if args.command == "dart-extract":
-            result = extract_dart_evidence_candidate(
-                load_dart_snapshot(args.file),
-                args.metric,
-                statement_section=args.statement_section,
-            )
-            _dump(result)
+            _dump(extract_dart_evidence_candidate(load_dart_snapshot(args.file), args.metric, statement_section=args.statement_section))
             return 0
         raise CaseServiceError(f"unsupported OpenDART command / 미지원 OpenDART 명령: {args.command}")
+    except (CaseServiceError, ValueError, OSError) as exc:
+        if args.as_json:
+            _dump({"ok": False, "error": str(exc)})
+        else:
+            print(f"ERROR / 오류: {exc}", file=sys.stderr)
+        return 2
+
+
+def _run_normalization(argv: list[str]) -> int:
+    args = _normalization_parser().parse_args(argv)
+    try:
+        if args.command == "normalize-sec":
+            _dump(normalize_sec_candidate(_load_object(args.file, "SEC evidence candidate"), declared_period_kind=args.period_kind))
+            return 0
+        if args.command == "normalize-dart":
+            _dump(normalize_dart_candidate(_load_object(args.file, "OpenDART evidence candidate"), amount_basis=args.amount_basis))
+            return 0
+        if args.command == "normalize-validate":
+            _dump(validate_financial_observation(_load_object(args.file, "financial observation")))
+            return 0
+        if args.command == "ttm-four-quarters":
+            _dump(ttm_four_quarters([_load_object(path, "financial observation") for path in args.files]))
+            return 0
+        if args.command == "ttm-annual-bridge":
+            _dump(ttm_annual_bridge(
+                _load_object(args.prior_annual, "prior annual observation"),
+                _load_object(args.current_ytd, "current YTD observation"),
+                _load_object(args.prior_ytd, "prior YTD observation"),
+            ))
+            return 0
+        if args.command == "ttm-validate":
+            _dump(validate_ttm_result(_load_object(args.file, "TTM result")))
+            return 0
+        if args.command == "normalize-reconcile":
+            _dump(reconcile_same_period([_load_object(path, "financial observation") for path in args.files]))
+            return 0
+        raise CaseServiceError(f"unsupported normalization command / 미지원 정규화 명령: {args.command}")
     except (CaseServiceError, ValueError, OSError) as exc:
         if args.as_json:
             _dump({"ok": False, "error": str(exc)})
@@ -127,6 +223,8 @@ def main(argv: list[str] | None = None) -> int:
     command = _command(values)
     if command in DART_COMMANDS:
         return _run_dart(values)
+    if command in NORMALIZATION_COMMANDS:
+        return _run_normalization(values)
     if command == "web":
         return _run_web(values)
     return legacy_cli.main(values)

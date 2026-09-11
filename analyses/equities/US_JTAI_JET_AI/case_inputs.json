@@ -1,0 +1,20 @@
+{
+  "case_id":"US_JTAI_JET_AI",
+  "model_version":"reference-venture-probability-v0.1",
+  "valuation_as_of":"2026-09-09",
+  "currency":"USD",
+  "market":{"price":1.28,"shares_snapshot":3560000,"market_cap":4550000},
+  "normalized_perimeter":{"proforma_2025_revenue":2979839,"proforma_2025_operating_income":-4594736,"proforma_2026q1_revenue":361680,"proforma_2026q1_operating_income":-1546110},
+  "liquidity_and_financing":{"pre_spin_cash_2026h1":10608614,"cash_transferred_to_spinco":5300000,"h1_atm_gross_proceeds":27721874,"going_concern":true,"note_en":"Cash is not used as a guaranteed equity-value floor because of post-spin transfer, operating burn, investments and expected future financing.","note_ko":"분할 시 현금이전, 영업현금소진, 투자, 향후 자금조달 필요 때문에 현금을 보장된 자기자본가치 하한으로 사용하지 않는다."},
+  "holding_period_years":4.306639288158795,
+  "holding_period_end":"2030-12-31",
+  "venture_discount_rate":0.30,
+  "scenario_policy":{"description_en":"Probabilities are explicit analyst assumptions, not observed frequencies. Terminal revenue, EV/sales, net debt and diluted shares are jointly varied. The 30% venture discount rate is a model-risk assumption rather than a conventional WACC estimate.","description_ko":"확률은 관측 빈도가 아니라 명시적 분석가 가정이다. 종착 매출, EV/Sales, 순부채, 희석주식수를 함께 변화시킨다. 30% 벤처 할인율은 전통 WACC 추정이 아니라 모델위험 가정이다."},
+  "scenarios":[
+    {"name":"FAILURE","probability":0.60,"terminal_revenue":0,"ev_to_sales":0,"terminal_net_debt":0,"diluted_shares":15000000,"discount_rate":0.30,"recovery_equity_value":0,"rationale_en":"Financing/execution failure or inability to build a durable AI-infrastructure revenue base.","rationale_ko":"자금조달·실행 실패 또는 지속 가능한 AI 인프라 매출 기반 구축 실패."},
+    {"name":"SURVIVAL","probability":0.30,"terminal_revenue":50000000,"ev_to_sales":2.0,"terminal_net_debt":10000000,"diluted_shares":12000000,"discount_rate":0.30,"recovery_equity_value":0,"rationale_en":"Company survives, raises capital with substantial dilution, and develops a modest AI/cloud/data-center business by 2030.","rationale_ko":"상당한 희석을 수반한 자금조달에 성공하고 2030년까지 중소규모 AI·클라우드·데이터센터 사업을 구축."},
+    {"name":"BREAKOUT","probability":0.10,"terminal_revenue":200000000,"ev_to_sales":4.0,"terminal_net_debt":20000000,"diluted_shares":10000000,"discount_rate":0.30,"recovery_equity_value":0,"rationale_en":"Successful scaling of AI infrastructure with stronger capital access, commercial traction and premium terminal multiple.","rationale_ko":"AI 인프라의 성공적 확장, 개선된 자본접근성·상업적 traction·높은 종착 배수 달성."}
+  ],
+  "reverse_probability":{"target_market_price":1.28,"fixed_survival_probability":0.30,"solve_for":"BREAKOUT_PROBABILITY","failure_probability_formula":"0.70 - breakout_probability","warning_en":"Reverse probability is a mechanical expectation diagnostic, not a forecast of transaction or business success.","warning_ko":"역산확률은 거래 또는 사업성공 확률의 전망이 아니라 기계적 기대 진단이다."},
+  "optional_transaction_overlays":{"rto_loi":{"status":"NON_BINDING_NOT_INCLUDED","company_stated_consideration_per_share_approx":10.0},"flyx_distribution":{"status":"HISTORICAL_DISTRIBUTION_NOT_ONGOING_JTAI_VALUE"}}
+}

@@ -35,7 +35,13 @@ ADMISSION_ARTIFACTS = (
 
 
 def _json_bytes(value: Any) -> bytes:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
 
 
 def _artifact_bytes(value: Any) -> bytes:
@@ -57,34 +63,59 @@ def _market_as_of(candidate: dict[str, Any]) -> str:
     evidence = candidate.get("evidence")
     if not isinstance(bindings, list) or not isinstance(evidence, list):
         raise CaseServiceError("candidate governance/evidence missing / Candidate 거버넌스·근거 누락")
-    market_bindings = [item for item in bindings if isinstance(item, dict) and item.get("path") == "market_price"]
+    market_bindings = [
+        item
+        for item in bindings
+        if isinstance(item, dict) and item.get("path") == "market_price"
+    ]
     if len(market_bindings) != 1:
-        raise CaseServiceError("exactly one market_price binding required / market_price binding은 정확히 하나여야 합니다")
+        raise CaseServiceError(
+            "exactly one market_price binding required / market_price binding은 정확히 하나여야 합니다"
+        )
     claim_ids = market_bindings[0].get("claim_ids")
     if not isinstance(claim_ids, list) or not claim_ids:
         raise CaseServiceError("market_price evidence link required / market_price 연결 근거 필요")
-    indexed = {item.get("claim_id"): item for item in evidence if isinstance(item, dict) and item.get("claim_id")}
+    indexed = {
+        item.get("claim_id"): item
+        for item in evidence
+        if isinstance(item, dict) and item.get("claim_id")
+    }
     dates: set[str] = set()
     for claim_id in claim_ids:
         claim = indexed.get(claim_id)
         if claim is None:
-            raise CaseServiceError(f"market_price evidence missing / 시장가격 근거 누락: {claim_id}")
+            raise CaseServiceError(
+                f"market_price evidence missing / 시장가격 근거 누락: {claim_id}"
+            )
         raw = claim.get("as_of")
         if not isinstance(raw, str):
-            raise CaseServiceError(f"market_price evidence as_of required / 시장가격 근거 기준일 필요: {claim_id}")
+            raise CaseServiceError(
+                f"market_price evidence as_of required / 시장가격 근거 기준일 필요: {claim_id}"
+            )
         try:
             parsed = date.fromisoformat(raw)
         except ValueError as exc:
-            raise CaseServiceError(f"market_price evidence as_of must be YYYY-MM-DD / 기준일 형식 오류: {raw}") from exc
+            raise CaseServiceError(
+                f"market_price evidence as_of must be YYYY-MM-DD / 기준일 형식 오류: {raw}"
+            ) from exc
         if parsed.isoformat() != raw:
-            raise CaseServiceError(f"market_price evidence as_of must be canonical YYYY-MM-DD / 기준일 정규형식 오류: {raw}")
+            raise CaseServiceError(
+                f"market_price evidence as_of must be canonical YYYY-MM-DD / 기준일 정규형식 오류: {raw}"
+            )
         dates.add(raw)
     if len(dates) != 1:
         raise CaseServiceError("market_price evidence dates conflict / 시장가격 근거 기준일 충돌")
     return next(iter(dates))
 
 
-def _report(case_id: str, name_en: str, name_ko: str, adapter: str, valuation_as_of: str, package_sha256: str) -> str:
+def _report(
+    case_id: str,
+    name_en: str,
+    name_ko: str,
+    adapter: str,
+    valuation_as_of: str,
+    package_sha256: str,
+) -> str:
     return f"""# Reviewed-Draft Canonical Admission / 검토 Draft 정식 수용
 
 > **PROPOSED CANONICAL ARTIFACTS — EFFECTIVE ONLY AFTER REVIEWED PR MERGE**  
@@ -107,16 +138,32 @@ These files become canonical only if a separate repository PR containing the exa
 """
 
 
-def build_admission_bundle(package: dict[str, Any], root: Path | None = None) -> dict[str, Any]:
+def build_admission_bundle(
+    package: dict[str, Any],
+    root: Path | None = None,
+    *,
+    check_collision: bool = True,
+) -> dict[str, Any]:
     """Build deterministic proposed canonical artifacts from a valid M10 package."""
     repo = root.resolve() if root else find_repo_root()
-    package_validation = validate_promotion_package(package, repo, check_collision=True)
+    package_validation = validate_promotion_package(
+        package, repo, check_collision=check_collision
+    )
     identity = package["case_identity"]
     candidate = package["artifacts"]["reviewed_candidate.json"]
     reviewed_draft = candidate["draft"]
-    normalized_draft, draft_result, runtime = normalize_reviewed_runtime(reviewed_draft)
+    try:
+        normalized_draft, draft_result, runtime = normalize_reviewed_runtime(
+            reviewed_draft, require_canonical_profile=True
+        )
+    except ValueError as exc:
+        raise CaseServiceError(
+            f"reviewed Draft is not compatible with canonical adapter v0.1 / 정식 adapter v0.1 호환 실패: {exc}"
+        ) from exc
     if normalized_draft != reviewed_draft:
-        raise CaseServiceError("reviewed Draft is not normalized/stable / 검토 Draft 정규화 drift")
+        raise CaseServiceError(
+            "reviewed Draft is not normalized/stable / 검토 Draft 정규화 drift"
+        )
 
     staged = package["artifacts"]["staged_valuation_result.json"]
     if staged.get("valuation") != draft_result:
@@ -150,6 +197,8 @@ def build_admission_bundle(package: dict[str, Any], root: Path | None = None) ->
         "claims": copy.deepcopy(candidate["evidence"]),
         "input_governance": copy.deepcopy(candidate["input_governance"]),
         "source_package_sha256": package_sha256,
+        "source_candidate_sha256": source_review["candidate_sha256"],
+        "review_scope_sha256": source_review["review_scope_sha256"],
     }
     evidence_manifest = {
         "case_id": case_id,
@@ -206,7 +255,9 @@ def build_admission_bundle(package: dict[str, Any], root: Path | None = None) ->
             package_sha256,
         ),
     }
-    hashes = {name: _sha(_artifact_bytes(artifacts[name])) for name in ADMISSION_ARTIFACTS}
+    hashes = {
+        name: _sha(_artifact_bytes(artifacts[name])) for name in ADMISSION_ARTIFACTS
+    }
     bundle: dict[str, Any] = {
         "schema_version": ADMISSION_SCHEMA_VERSION,
         "status": ADMISSION_STATUS,
@@ -230,50 +281,101 @@ def validate_admission_bundle(
 ) -> dict[str, Any]:
     repo = root.resolve() if root else find_repo_root()
     if not isinstance(bundle, dict):
-        raise CaseServiceError("admission bundle must be a JSON object / 수용 bundle은 JSON 객체여야 합니다")
-    if bundle.get("schema_version") != ADMISSION_SCHEMA_VERSION or bundle.get("status") != ADMISSION_STATUS:
-        raise CaseServiceError("admission bundle schema/status invalid / 수용 bundle 스키마·상태 오류")
+        raise CaseServiceError(
+            "admission bundle must be a JSON object / 수용 bundle은 JSON 객체여야 합니다"
+        )
+    if (
+        bundle.get("schema_version") != ADMISSION_SCHEMA_VERSION
+        or bundle.get("status") != ADMISSION_STATUS
+    ):
+        raise CaseServiceError(
+            "admission bundle schema/status invalid / 수용 bundle 스키마·상태 오류"
+        )
     if bundle.get("canonical") is not False:
-        raise CaseServiceError("admission bundle itself cannot be canonical / 수용 bundle 자체는 정식일 수 없습니다")
+        raise CaseServiceError(
+            "admission bundle itself cannot be canonical / 수용 bundle 자체는 정식일 수 없습니다"
+        )
     artifacts = bundle.get("artifacts")
     hashes = bundle.get("artifact_sha256")
     if not isinstance(artifacts, dict) or not isinstance(hashes, dict):
-        raise CaseServiceError("admission artifacts/hash manifest missing / 수용 산출물·해시 누락")
-    if set(artifacts) != set(ADMISSION_ARTIFACTS) or set(hashes) != set(ADMISSION_ARTIFACTS):
-        raise CaseServiceError("admission artifact set mismatch / 수용 산출물 집합 불일치")
+        raise CaseServiceError(
+            "admission artifacts/hash manifest missing / 수용 산출물·해시 누락"
+        )
+    if set(artifacts) != set(ADMISSION_ARTIFACTS) or set(hashes) != set(
+        ADMISSION_ARTIFACTS
+    ):
+        raise CaseServiceError(
+            "admission artifact set mismatch / 수용 산출물 집합 불일치"
+        )
     for name in ADMISSION_ARTIFACTS:
         if hashes.get(name) != _sha(_artifact_bytes(artifacts[name])):
-            raise CaseServiceError(f"admission artifact hash mismatch / 수용 산출물 해시 불일치: {name}")
+            raise CaseServiceError(
+                f"admission artifact hash mismatch / 수용 산출물 해시 불일치: {name}"
+            )
     if bundle.get("bundle_sha256") != _sha(_json_bytes(_bundle_hash_payload(bundle))):
-        raise CaseServiceError("admission bundle SHA-256 mismatch / 수용 bundle SHA-256 불일치")
+        raise CaseServiceError(
+            "admission bundle SHA-256 mismatch / 수용 bundle SHA-256 불일치"
+        )
 
     source_package = artifacts["SOURCE_PACKAGE.json"]
-    package_validation = validate_promotion_package(source_package, repo, check_collision=check_collision)
+    validate_promotion_package(source_package, repo, check_collision=check_collision)
     case_id = source_package["case_identity"]["case_id"]
-    if bundle.get("case_id") != case_id or bundle.get("target_path") != f"analyses/equities/{case_id}":
+    if (
+        bundle.get("case_id") != case_id
+        or bundle.get("target_path") != f"analyses/equities/{case_id}"
+    ):
         raise CaseServiceError("admission identity/path mismatch / 수용 식별·경로 불일치")
 
-    expected = build_admission_bundle(source_package, repo) if check_collision else None
-    if expected is not None and bundle != expected:
-        raise CaseServiceError("admission bundle is not deterministic reconstruction / 수용 bundle 결정론적 재구축 불일치")
+    expected = build_admission_bundle(
+        source_package, repo, check_collision=check_collision
+    )
+    if bundle != expected:
+        raise CaseServiceError(
+            "admission bundle is not deterministic reconstruction / 수용 bundle 결정론적 재구축 불일치"
+        )
 
     case_inputs = artifacts["case_inputs.json"]
     result = artifacts["valuation_result.json"]
     manifest = artifacts["evidence_manifest.json"]
+    evidence_reviewed = artifacts["evidence_reviewed.json"]
     registry = bundle["registry_entry"]
-    adapter = adapter_for_model(source_package["adapter_requirement"]["source_model"])
-    if registry.get("adapter") != adapter or registry.get("model") != source_package["adapter_requirement"]["source_model"]:
-        raise CaseServiceError("admission registry adapter/model mismatch / 수용 registry adapter·model 불일치")
+    source_model = source_package["adapter_requirement"]["source_model"]
+    adapter = adapter_for_model(source_model)
+    if registry.get("adapter") != adapter or registry.get("model") != source_model:
+        raise CaseServiceError(
+            "admission registry adapter/model mismatch / 수용 registry adapter·model 불일치"
+        )
     if case_inputs.get("model_version") != adapter or result.get("model_version") != adapter:
-        raise CaseServiceError("admission model_version mismatch / 수용 model_version 불일치")
+        raise CaseServiceError(
+            "admission model_version mismatch / 수용 model_version 불일치"
+        )
     if manifest.get("promotion_gate") != REVIEWED_ADMISSION_GATE:
-        raise CaseServiceError("admission evidence gate mismatch / 수용 근거게이트 불일치")
+        raise CaseServiceError(
+            "admission evidence gate mismatch / 수용 근거게이트 불일치"
+        )
     if case_inputs.get("source_package_sha256") != source_package["package_sha256"]:
-        raise CaseServiceError("case input package provenance mismatch / 사례입력 패키지 출처 불일치")
+        raise CaseServiceError(
+            "case input package provenance mismatch / 사례입력 패키지 출처 불일치"
+        )
 
-    normalized, _, runtime = normalize_reviewed_runtime(case_inputs["reviewed_draft"])
+    candidate = source_package["artifacts"]["reviewed_candidate.json"]
+    if evidence_reviewed.get("claims") != candidate.get("evidence"):
+        raise CaseServiceError("admission evidence drift / 수용 근거 drift")
+    if evidence_reviewed.get("input_governance") != candidate.get("input_governance"):
+        raise CaseServiceError("admission governance drift / 수용 거버넌스 drift")
+
+    try:
+        normalized, _, runtime = normalize_reviewed_runtime(
+            case_inputs["reviewed_draft"], require_canonical_profile=True
+        )
+    except ValueError as exc:
+        raise CaseServiceError(
+            f"admission canonical profile mismatch / 수용 정식 프로파일 불일치: {exc}"
+        ) from exc
     if normalized != case_inputs["reviewed_draft"] or result.get("runtime") != runtime:
-        raise CaseServiceError("admission runtime/economics drift / 수용 runtime·경제값 drift")
+        raise CaseServiceError(
+            "admission runtime/economics drift / 수용 runtime·경제값 drift"
+        )
     return {
         "status": ADMISSION_STATUS,
         "canonical": False,

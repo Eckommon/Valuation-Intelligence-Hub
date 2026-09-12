@@ -11,16 +11,18 @@ from valuation_hub import cli as legacy_cli
 from valuation_hub.binding_apply import build_binding_approval, validate_binding_approval, apply_binding_approval, validate_bound_draft_result
 from valuation_hub.case_service import CaseServiceError
 from valuation_hub.dart_live import DART_METRIC_SPECS, capture_dart_snapshot, extract_dart_evidence_candidate, load_dart_snapshot, materialize_dart_snapshot, validate_dart_snapshot
+from valuation_hub.debt_components import aggregate_interest_bearing_debt, validate_interest_bearing_debt_evidence
 from valuation_hub.derived_financial import derive_historical_net_income_margin, derive_historical_operating_margin, validate_derived_financial_evidence
 from valuation_hub.draft_binding import build_binding_proposal, validate_binding_proposal
 from valuation_hub.financial_normalization import DURATION_ANNUAL, DURATION_QUARTER, DURATION_YTD, normalize_dart_candidate, normalize_sec_candidate, reconcile_same_period, ttm_annual_bridge, ttm_four_quarters, validate_financial_observation, validate_ttm_result
-from valuation_hub.web_derived import serve as serve_web
+from valuation_hub.web_debt import serve as serve_web
 
 DART_COMMANDS = {"dart-fetch", "dart-snapshot-validate", "dart-extract"}
 NORMALIZATION_COMMANDS = {"normalize-sec", "normalize-dart", "normalize-validate", "ttm-four-quarters", "ttm-annual-bridge", "ttm-validate", "normalize-reconcile"}
 BINDING_COMMANDS = {"binding-build", "binding-validate"}
 BINDING_APPLY_COMMANDS = {"binding-approval-build", "binding-approval-validate", "binding-apply", "bound-draft-validate"}
 DERIVED_COMMANDS = {"derive-operating-margin", "derive-net-margin", "derived-validate"}
+DEBT_COMMANDS = {"debt-aggregate", "debt-validate"}
 
 
 def _dump(payload: Any) -> None:
@@ -46,7 +48,7 @@ def _load_object_list(path: Path, label: str) -> list[dict[str, Any]]:
 
 
 def _command(argv: list[str]) -> str | None:
-    known = DART_COMMANDS | NORMALIZATION_COMMANDS | BINDING_COMMANDS | BINDING_APPLY_COMMANDS | DERIVED_COMMANDS | {"web"}
+    known = DART_COMMANDS | NORMALIZATION_COMMANDS | BINDING_COMMANDS | BINDING_APPLY_COMMANDS | DERIVED_COMMANDS | DEBT_COMMANDS | {"web"}
     return next((token for token in argv if token in known), None)
 
 
@@ -83,8 +85,13 @@ def _derived_parser() -> argparse.ArgumentParser:
     p=argparse.ArgumentParser(prog="vih"); p.add_argument("--root",type=Path,default=None); p.add_argument("--json",action="store_true",dest="as_json"); s=p.add_subparsers(dest="command",required=True)
     d=s.add_parser("derive-operating-margin",help="Derive historical operating margin / 역사적 영업마진 파생"); d.add_argument("operating_income",type=Path); d.add_argument("revenue",type=Path)
     d=s.add_parser("derive-net-margin",help="Derive historical net-income margin / 역사적 순이익률 파생"); d.add_argument("net_income",type=Path); d.add_argument("revenue",type=Path)
-    s.add_parser("derived-validate",help="Validate derived financial evidence / 파생재무근거 검증").add_argument("file",type=Path)
-    return p
+    s.add_parser("derived-validate",help="Validate derived financial evidence / 파생재무근거 검증").add_argument("file",type=Path); return p
+
+
+def _debt_parser() -> argparse.ArgumentParser:
+    p=argparse.ArgumentParser(prog="vih"); p.add_argument("--root",type=Path,default=None); p.add_argument("--json",action="store_true",dest="as_json"); s=p.add_subparsers(dest="command",required=True)
+    s.add_parser("debt-aggregate",help="Aggregate explicit debt components / 명시적 이자부채 구성요소 집계").add_argument("observations",type=Path)
+    s.add_parser("debt-validate",help="Validate interest-bearing debt evidence / 이자부채 근거 검증").add_argument("file",type=Path); return p
 
 
 def _web_parser() -> argparse.ArgumentParser:
@@ -149,6 +156,15 @@ def _run_derived(argv:list[str])->int:
     except (CaseServiceError,ValueError,OSError) as exc: return _error(a,exc)
 
 
+def _run_debt(argv:list[str])->int:
+    a=_debt_parser().parse_args(argv)
+    try:
+        if a.command=="debt-aggregate": _dump(aggregate_interest_bearing_debt(_load_object_list(a.observations,"debt component observations"))); return 0
+        if a.command=="debt-validate": _dump(validate_interest_bearing_debt_evidence(_load_object(a.file,"interest-bearing debt evidence"))); return 0
+        raise CaseServiceError("unsupported debt command / 미지원 이자부채 명령")
+    except (CaseServiceError,ValueError,OSError) as exc: return _error(a,exc)
+
+
 def _run_web(argv:list[str])->int:
     a=_web_parser().parse_args(argv)
     try:
@@ -164,6 +180,7 @@ def main(argv:list[str]|None=None)->int:
     if command in BINDING_COMMANDS: return _run_binding(values)
     if command in BINDING_APPLY_COMMANDS: return _run_binding_apply(values)
     if command in DERIVED_COMMANDS: return _run_derived(values)
+    if command in DEBT_COMMANDS: return _run_debt(values)
     if command=="web": return _run_web(values)
     return legacy_cli.main(values)
 

@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/draft_binding_proposal_v03.schema.json",
+  "title": "Share-Aware Draft Binding Proposal v0.3",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "status",
+    "canonical",
+    "target",
+    "policy",
+    "identity",
+    "baseline_context",
+    "conflicts",
+    "draft_input_matrix",
+    "completeness",
+    "source_observation_sha256",
+    "source_share_bridge_sha256",
+    "share_bridge",
+    "base_proposal",
+    "base_proposal_sha256",
+    "proposal_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "draft-binding-proposal-v0.3"},
+    "status": {"const": "DRAFT_BINDING_PROPOSED"},
+    "canonical": {"const": false},
+    "target": {
+      "type": "object",
+      "required": ["draft_schema_version", "model"],
+      "properties": {
+        "draft_schema_version": {"const": "draft-case-v0.1"},
+        "model": {"const": "equity_fcff"}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["version", "as_of", "base_policy_version", "direct_bind_requires"],
+      "properties": {
+        "version": {"const": "evidence-draft-binding-v0.3-diluted-shares"},
+        "as_of": {"type": "string", "format": "date"},
+        "base_policy_version": {"type": "string", "minLength": 1},
+        "direct_bind_requires": {
+          "type": "array",
+          "contains": {"const": "COMPLETE_REVIEWED_DILUTION_COVERAGE"}
+        }
+      }
+    },
+    "identity": {"type": "object"},
+    "baseline_context": {
+      "type": "object",
+      "required": ["fully_diluted_shares"],
+      "properties": {
+        "fully_diluted_shares": {
+          "type": "object",
+          "required": [
+            "metric",
+            "value",
+            "unit",
+            "class",
+            "entity",
+            "as_of",
+            "coverage_status",
+            "freshness",
+            "context_sha256",
+            "source_bridge_sha256",
+            "base_context_sha256",
+            "coverage_assertion_sha256"
+          ],
+          "properties": {
+            "metric": {"const": "fully_diluted_shares"},
+            "value": {"type": "number", "exclusiveMinimum": 0},
+            "unit": {"const": "shares"},
+            "class": {"const": "DERIVED_FACT"},
+            "coverage_status": {"const": "COMPLETE_REVIEWED_DILUTION_COVERAGE"},
+            "context_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "source_bridge_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "base_context_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "coverage_assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      }
+    },
+    "conflicts": {"type": "object"},
+    "draft_input_matrix": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {
+        "type": "object",
+        "required": ["field", "state", "rationale"],
+        "properties": {
+          "field": {"type": "string"},
+          "state": {"enum": ["DIRECT_BIND", "REFERENCE_ONLY", "NEEDS_DERIVATION", "NEEDS_ASSUMPTION", "MISSING_REQUIRED", "CONFLICT_BLOCKED", "STALE_BLOCKED"]},
+          "rationale": {"type": "string"}
+        }
+      },
+      "contains": {
+        "type": "object",
+        "required": ["field", "state", "source_metric", "source_context_sha256", "source_bridge_sha256", "base_context_sha256", "coverage_assertion_sha256"],
+        "properties": {
+          "field": {"const": "equity.diluted_shares"},
+          "state": {"const": "DIRECT_BIND"},
+          "source_metric": {"const": "fully_diluted_shares"},
+          "source_context_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "source_bridge_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "base_context_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "coverage_assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      },
+      "minContains": 1,
+      "maxContains": 1
+    },
+    "completeness": {"type": "object"},
+    "source_observation_sha256": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "source_share_bridge_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "share_bridge": {"$ref": "diluted_share_bridge.schema.json"},
+    "base_proposal": {
+      "type": "object",
+      "required": ["schema_version", "proposal_sha256"],
+      "properties": {
+        "schema_version": {"enum": ["draft-binding-proposal-v0.1", "draft-binding-proposal-v0.2"]},
+        "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "base_proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

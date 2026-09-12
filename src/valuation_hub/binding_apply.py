@@ -1,8 +1,8 @@
 """Human-approved binding application to a noncanonical Draft / 인간승인 비정식 Draft 바인딩 적용.
 
 M17 applies only explicitly approved DIRECT_BIND decisions in memory. M20 extends
-that same approval lock to debt-aware proposal v0.2 while preserving v0.1 cash
-behavior. No path overwrites a Draft file or creates canonical state.
+the same lock to debt-aware v0.2 and M23 to share-aware v0.3 while preserving
+older proposal behavior. No path overwrites a Draft file or creates canonical state.
 """
 from __future__ import annotations
 
@@ -13,9 +13,9 @@ from datetime import datetime
 from typing import Any
 
 from valuation_hub.case_service import CaseServiceError
-from valuation_hub.debt_draft_binding import validate_binding_proposal_any
 from valuation_hub.draft_binding import DIRECT_BIND
 from valuation_hub.draft_service import validate_draft
+from valuation_hub.share_draft_binding import validate_binding_proposal_any
 
 APPROVAL_SCHEMA = "binding-approval-v0.1"
 RESULT_SCHEMA = "bound-draft-result-v0.1"
@@ -65,7 +65,7 @@ def build_binding_approval(
     validate_binding_proposal_any(proposal)
     normalized_draft = validate_draft(draft)
     if normalized_draft["model"] != "equity_fcff":
-        raise CaseServiceError("M17/M20 requires equity_fcff Draft / M17/M20은 equity_fcff Draft 전용")
+        raise CaseServiceError("M17/M20/M23 requires equity_fcff Draft / M17/M20/M23은 equity_fcff Draft 전용")
     if not isinstance(reviewer, str) or not reviewer.strip() or len(reviewer) > 160:
         raise CaseServiceError("reviewer required / reviewer 필요")
     identity = proposal["identity"]
@@ -127,41 +127,62 @@ def validate_binding_approval(approval: dict[str, Any], proposal: dict[str, Any]
 def _get_field(draft: dict[str, Any], field: str) -> Any:
     if field == "equity.cash": return draft["equity"]["cash"]
     if field == "equity.debt": return draft["equity"]["debt"]
+    if field == "equity.diluted_shares": return draft["equity"]["diluted_shares"]
     raise CaseServiceError(f"unsupported binding apply field / 미지원 바인딩 적용필드: {field}")
 
 
 def _set_field(draft: dict[str, Any], field: str, value: Any) -> None:
     if field == "equity.cash": draft["equity"]["cash"] = value; return
     if field == "equity.debt": draft["equity"]["debt"] = value; return
+    if field == "equity.diluted_shares": draft["equity"]["diluted_shares"] = value; return
     raise CaseServiceError(f"unsupported binding apply field / 미지원 바인딩 적용필드: {field}")
 
 
-def _binding_context(proposal:dict[str,Any],decision:dict[str,Any])->dict[str,Any]:
-    metric=decision.get("source_metric")
-    context=proposal.get("baseline_context",{}).get(metric)
-    if not isinstance(context,dict):
+def _binding_context(proposal: dict[str, Any], decision: dict[str, Any]) -> dict[str, Any]:
+    metric = decision.get("source_metric")
+    context = proposal.get("baseline_context", {}).get(metric)
+    if not isinstance(context, dict):
         raise CaseServiceError("binding source context missing / 바인딩 source context 누락")
     if "source_observation_sha256" in decision:
-        if context.get("observation_sha256")!=decision.get("source_observation_sha256"):
+        if context.get("observation_sha256") != decision.get("source_observation_sha256"):
             raise CaseServiceError("binding source observation hash mismatch / 바인딩 source observation hash 불일치")
     elif "source_context_sha256" in decision:
-        if context.get("context_sha256")!=decision.get("source_context_sha256") or context.get("source_debt_sha256")!=decision.get("source_debt_sha256"):
-            raise CaseServiceError("binding debt context hash mismatch / 바인딩 debt context hash 불일치")
-        if context.get("date_resolution",{}).get("date_assertion_sha256")!=decision.get("date_assertion_sha256"):
-            raise CaseServiceError("binding debt date assertion lineage mismatch / 바인딩 debt 날짜승인 lineage 불일치")
+        if context.get("context_sha256") != decision.get("source_context_sha256"):
+            raise CaseServiceError("binding source context hash mismatch / 바인딩 source context hash 불일치")
+        if "source_debt_sha256" in decision:
+            if context.get("source_debt_sha256") != decision.get("source_debt_sha256"):
+                raise CaseServiceError("binding debt context hash mismatch / 바인딩 debt context hash 불일치")
+            if context.get("date_resolution", {}).get("date_assertion_sha256") != decision.get("date_assertion_sha256"):
+                raise CaseServiceError("binding debt date assertion lineage mismatch / 바인딩 debt 날짜승인 lineage 불일치")
+        elif "source_bridge_sha256" in decision:
+            if context.get("source_bridge_sha256") != decision.get("source_bridge_sha256"):
+                raise CaseServiceError("binding share bridge hash mismatch / 바인딩 share bridge hash 불일치")
+            if context.get("base_context_sha256") != decision.get("base_context_sha256"):
+                raise CaseServiceError("binding share base context lineage mismatch / 바인딩 share base context lineage 불일치")
+            if context.get("coverage_assertion_sha256") != decision.get("coverage_assertion_sha256"):
+                raise CaseServiceError("binding share coverage assertion lineage mismatch / 바인딩 share coverage 승인 lineage 불일치")
+        else:
+            raise CaseServiceError("unknown binding context lineage / 알 수 없는 바인딩 context lineage")
     else:
         raise CaseServiceError("binding decision source hash missing / 바인딩 판정 source hash 누락")
     return context
 
 
-def _diff_for(field:str,old:Any,new:Any,decision:dict[str,Any],context:dict[str,Any])->dict[str,Any]:
-    diff={"field":field,"before":old,"after":new,"source_metric":decision.get("source_metric")}
+def _diff_for(field: str, old: Any, new: Any, decision: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
+    diff = {"field": field, "before": old, "after": new, "source_metric": decision.get("source_metric")}
     if "source_observation_sha256" in decision:
-        diff["source_observation_sha256"]=context["observation_sha256"]
+        diff["source_observation_sha256"] = context["observation_sha256"]
+    elif "source_debt_sha256" in decision:
+        diff["source_context_sha256"] = context["context_sha256"]
+        diff["source_debt_sha256"] = context["source_debt_sha256"]
+        diff["date_assertion_sha256"] = context.get("date_resolution", {}).get("date_assertion_sha256")
+    elif "source_bridge_sha256" in decision:
+        diff["source_context_sha256"] = context["context_sha256"]
+        diff["source_bridge_sha256"] = context["source_bridge_sha256"]
+        diff["base_context_sha256"] = context["base_context_sha256"]
+        diff["coverage_assertion_sha256"] = context["coverage_assertion_sha256"]
     else:
-        diff["source_context_sha256"]=context["context_sha256"]
-        diff["source_debt_sha256"]=context["source_debt_sha256"]
-        diff["date_assertion_sha256"]=context.get("date_resolution",{}).get("date_assertion_sha256")
+        raise CaseServiceError("binding diff source lineage unknown / 바인딩 diff source lineage 미상")
     return diff
 
 
@@ -171,19 +192,19 @@ def apply_binding_approval(proposal: dict[str, Any], draft: dict[str, Any], appr
     direct = _direct_fields(proposal); diffs: list[dict[str, Any]] = []
     for field in approval["approved_fields"]:
         decision = direct[field]
-        context = _binding_context(proposal,decision)
+        context = _binding_context(proposal, decision)
         old = _get_field(after, field); new = context.get("value")
         _set_field(after, field, new)
-        diffs.append(_diff_for(field,old,new,decision,context))
+        diffs.append(_diff_for(field, old, new, decision, context))
     validate_draft(after)
     unresolved = [copy.deepcopy(item) for item in proposal["draft_input_matrix"] if item["field"] not in approval["approved_fields"]]
     result = {
-        "schema_version": RESULT_SCHEMA,"status": RESULT_STATUS,"canonical": False,
-        "binding_proposal": copy.deepcopy(proposal),"approval": copy.deepcopy(approval),
-        "draft_before": before,"draft_before_sha256": _sha(before),"applied_diffs": diffs,
-        "draft_after": after,"draft_after_sha256": _sha(after),"unresolved_binding_matrix": unresolved,
+        "schema_version": RESULT_SCHEMA, "status": RESULT_STATUS, "canonical": False,
+        "binding_proposal": copy.deepcopy(proposal), "approval": copy.deepcopy(approval),
+        "draft_before": before, "draft_before_sha256": _sha(before), "applied_diffs": diffs,
+        "draft_after": after, "draft_after_sha256": _sha(after), "unresolved_binding_matrix": unresolved,
         "warning_en": "Noncanonical Draft result only. Existing evidence governance and human review are still required before promotion.",
-        "warning_ko": "비정식 Draft 결과입니다. 승격 전 기존 근거 거버넌스와 인간검토가 계속 필요합니다.","result_sha256": "",
+        "warning_ko": "비정식 Draft 결과입니다. 승격 전 기존 근거 거버넌스와 인간검토가 계속 필요합니다.", "result_sha256": "",
     }
     result["result_sha256"] = _sha(_without(result, "result_sha256"))
     validate_bound_draft_result(result); return result
@@ -192,35 +213,35 @@ def apply_binding_approval(proposal: dict[str, Any], draft: dict[str, Any], appr
 def validate_bound_draft_result(result: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(result, dict) or result.get("schema_version") != RESULT_SCHEMA or result.get("status") != RESULT_STATUS or result.get("canonical") is not False:
         raise CaseServiceError("bound Draft result schema/status invalid / 바인딩 Draft 결과 스키마·상태 오류")
-    proposal=result.get("binding_proposal");approval=result.get("approval");before=result.get("draft_before");after=result.get("draft_after")
-    if not all(isinstance(x,dict) for x in (proposal,approval,before,after)):
+    proposal=result.get("binding_proposal"); approval=result.get("approval"); before=result.get("draft_before"); after=result.get("draft_after")
+    if not all(isinstance(x, dict) for x in (proposal, approval, before, after)):
         raise CaseServiceError("bound Draft result payload incomplete / 바인딩 Draft 결과 payload 불완전")
-    validate_binding_proposal_any(proposal);validate_binding_approval(approval,proposal,before);validate_draft(after)
+    validate_binding_proposal_any(proposal); validate_binding_approval(approval, proposal, before); validate_draft(after)
     if result.get("draft_before_sha256") != _sha(before) or result.get("draft_after_sha256") != _sha(after):
         raise CaseServiceError("bound Draft before/after SHA mismatch / 바인딩 Draft 전후 SHA 불일치")
-    direct=_direct_fields(proposal);approved=approval["approved_fields"];diffs=result.get("applied_diffs")
-    if not isinstance(diffs,list) or len(diffs)!=len(approved):
+    direct=_direct_fields(proposal); approved=approval["approved_fields"]; diffs=result.get("applied_diffs")
+    if not isinstance(diffs, list) or len(diffs) != len(approved):
         raise CaseServiceError("bound Draft diff count mismatch / 바인딩 Draft diff 개수 불일치")
     reconstructed=copy.deepcopy(before)
     for diff in diffs:
-        if not isinstance(diff,dict) or diff.get("field") not in approved or diff.get("field") not in direct:
+        if not isinstance(diff, dict) or diff.get("field") not in approved or diff.get("field") not in direct:
             raise CaseServiceError("bound Draft diff field invalid / 바인딩 Draft diff 필드 오류")
         field=diff["field"]
-        if diff.get("before")!=_get_field(reconstructed,field):
+        if diff.get("before") != _get_field(reconstructed, field):
             raise CaseServiceError("bound Draft diff before mismatch / 바인딩 Draft diff 이전값 불일치")
-        decision=direct[field];context=_binding_context(proposal,decision)
-        if diff.get("after")!=context.get("value"):
+        decision=direct[field]; context=_binding_context(proposal, decision)
+        if diff.get("after") != context.get("value"):
             raise CaseServiceError("bound Draft diff source/value mismatch / 바인딩 Draft diff source·값 불일치")
-        expected_diff=_diff_for(field,_get_field(reconstructed,field),context.get("value"),decision,context)
-        if diff!=expected_diff:
+        expected_diff=_diff_for(field, _get_field(reconstructed, field), context.get("value"), decision, context)
+        if diff != expected_diff:
             raise CaseServiceError("bound Draft diff lineage mismatch / 바인딩 Draft diff lineage 불일치")
-        _set_field(reconstructed,field,diff["after"])
-    if reconstructed!=after:
+        _set_field(reconstructed, field, diff["after"])
+    if reconstructed != after:
         raise CaseServiceError("bound Draft reconstructed result mismatch / 바인딩 Draft 재구성 결과 불일치")
     expected_unresolved=[item for item in proposal["draft_input_matrix"] if item["field"] not in approved]
-    if result.get("unresolved_binding_matrix")!=expected_unresolved:
+    if result.get("unresolved_binding_matrix") != expected_unresolved:
         raise CaseServiceError("unresolved binding matrix mismatch / 미해결 바인딩 matrix 불일치")
-    expected=_sha(_without(result,"result_sha256"))
-    if result.get("result_sha256")!=expected:
+    expected=_sha(_without(result, "result_sha256"))
+    if result.get("result_sha256") != expected:
         raise CaseServiceError("bound Draft result SHA-256 mismatch / 바인딩 Draft 결과 SHA-256 불일치")
     return {"status":"PASS_BOUND_DRAFT_RESULT_VALIDATION","canonical":False,"result_sha256":expected,"applied_field_count":len(approved),"unresolved_count":len(expected_unresolved)}

@@ -13,11 +13,12 @@ from valuation_hub.case_service import CaseServiceError
 from valuation_hub.dart_live import DART_METRIC_SPECS, capture_dart_snapshot, extract_dart_evidence_candidate, load_dart_snapshot, materialize_dart_snapshot, validate_dart_snapshot
 from valuation_hub.debt_binding import build_debt_binding_context, build_debt_date_assertion, validate_debt_binding_context, validate_debt_date_assertion
 from valuation_hub.debt_components import CORE_COMPONENTS, SEC_COMPONENT_SUPPORT, aggregate_interest_bearing_debt, extract_dart_debt_component_candidate, extract_sec_debt_component_candidate, normalize_debt_component_candidate, validate_debt_component_observation, validate_interest_bearing_debt_evidence
-from valuation_hub.debt_draft_binding import build_binding_proposal_with_debt, validate_binding_proposal_any
+from valuation_hub.debt_draft_binding import build_binding_proposal_with_debt
 from valuation_hub.derived_financial import derive_historical_net_income_margin, derive_historical_operating_margin, validate_derived_financial_evidence
 from valuation_hub.draft_binding import build_binding_proposal
 from valuation_hub.financial_normalization import DURATION_ANNUAL, DURATION_QUARTER, DURATION_YTD, normalize_dart_candidate, normalize_sec_candidate, reconcile_same_period, ttm_annual_bridge, ttm_four_quarters, validate_financial_observation, validate_ttm_result
 from valuation_hub.share_dilution import METRICS as DILUTION_METRICS, derive_historical_dilution, extract_sec_dilution_candidate, normalize_share_dilution_candidate, validate_historical_dilution, validate_share_dilution_observation
+from valuation_hub.share_draft_binding import build_binding_proposal_with_diluted_shares, validate_binding_proposal_any
 from valuation_hub.valuation_shares import (
     ADJUSTMENT_CATEGORIES,
     build_diluted_share_bridge,
@@ -32,11 +33,11 @@ from valuation_hub.valuation_shares import (
     validate_dilution_coverage_assertion,
     validate_valuation_share_base_context,
 )
-from valuation_hub.web_valuation_shares import serve as serve_web
+from valuation_hub.web_share_binding import serve as serve_web
 
 DART_COMMANDS={"dart-fetch","dart-snapshot-validate","dart-extract"}
 NORMALIZATION_COMMANDS={"normalize-sec","normalize-dart","normalize-validate","ttm-four-quarters","ttm-annual-bridge","ttm-validate","normalize-reconcile"}
-BINDING_COMMANDS={"binding-build","binding-build-with-debt","binding-validate"}
+BINDING_COMMANDS={"binding-build","binding-build-with-debt","binding-build-with-diluted-shares","binding-validate"}
 BINDING_APPLY_COMMANDS={"binding-approval-build","binding-approval-validate","binding-apply","bound-draft-validate"}
 DERIVED_COMMANDS={"derive-operating-margin","derive-net-margin","derived-validate"}
 DEBT_COMMANDS={"debt-sec-extract","debt-dart-extract","debt-normalize","debt-component-validate","debt-aggregate","debt-validate","debt-date-assertion-build","debt-date-assertion-validate","debt-binding-context-build","debt-binding-context-validate"}
@@ -89,6 +90,7 @@ def _binding_parser()->argparse.ArgumentParser:
     p=argparse.ArgumentParser(prog="vih");p.add_argument("--root",type=Path,default=None);p.add_argument("--json",action="store_true",dest="as_json");s=p.add_subparsers(dest="command",required=True)
     b=s.add_parser("binding-build");b.add_argument("observations",type=Path);b.add_argument("--as-of",required=True);b.add_argument("--max-age-days",type=int,default=550)
     b=s.add_parser("binding-build-with-debt");b.add_argument("observations",type=Path);b.add_argument("debt_context",type=Path);b.add_argument("--as-of",required=True);b.add_argument("--max-age-days",type=int,default=550)
+    b=s.add_parser("binding-build-with-diluted-shares");b.add_argument("base_proposal",type=Path);b.add_argument("share_bridge",type=Path)
     s.add_parser("binding-validate").add_argument("file",type=Path);return p
 
 def _binding_apply_parser()->argparse.ArgumentParser:
@@ -169,6 +171,7 @@ def _run_binding(argv:list[str])->int:
     try:
         if a.command=="binding-build":_dump(build_binding_proposal(_load_object_list(a.observations,"normalized observations"),as_of=a.as_of,max_age_days=a.max_age_days));return 0
         if a.command=="binding-build-with-debt":_dump(build_binding_proposal_with_debt(_load_object_list(a.observations,"normalized observations"),_load_object(a.debt_context,"debt binding context"),as_of=a.as_of,max_age_days=a.max_age_days));return 0
+        if a.command=="binding-build-with-diluted-shares":_dump(build_binding_proposal_with_diluted_shares(_load_object(a.base_proposal,"base binding proposal"),_load_object(a.share_bridge,"diluted-share bridge")));return 0
         if a.command=="binding-validate":_dump(validate_binding_proposal_any(_load_object(a.file,"binding proposal")));return 0
         raise CaseServiceError("unsupported binding command / 미지원 바인딩 명령")
     except (CaseServiceError,ValueError,OSError) as exc:return _error(a,exc)

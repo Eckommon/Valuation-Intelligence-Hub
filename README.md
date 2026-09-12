@@ -16,7 +16,7 @@ EVIDENCE CANDIDATE / NOT CANONICAL
         ↓
 NORMALIZED / DERIVED EVIDENCE / NOT CANONICAL
         ↓
-GOVERNED BINDING CONTEXT / NOT CANONICAL
+GOVERNED CONTEXT / NOT CANONICAL
         ↓
 DRAFT BINDING PROPOSAL / NOT CANONICAL
         ↓
@@ -29,7 +29,7 @@ DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
 CANONICAL
 ```
 
-Facts, calculations, derivations, binding contexts, proposals, and Draft application are intentionally separate authority states.
+Calculations never upgrade evidence authority by themselves.
 
 ## Valuation kernel / 가치평가 커널
 
@@ -37,7 +37,7 @@ Facts, calculations, derivations, binding contexts, proposals, and Draft applica
 FCFF = EBIT(1-T) + D\&A - CAPEX - \Delta NWC
 \]
 
-The Hub also supports reverse valuation and probability-weighted venture valuation. Existing company cases are versioned methodology references, not live investment recommendations.
+The Hub also supports reverse valuation and probability-weighted venture valuation. Company cases are versioned methodology references, not live investment recommendations.
 
 ## Install / 설치
 
@@ -52,15 +52,14 @@ python -m pip install -e ".[dev]"
 - M14: immutable OpenDART financial-statement acquisition
 - M15: period semantics, normalization, reconciliation, TTM
 - M16: normalized-evidence → equity-FCFF Draft binding proposal v0.1
-- M17: SHA-locked human approval + in-memory noncanonical Draft binding application
-- M18: governed historical operating/net margin derivation separated from forecast assumptions
-- M19: explicit interest-bearing-debt component evidence, normalization, completeness and aggregation
-- M20: reviewed complete debt → `equity.debt` binding with human date assertion for unresolved report-stage dates
-- M21: governed historical share-dilution reference evidence, explicitly separated from valuation-date fully diluted shares
+- M17: SHA-locked human approval + noncanonical Draft binding application
+- M18: governed historical operating/net margin derivation
+- M19: explicit interest-bearing-debt components and aggregation
+- M20: reviewed complete debt → `equity.debt` binding with human date assertion where needed
+- M21: governed historical share-dilution reference evidence
+- M22: valuation-date current-common-share base + explicit diluted-share bridge foundation
 
-## M20 — Reviewed debt → `equity.debt` binding
-
-M20 connects only complete, reviewed M19 debt to the equity-FCFF Draft path.
+## M20 — Reviewed debt binding
 
 ```text
 liabilities ≠ interest_bearing_debt
@@ -68,13 +67,9 @@ REPORT_STAGE_ONLY ≠ invented exact date
 complete reviewed fresh debt → eligible for DIRECT_BIND
 ```
 
-For `REPORT_STAGE_ONLY` debt, an explicit SHA-locked human date assertion is required. The debt-binding context independently recomputes freshness from `as_of` and the resolved period end. M20 preserves the original M16 v0.1 cash proposal path and adds a debt-aware v0.2 proposal that may replace only the `equity.debt` decision.
-
-See [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md).
+M20 preserves M16 v0.1 cash semantics and adds a debt-aware v0.2 proposal. OpenDART report-stage-only dates require a separate human SHA lock. See [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md).
 
 ## M21 — Historical dilution reference / 역사적 희석도 참조근거
-
-M21 deliberately keeps historical EPS denominator evidence separate from valuation-date fully diluted shares.
 
 ```text
 shares_outstanding != weighted_average_basic_shares
@@ -82,26 +77,7 @@ weighted_average_diluted_shares != valuation_date_fully_diluted_shares
 historical_dilution_factor != valuation denominator
 ```
 
-M21 v0.1 supports only exact SEC US-GAAP concepts:
-
-```text
-WeightedAverageNumberOfSharesOutstandingBasic
-WeightedAverageNumberOfDilutedSharesOutstanding
-```
-
-Extraction requires an exact start/end period so quarterly and YTD 10-Q denominators cannot be conflated.
-
-Normalized evidence remains duration-based and noncanonical. Historical dilution is derived only from exact same entity, unit, and full period identity:
-
-```text
-historical_dilution_factor
-  = weighted_average_diluted_shares / weighted_average_basic_shares
-
-historical_incremental_diluted_shares
-  = weighted_average_diluted_shares - weighted_average_basic_shares
-```
-
-Every M21 derived result carries the fail-closed boundary:
+M21 accepts exact SEC weighted-average basic/diluted EPS denominator concepts with exact start/end periods. Its result is historical reference only:
 
 ```text
 historical_only = true
@@ -110,39 +86,73 @@ forecast_direct_bind = false
 shares_outstanding_substitution = false
 ```
 
-Therefore `equity.diluted_shares` remains unresolved after M21. A future milestone must build valuation-date fully diluted shares from explicit instrument-level or equivalently governed evidence.
-
-### M21 CLI
-
-```text
-dilution-sec-extract
-dilution-normalize
-dilution-observation-validate
-dilution-derive
-dilution-validate
-```
-
-### M21 Web
-
-```text
-/dilution
-```
-
-The dilution surface is calculate/validate only. There is no Draft mutation, promotion, admission, or canonical-write route.
-
 See [`docs/SHARE_DILUTION_REFERENCE.md`](docs/SHARE_DILUTION_REFERENCE.md).
+
+## M22 — Valuation-date share base + diluted-share bridge / 가치평가일 주식기준 + 희석주식 Bridge
+
+M22 separates the point-in-time common-share base from explicit dilution adjustments and from the final valuation denominator.
+
+```text
+current_common_shares != fully_diluted_shares
+weighted_average_diluted_shares != current_common_shares
+historical_dilution_factor != automatic current dilution adjustment
+missing dilution category != zero
+```
+
+### Current common-share base
+
+M22 v0.1 uses only exact SEC:
+
+```text
+dei:EntityCommonStockSharesOutstanding
+```
+
+The normalized observation is exact-date `INSTANT` evidence. Only reviewed evidence can enter `valuation-share-base-context-v0.1`, whose freshness is independently recomputed from source date and `as_of`.
+
+### Explicit adjustment ledger
+
+Supported structural categories:
+
+```text
+options_treasury_stock_method
+rsu_restricted_stock
+warrants
+convertibles_if_converted
+contingent_shares
+other_explicit
+```
+
+Each adjustment has an explicit source SHA, typed category, share amount, authority class, and its own integrity hash. Calculation never upgrades a candidate adjustment to reviewed authority.
+
+### Coverage gate
+
+```text
+BASE_ONLY
+PARTIAL_DILUTION_COVERAGE
+COMPLETE_REVIEWED_DILUTION_COVERAGE
+CONFLICT_BLOCKED
+```
+
+A candidate total may be calculated from the base plus selected explicit adjustments, but only **complete + reviewed + fresh + human coverage assertion** can be marked eligible for a future `equity.diluted_shares` binding integration.
+
+Missing categories are never zero-imputed. Conflicting adjustment IDs hide the candidate total. M21 historical dilution may be attached as reference only and can never generate a current adjustment automatically.
+
+M22 does **not** itself mutate a Draft or bind `equity.diluted_shares`; that remains a later governed integration step.
+
+See [`docs/VALUATION_SHARE_BRIDGE.md`](docs/VALUATION_SHARE_BRIDGE.md).
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
 ```text
 liabilities                         ≠ debt
 shares_outstanding                  ≠ diluted_shares
-weighted_average_diluted_shares    ≠ valuation_date_fully_diluted_shares
+current_common_shares               ≠ fully_diluted_shares
+weighted_average_diluted_shares     ≠ current_common_shares
+historical_dilution_factor          ≠ current dilution adjustment
+missing dilution category           ≠ zero
 historical revenue                  ≠ forecast revenue
 historical margin                   ≠ forecast margin
-missing debt component              ≠ zero
 REPORT_STAGE_ONLY                   ≠ exact date
-stale debt                          ≠ DIRECT_BIND
 ```
 
 ## Web product / Web 제품
@@ -162,7 +172,10 @@ Default: `http://127.0.0.1:8765`
 /derived       — governed historical derived evidence
 /debt          — governed debt aggregation + M20 binding preparation
 /dilution      — governed historical dilution reference evidence
+/shares        — valuation-date common-share base + diluted-share bridge
 ```
+
+M22 `/shares` and `/api/shares/*` are calculate/validate only; no Draft or canonical write path exists.
 
 ## Milestones / 마일스톤
 
@@ -175,8 +188,9 @@ Default: `http://127.0.0.1:8765`
 - [x] M18 governed derived financial evidence + historical margins
 - [x] M19 governed interest-bearing debt components + aggregation
 - [x] M20 reviewed debt → `equity.debt` binding + human date assertion
-- [ ] **M21 governed historical dilution reference evidence — active finalization**
-- [ ] valuation-date fully diluted-share bridge
+- [x] M21 governed historical dilution reference evidence
+- [ ] **M22 valuation-date common-share base + diluted-share bridge foundation — active finalization**
+- [ ] complete reviewed M22 bridge → `equity.diluted_shares` binding integration
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
@@ -195,8 +209,9 @@ Default: `http://127.0.0.1:8765`
 - [`docs/INTEREST_BEARING_DEBT.md`](docs/INTEREST_BEARING_DEBT.md)
 - [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md)
 - [`docs/SHARE_DILUTION_REFERENCE.md`](docs/SHARE_DILUTION_REFERENCE.md)
+- [`docs/VALUATION_SHARE_BRIDGE.md`](docs/VALUATION_SHARE_BRIDGE.md)
 - [`docs/M20_ACCEPTANCE.md`](docs/M20_ACCEPTANCE.md)
-- [`docs/M20_IMPLEMENTATION_SUMMARY.md`](docs/M20_IMPLEMENTATION_SUMMARY.md)
 - [`docs/M21_ACCEPTANCE.md`](docs/M21_ACCEPTANCE.md)
-- [`docs/M21_IMPLEMENTATION_SUMMARY.md`](docs/M21_IMPLEMENTATION_SUMMARY.md)
+- [`docs/M22_ACCEPTANCE.md`](docs/M22_ACCEPTANCE.md)
+- [`docs/M22_IMPLEMENTATION_SUMMARY.md`](docs/M22_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

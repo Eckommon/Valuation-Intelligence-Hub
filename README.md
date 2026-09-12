@@ -37,7 +37,7 @@ Facts, calculations, derivations, binding contexts, proposals, and Draft applica
 FCFF = EBIT(1-T) + D\&A - CAPEX - \Delta NWC
 \]
 
-The Hub also supports reverse valuation and probability-weighted venture valuation. Existing LS ELECTRIC, LS Eco Energy, and Jet.AI cases are versioned methodology references, not live investment recommendations.
+The Hub also supports reverse valuation and probability-weighted venture valuation. Existing company cases are versioned methodology references, not live investment recommendations.
 
 ## Install / 설치
 
@@ -55,10 +55,12 @@ python -m pip install -e ".[dev]"
 - M17: SHA-locked human approval + in-memory noncanonical Draft binding application
 - M18: governed historical operating/net margin derivation separated from forecast assumptions
 - M19: explicit interest-bearing-debt component evidence, normalization, completeness and aggregation
+- M20: reviewed complete debt → `equity.debt` binding with human date assertion for unresolved report-stage dates
+- M21: governed historical share-dilution reference evidence, explicitly separated from valuation-date fully diluted shares
 
 ## M20 — Reviewed debt → `equity.debt` binding
 
-M20 connects only **complete, reviewed M19 debt** to the equity-FCFF Draft path.
+M20 connects only complete, reviewed M19 debt to the equity-FCFF Draft path.
 
 ```text
 liabilities ≠ interest_bearing_debt
@@ -66,92 +68,81 @@ REPORT_STAGE_ONLY ≠ invented exact date
 complete reviewed fresh debt → eligible for DIRECT_BIND
 ```
 
-### Date resolution / 날짜 해소
-
-For debt whose source period is already `EXACT`, M20 uses the source period end directly and forbids a human assertion from overriding it.
-
-For OpenDART-style `REPORT_STAGE_ONLY` debt, M20 requires a separate noncanonical `debt-date-assertion-v0.1`. It SHA-locks reviewer, approval timestamp, exact M19 debt hash, entity/scope, original period identity, asserted period-end date, and human review basis.
-
-No assertion means no resolved exact date and therefore no binding-ready context.
-
-### Binding context / 바인딩 context
-
-`debt-binding-context-v0.1` is created only from:
-
-```text
-COMPLETE_CORE_COMPONENTS
-+ DERIVED_FACT
-+ M19 Draft-eligibility=true
-```
-
-Freshness is evaluated after exact date resolution. Fresh debt is eligible; stale debt remains `STALE_BLOCKED`.
-
-Partial, conflict-blocked, or candidate debt is rejected before a binding context can be produced.
-
-### Proposal compatibility / Proposal 호환성
-
-The historical M16 `build_binding_proposal()` remains unchanged and still produces `draft-binding-proposal-v0.1`.
-
-M20 adds `draft-binding-proposal-v0.2`, which embeds the complete v0.1 proposal and complete debt binding context, then changes **only** the `equity.debt` decision. Every other material-field decision must remain identical to v0.1.
-
-This preserves old cash behavior while adding an auditable debt path.
-
-### Human approval and apply / 인간 승인·적용
-
-M20 reuses the existing M17 `binding-approval-v0.1` contract. When v0.2 marks `equity.debt` as `DIRECT_BIND`, a human may explicitly approve that field.
-
-Debt applied-diff lineage preserves:
-
-```text
-debt binding context SHA-256
-M19 source debt SHA-256
-date assertion SHA-256 (when required)
-```
-
-The source Draft is never mutated; the output remains noncanonical and in-memory.
-
-### CLI
-
-```text
-debt-date-assertion-build
-debt-date-assertion-validate
-debt-binding-context-build
-debt-binding-context-validate
-binding-build-with-debt
-binding-validate
-binding-approval-build
-binding-approval-validate
-binding-apply
-bound-draft-validate
-```
-
-### Web
-
-The `/debt` Lab remains calculate/validate-only and now includes M20 preparation endpoints:
-
-```text
-POST /api/debt/date-assertion-build
-POST /api/debt/date-assertion-validate
-POST /api/debt/binding-context-build
-POST /api/debt/binding-context-validate
-POST /api/debt/binding-proposal-build
-POST /api/debt/binding-proposal-validate
-```
-
-There is no Draft-file write, admission, promotion, or canonical-write route.
+For `REPORT_STAGE_ONLY` debt, an explicit SHA-locked human date assertion is required. The debt-binding context independently recomputes freshness from `as_of` and the resolved period end. M20 preserves the original M16 v0.1 cash proposal path and adds a debt-aware v0.2 proposal that may replace only the `equity.debt` decision.
 
 See [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md).
+
+## M21 — Historical dilution reference / 역사적 희석도 참조근거
+
+M21 deliberately keeps historical EPS denominator evidence separate from valuation-date fully diluted shares.
+
+```text
+shares_outstanding != weighted_average_basic_shares
+weighted_average_diluted_shares != valuation_date_fully_diluted_shares
+historical_dilution_factor != valuation denominator
+```
+
+M21 v0.1 supports only exact SEC US-GAAP concepts:
+
+```text
+WeightedAverageNumberOfSharesOutstandingBasic
+WeightedAverageNumberOfDilutedSharesOutstanding
+```
+
+Extraction requires an exact start/end period so quarterly and YTD 10-Q denominators cannot be conflated.
+
+Normalized evidence remains duration-based and noncanonical. Historical dilution is derived only from exact same entity, unit, and full period identity:
+
+```text
+historical_dilution_factor
+  = weighted_average_diluted_shares / weighted_average_basic_shares
+
+historical_incremental_diluted_shares
+  = weighted_average_diluted_shares - weighted_average_basic_shares
+```
+
+Every M21 derived result carries the fail-closed boundary:
+
+```text
+historical_only = true
+valuation_date_direct_bind = false
+forecast_direct_bind = false
+shares_outstanding_substitution = false
+```
+
+Therefore `equity.diluted_shares` remains unresolved after M21. A future milestone must build valuation-date fully diluted shares from explicit instrument-level or equivalently governed evidence.
+
+### M21 CLI
+
+```text
+dilution-sec-extract
+dilution-normalize
+dilution-observation-validate
+dilution-derive
+dilution-validate
+```
+
+### M21 Web
+
+```text
+/dilution
+```
+
+The dilution surface is calculate/validate only. There is no Draft mutation, promotion, admission, or canonical-write route.
+
+See [`docs/SHARE_DILUTION_REFERENCE.md`](docs/SHARE_DILUTION_REFERENCE.md).
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
 ```text
-liabilities             ≠ debt
-shares_outstanding      ≠ diluted_shares
-historical revenue      ≠ forecast revenue
-historical margin       ≠ forecast margin
-missing debt component  ≠ zero
-REPORT_STAGE_ONLY       ≠ exact date
-stale debt              ≠ DIRECT_BIND
+liabilities                         ≠ debt
+shares_outstanding                  ≠ diluted_shares
+weighted_average_diluted_shares    ≠ valuation_date_fully_diluted_shares
+historical revenue                  ≠ forecast revenue
+historical margin                   ≠ forecast margin
+missing debt component              ≠ zero
+REPORT_STAGE_ONLY                   ≠ exact date
+stale debt                          ≠ DIRECT_BIND
 ```
 
 ## Web product / Web 제품
@@ -170,6 +161,7 @@ Default: `http://127.0.0.1:8765`
 /binding-apply — human approval + in-memory Draft binding
 /derived       — governed historical derived evidence
 /debt          — governed debt aggregation + M20 binding preparation
+/dilution      — governed historical dilution reference evidence
 ```
 
 ## Milestones / 마일스톤
@@ -182,8 +174,9 @@ Default: `http://127.0.0.1:8765`
 - [x] M17 human-approved noncanonical Draft binding application
 - [x] M18 governed derived financial evidence + historical margins
 - [x] M19 governed interest-bearing debt components + aggregation
-- [ ] **M20 reviewed debt → `equity.debt` binding + human date assertion — active finalization**
-- [ ] governed diluted-share evidence/derivation
+- [x] M20 reviewed debt → `equity.debt` binding + human date assertion
+- [ ] **M21 governed historical dilution reference evidence — active finalization**
+- [ ] valuation-date fully diluted-share bridge
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
@@ -201,6 +194,9 @@ Default: `http://127.0.0.1:8765`
 - [`docs/DERIVED_FINANCIAL_EVIDENCE.md`](docs/DERIVED_FINANCIAL_EVIDENCE.md)
 - [`docs/INTEREST_BEARING_DEBT.md`](docs/INTEREST_BEARING_DEBT.md)
 - [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md)
+- [`docs/SHARE_DILUTION_REFERENCE.md`](docs/SHARE_DILUTION_REFERENCE.md)
 - [`docs/M20_ACCEPTANCE.md`](docs/M20_ACCEPTANCE.md)
 - [`docs/M20_IMPLEMENTATION_SUMMARY.md`](docs/M20_IMPLEMENTATION_SUMMARY.md)
+- [`docs/M21_ACCEPTANCE.md`](docs/M21_ACCEPTANCE.md)
+- [`docs/M21_IMPLEMENTATION_SUMMARY.md`](docs/M21_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

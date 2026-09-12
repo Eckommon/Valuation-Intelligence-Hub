@@ -20,8 +20,9 @@
 | M17 Human-approved noncanonical Draft binding apply | `ef68c2549bef842ef417d401140b49c88af209b5` | #38 |
 | M18 Governed derived financial evidence + historical margins | `fb33cfbf401ab9c2e36ccd831bd059c8951214ba` | #40 |
 | M19 Governed interest-bearing debt components + aggregation | `5b2ab53b0c83632abae187f12e1a682ecc254b77` | #42 |
+| M20 Reviewed debt → `equity.debt` binding | `236547512919b5d68e283b3431183f56f5fc845c` | #44 |
 
-M19 final PR CI `34673236672` and post-merge `main` CI `34673285798` completed `success` on Python 3.11/3.12.
+M20 final PR CI `34688790288` and post-merge `main` CI `34688853460` completed `success` on Python 3.11/3.12.
 
 Earlier M1–M11 milestones remain completed and regression-locked in repository history.
 
@@ -53,149 +54,165 @@ Source acquisition, normalization, derivation, date assertion, binding preparati
 
 ## Active mission / 활성 미션
 
-- Issue: `#44 [M20] Reviewed debt → equity.debt binding + date assertion`
-- PR: `#45 M20 Reviewed debt → equity.debt binding + date assertion`
-- Branch: `mission/m20-debt-draft-binding-v01`
-- Base main: `5b2ab53b0c83632abae187f12e1a682ecc254b77`
+- Issue: `#46 [M21] Governed dilution reference evidence + valuation-share boundary`
+- PR: `#47 M21 Governed dilution reference evidence + valuation-share boundary`
+- Branch: `mission/m21-dilution-reference-v01`
+- Base main: `236547512919b5d68e283b3431183f56f5fc845c`
 - Status: `ACTIVE_FINALIZATION`
 
-### M20 diagnostic CI history / M20 진단 CI 이력
+### M21 CI history / M21 CI 이력
 
-Checkpoint run `34688393668` failed with **261 passed / 1 failed**. The single failure was the M19 Web regression contract `LIABILITIES ≠ DEBT · CALCULATE ONLY`, which M20 had replaced while extending the UI. Core debt/date/binding logic was not the failing contract. M20 restored the exact M19 phrase and appended the new human-date/no-write semantics.
+- Core checkpoint head `6514684f9bf72ce146ed9d360d8ac2b73f1db2d6`
+- Core checkpoint CI `34688999080`: Python 3.11/3.12 `success`
+- Interface checkpoint head `9ae168d04f2a564125f95c6e698f896b8989f56d`
+- Interface checkpoint CI `34689111081`: Python 3.11/3.12 `success`
 
-The failed checkpoint is retained as diagnostic evidence and is not a merge gate. Only a fresh final-head Python 3.11/3.12 success can authorize merge.
+A fresh final-head CI is still required after schemas/docs/state changes. Only that fresh final-head run may authorize merge.
 
-## M20 objective / M20 목표
-
-Connect only complete, reviewed M19 interest-bearing debt to the existing equity-FCFF Draft path as `equity.debt`, while preserving M16 v0.1 and M17 cash behavior.
-
-## Date assertion / 날짜승인
-
-For source debt with:
+## M21 core semantic boundary / M21 핵심 의미경계
 
 ```text
-date_precision = EXACT
+shares_outstanding != weighted_average_basic_shares
+weighted_average_diluted_shares != valuation_date_fully_diluted_shares
+historical_dilution_factor != valuation denominator
 ```
 
-M20 uses the exact source period end and forbids assertion-based override.
+M21 does **not** resolve `equity.diluted_shares`. It creates historical dilution reference evidence only.
 
-For:
+## Source mapping / 원천 매핑
+
+M21 v0.1 uses an isolated SEC mapping and does not mutate the M13 source registry.
+
+Exact US-GAAP concepts only:
 
 ```text
-date_precision = REPORT_STAGE_ONLY
-end = null
+WeightedAverageNumberOfSharesOutstandingBasic
+WeightedAverageNumberOfDilutedSharesOutstanding
 ```
 
-M20 requires noncanonical `debt-date-assertion-v0.1` locking:
+Unit is `shares`. OpenDART is intentionally unsupported in v0.1 because denominator shares are not inferred from EPS or current shares.
 
-- reviewer
-- timezone-aware approval timestamp
-- exact M19 `debt_sha256`
-- target entity + financial scope
-- complete original period identity
-- asserted exact period-end date
-- human review basis
-- assertion SHA-256
+## Period safety / 기간 안전성
 
-The system does not infer or synthesize the exact date.
-
-## Binding context / 바인딩 context
-
-`debt-binding-context-v0.1` accepts only M19 debt that is:
+SEC extraction requires explicit:
 
 ```text
-COMPLETE_CORE_COMPONENTS
-+ DERIVED_FACT
-+ eligible_for_draft_direct_bind=true
+period_start
+period_end
 ```
 
-It resolves the exact period end, calculates age versus `as_of`, and records `FRESH` or `STALE_BLOCKED`.
-
-Partial, conflict-blocked, and candidate debt cannot enter this context.
-
-## Binding proposal v0.2 / 바인딩 제안 v0.2
-
-The original M16 `build_binding_proposal()` remains unchanged and continues to produce `draft-binding-proposal-v0.1`.
-
-M20 adds `draft-binding-proposal-v0.2`, which:
-
-- embeds the complete base v0.1 proposal
-- embeds the complete M20 debt-binding context
-- requires entity/scope/unit compatibility
-- replaces **only** the `equity.debt` decision
-- makes fresh eligible debt `DIRECT_BIND`
-- makes stale debt `STALE_BLOCKED`
-- preserves all non-debt v0.1 decisions exactly
-- SHA-locks the full proposal
-
-## M17 integration / M17 통합
-
-Existing `binding-approval-v0.1` is reused. M20 extends the application implementation to support `equity.debt` when and only when v0.2 marks it `DIRECT_BIND`.
-
-Debt applied-diff lineage records:
+Selection rule:
 
 ```text
-source_context_sha256
-source_debt_sha256
-date_assertion_sha256  # null for source EXACT debt
+EXACT_START_END_THEN_LATEST_FILED
 ```
 
-The input Draft remains unchanged and the bound result remains `canonical=false`.
+This prevents quarterly and YTD 10-Q denominator facts with the same end date from being conflated.
+
+Normalized observations are duration evidence:
+
+```text
+DURATION_QUARTER
+DURATION_YTD
+DURATION_ANNUAL
+```
+
+and always preserve exact start/end dates.
+
+## Historical dilution derivation / 역사적 희석도 파생
+
+For exact same entity, unit, and complete period identity:
+
+```text
+historical_dilution_factor
+  = weighted_average_diluted_shares / weighted_average_basic_shares
+
+historical_incremental_diluted_shares
+  = weighted_average_diluted_shares - weighted_average_basic_shares
+```
+
+Rules:
+
+- basic shares must be > 0
+- diluted shares must be >= basic shares
+- full period identity must match exactly
+- candidate authority propagates
+- arithmetic never upgrades authority
+- validators recompute arithmetic from source values
+
+## Mandatory non-binding flags / 필수 비바인딩 플래그
+
+Every `historical-dilution-evidence-v0.1` result must carry:
+
+```text
+historical_only = true
+valuation_date_direct_bind = false
+forecast_direct_bind = false
+shares_outstanding_substitution = false
+```
+
+Therefore M16/M20 `equity.diluted_shares` remains unresolved.
 
 ## Interfaces / 인터페이스
 
-CLI additions:
+CLI:
 
 ```text
-debt-date-assertion-build
-debt-date-assertion-validate
-debt-binding-context-build
-debt-binding-context-validate
-binding-build-with-debt
+dilution-sec-extract
+dilution-normalize
+dilution-observation-validate
+dilution-derive
+dilution-validate
 ```
 
-Existing approval/apply commands are reused.
-
-Web calculate/validate preparation endpoints:
+Web:
 
 ```text
-POST /api/debt/date-assertion-build
-POST /api/debt/date-assertion-validate
-POST /api/debt/binding-context-build
-POST /api/debt/binding-context-validate
-POST /api/debt/binding-proposal-build
-POST /api/debt/binding-proposal-validate
+/dilution
 ```
 
-No Draft-file write, promotion, admission, or canonical-write M20 endpoint exists.
+M21 interfaces are calculate/validate only. No Draft mutation, promotion, admission, or canonical-write M21 route exists.
 
-## M20 files / M20 파일
+## M21 files / M21 파일
 
-- `src/valuation_hub/debt_binding.py`
-- `src/valuation_hub/debt_draft_binding.py`
-- `src/valuation_hub/binding_apply.py`
+- `src/valuation_hub/share_dilution.py`
+- `src/valuation_hub/web_dilution.py`
 - `src/valuation_hub/cli_entry.py`
-- `src/valuation_hub/web_debt.py`
-- `schemas/debt_date_assertion.schema.json`
-- `schemas/debt_binding_context.schema.json`
-- `schemas/draft_binding_proposal_v02.schema.json`
-- `tests/test_debt_binding.py`
-- `tests/test_m20_binding.py`
-- `tests/test_m20_interfaces.py`
-- `docs/DEBT_DRAFT_BINDING.md`
-- `docs/M20_ACCEPTANCE.md`
-- `docs/M20_IMPLEMENTATION_SUMMARY.md`
+- `schemas/share_dilution_observation.schema.json`
+- `schemas/historical_dilution_evidence.schema.json`
+- `tests/test_share_dilution.py`
+- `tests/test_m21_interfaces.py`
+- `docs/SHARE_DILUTION_REFERENCE.md`
+- `docs/M21_ACCEPTANCE.md`
+- `docs/M21_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. M19 debt SHA → M20 date assertion/context SHA → proposal SHA → approval SHA → bound-result SHA lineage
+3. SEC snapshot SHA → M21 candidate SHA → observation SHA → derived evidence SHA lineage
 4. current chat
 5. AI recollection
 
 ## Exact resume point / 정확한 재개점
 
-Run fresh Python 3.11/3.12 CI on the final PR #45 head. Merge only if M16 v0.1 cash compatibility, M19 Web contract compatibility, date assertion locking, complete/reviewed/fresh debt eligibility, stale/partial/conflict/candidate blocking, entity/scope/unit guards, debt-aware v0.2 proposal integrity, M17 debt approval/apply lineage, no-write CLI/Web boundaries, and all M1–M20 regressions pass.
+Run a fresh full Python 3.11/3.12 CI on the final PR #47 head after schemas/docs/README/PROJECT_STATE are committed.
 
-After merge, verify Issue #44 closure and post-merge `main` CI before declaring M20 canonical. The next likely priority after a clean M20 close is governed diluted-share evidence/derivation because `shares_outstanding ≠ diluted_shares` remains unresolved.
+Merge only if all of the following remain green:
+
+- M13 SEC registry non-mutation
+- exact basic/diluted SEC concept mappings
+- exact start/end period selection
+- quarter/YTD/annual duration classification
+- observation SHA integrity
+- exact entity/unit/full-period derivation compatibility
+- basic > 0 and diluted >= basic arithmetic guards
+- candidate-authority propagation
+- historical-only/non-binding semantic boundary
+- `shares_outstanding` non-substitution
+- CLI/Web no-write boundaries
+- all M1–M21 regressions
+
+After merge, verify Issue #46 closure and post-merge `main` CI before declaring M21 canonical.
+
+If M21 closes cleanly, the next mission should be a separate **valuation-date fully diluted-share bridge** built from explicit current-share and instrument-level dilution evidence. Historical weighted-average EPS denominators must remain reference-only inputs to that future mission.

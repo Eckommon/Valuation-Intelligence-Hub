@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/share_dilution_observation.schema.json",
+  "title": "Share Dilution Observation v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","period","lineage","observation_sha256"],
+  "properties": {
+    "schema_version": {"const": "share-dilution-observation-v0.1"},
+    "status": {"const": "SHARE_DILUTION_OBSERVATION_NORMALIZED"},
+    "canonical": {"const": false},
+    "class": {"enum": ["NORMALIZED_FACT","NORMALIZED_FACT_CANDIDATE"]},
+    "metric": {"enum": ["weighted_average_basic_shares","weighted_average_diluted_shares"]},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"const": "shares"},
+    "entity": {
+      "type": "object",
+      "required": ["id","source_system","financial_scope"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^SEC_CIK:[0-9]{10}$"},
+        "source_system": {"const": "SEC"},
+        "financial_scope": {"const": "AS_REPORTED"}
+      },
+      "additionalProperties": false
+    },
+    "period": {
+      "type": "object",
+      "required": ["kind","start","end","duration_days","fiscal_year","fiscal_period","fiscal_quarter","report_stage","date_precision"],
+      "properties": {
+        "kind": {"enum": ["DURATION_QUARTER","DURATION_YTD","DURATION_ANNUAL"]},
+        "start": {"type": "string", "format": "date"},
+        "end": {"type": "string", "format": "date"},
+        "duration_days": {"type": "integer", "minimum": 1},
+        "fiscal_year": {"type": ["integer","null"]},
+        "fiscal_period": {"type": ["string","null"]},
+        "fiscal_quarter": {"type": ["integer","null"]},
+        "report_stage": {"type": ["string","null"]},
+        "date_precision": {"const": "EXACT"}
+      },
+      "additionalProperties": false
+    },
+    "lineage": {
+      "type": "object",
+      "required": ["normalization_rule","source_candidate_sha256","source_class","source_snapshot_sha256","source_body_sha256","filing_identity","source_detail"],
+      "properties": {
+        "normalization_rule": {"const": "SEC_WEIGHTED_AVERAGE_SHARE_DURATION_V01"},
+        "source_candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "source_class": {"enum": ["FACT","FACT_CANDIDATE"]},
+        "source_snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "source_body_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "filing_identity": {"type": "object"},
+        "source_detail": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "observation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

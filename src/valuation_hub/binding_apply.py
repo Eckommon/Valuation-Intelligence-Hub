@@ -502,6 +502,9 @@ def validate_bound_draft_result(result: dict[str, Any]) -> dict[str, Any]:
     diffs = result.get("applied_diffs")
     if not isinstance(diffs, list) or len(diffs) != len(approved):
         raise CaseServiceError("bound Draft diff count mismatch / 바인딩 Draft diff 개수 불일치")
+    diff_fields = [diff.get("field") if isinstance(diff, dict) else None for diff in diffs]
+    if len(diff_fields) != len(set(diff_fields)) or set(diff_fields) != set(approved):
+        raise CaseServiceError("bound Draft diff fields must exactly match approved fields / 바인딩 Draft diff 필드는 승인필드와 정확히 일치해야 함")
     reconstructed = copy.deepcopy(before)
     for diff in diffs:
         if not isinstance(diff, dict) or diff.get("field") not in approved or diff.get("field") not in direct:

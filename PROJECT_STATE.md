@@ -12,26 +12,24 @@
 
 | Milestone | Main commit | Issue |
 |---|---|---:|
-| M12 Guarded admission apply | `a40e92c196c39b40172711f38f7231f5e8812d52` | #26 |
-| M13 Immutable SEC live evidence | `372b8b0b26307730c3e91afea97c979b59906042` | #28 |
-| M14 Immutable OpenDART financial evidence | `1fff272cc583ec294226f5f530ebe483c2957fb5` | #30 |
-| M15 Financial normalization + TTM | `a99a6f24fa6736b01b270a2eeeb4592e8b673563` | #32 |
-| M16 Governed evidence → Draft binding proposal | `fbaf90bab04a877ba6afaaa035a4e99e9ef085a0` | #34 |
-| M17 Human-approved noncanonical Draft binding apply | `ef68c2549bef842ef417d401140b49c88af209b5` | #38 |
-| M18 Governed derived financial evidence + historical margins | `fb33cfbf401ab9c2e36ccd831bd059c8951214ba` | #40 |
-| M19 Governed interest-bearing debt components + aggregation | `5b2ab53b0c83632abae187f12e1a682ecc254b77` | #42 |
-| M20 Reviewed debt → `equity.debt` binding | `236547512919b5d68e283b3431183f56f5fc845c` | #44 |
-| M21 Governed historical dilution reference | `03af933835b8fbcf9ef4e6b3fd1b3db7603782fc` | #46 |
-| M22 Valuation-date common-share base + diluted-share bridge | `0a476cc9927b2d63164143447428f3e69b06051b` | #48 |
-| M23 Complete reviewed share bridge → `equity.diluted_shares` | `58d963238992f562c89c8325b42046ae35ac71bf` | #50 |
-| M24 Governed WACC assumption → `scenario.wacc` | `ca85f04c1bd84c5189f78c81e2653cc4f65bccca` | #52 |
+| M20 Reviewed debt → `equity.debt` | `236547512919b5d68e283b3431183f56f5fc845c` | #44 |
+| M21 Historical dilution reference | `03af933835b8fbcf9ef4e6b3fd1b3db7603782fc` | #46 |
+| M22 Valuation-date share bridge | `0a476cc9927b2d63164143447428f3e69b06051b` | #48 |
+| M23 Complete share bridge → `equity.diluted_shares` | `58d963238992f562c89c8325b42046ae35ac71bf` | #50 |
+| M24 Governed WACC → `scenario.wacc` | `ca85f04c1bd84c5189f78c81e2653cc4f65bccca` | #52 |
 | M25 Governed terminal growth → `scenario.terminal_growth` | `0c0a7591a59f163fa34aba54fdeb6001fb9b7dc0` | #54 |
+| M26 Integrated forecast → six-field atomic binding | `130363475139fe6ea30d00d615f387b440a23c71` | #56 |
 
-M24 final PR CI `34693544084` and post-merge main CI `34693990230` passed Python 3.11/3.12.
+Earlier M1–M19 milestones remain completed and regression-locked in repository history.
 
-M25 final PR CI `34694777238` and post-merge main CI `34694840768` passed Python 3.11/3.12. Issue #54 is completed.
+### Recent canonical CI / 최근 정식 CI
 
-Earlier milestones remain completed and regression-locked in repository history.
+- M24 final PR CI `34693544084` → Python 3.11/3.12 success
+- M24 post-merge main CI `34693990230` → Python 3.11/3.12 success
+- M25 final PR CI `34694777238` → Python 3.11/3.12 success
+- M25 post-merge main CI `34694840768` → Python 3.11/3.12 success
+- M26 final PR CI `34708790304` → Python 3.11/3.12 success
+- M26 post-merge main CI `34708847816` → Python 3.11/3.12 success
 
 ## Authority model / 권위모델
 
@@ -40,9 +38,9 @@ SOURCE
   ↓
 IMMUTABLE / SOURCE-LOCKED INPUT / NOT CANONICAL
   ↓
-FACT / NORMALIZED FACT / ASSUMPTION_CANDIDATE
+FACT_CANDIDATE / NORMALIZED FACT / ASSUMPTION_CANDIDATE
   ↓
-GOVERNED CONTEXT or HUMAN-REVIEWED ASSUMPTION / NOT CANONICAL
+HUMAN-REVIEWED FACT / GOVERNED CONTEXT / ASSUMPTION / NOT CANONICAL
   ↓
 BINDING PROPOSAL / NOT CANONICAL
   ↓
@@ -55,159 +53,142 @@ DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
 CANONICAL
 ```
 
-Calculation never silently upgrades `ASSUMPTION_CANDIDATE` to `ASSUMPTION`, nor `ASSUMPTION` to `FACT`.
+Calculation never silently upgrades candidate authority. A reviewed FACT or ASSUMPTION is still noncanonical until repository governance completes.
+
+계산은 candidate 권위를 자동 승격하지 않는다. 검토완료 FACT/ASSUMPTION도 저장소 거버넌스 완료 전에는 비정식이다.
 
 ## Active mission / 활성 미션
 
-- Issue: `#56 [M26] Integrated forecast-scenario assumption package + atomic Draft binding`
-- PR: `#57 M26 Integrated forecast package + atomic Draft binding`
-- Branch: `mission/m26-integrated-forecast-binding-v01`
-- Base main: `0c0a7591a59f163fa34aba54fdeb6001fb9b7dc0`
+- Issue: `#58 [M27] Governed market-price fact + Draft binding`
+- PR: `#59 M27 Governed market-price FACT + Draft binding`
+- Branch: `mission/m27-market-price-binding-v01`
+- Base main: `130363475139fe6ea30d00d615f387b440a23c71`
 - Status: `ACTIVE_FINALIZATION`
 
-## M26 mission / M26 미션
+## M27 mission / M27 미션
 
-Govern the six explicit FCFF forecast-year material inputs as one coherent human-reviewed assumption package and bind them atomically into the equity-FCFF Draft.
+Govern a valuation-date as-traded market quote as a source-backed, freshness-controlled market `FACT`, then bind only a human-reviewed eligible package into top-level Draft `market_price`.
 
-명시기간 FCFF의 여섯 미래 중요입력을 하나의 일관된 인간검토 가정패키지로 거버넌스하고 equity-FCFF Draft에 원자적으로 바인딩한다.
+가치평가일 as-traded 시장가격을 출처·최신성이 통제된 시장 `FACT`로 거버넌스하고 인간 검토완료 적격 패키지만 Draft 최상위 `market_price`로 연결한다.
 
-Atomic fields:
-
-```text
-scenario.years.revenue
-scenario.years.ebit_margin
-scenario.years.tax_rate
-scenario.years.depreciation_amortization
-scenario.years.capex
-scenario.years.delta_nwc
-```
-
-## M26 authority boundary / M26 권위경계
+## M27 authority boundary / M27 권위경계
 
 ```text
-historical fact != forecast assumption
-historical trend != automatic forecast
-calculated EBIT/NOPAT/FCFF != forecast authority
-ASSUMPTION_CANDIDATE != ASSUMPTION
-reviewed ASSUMPTION != canonical state
+quoted number without provenance != governed market-price FACT
+historical adjusted price != valuation-date market price
+FACT_CANDIDATE != FACT
+reviewed FACT != canonical state
 ```
 
-Forecast diagnostics are review aids only.
+Market price is a market observation, not a valuation assumption.
 
-Forecast 진단값은 검토 보조값일 뿐 authority를 생성하지 않는다.
+## Market-price candidate / 시장가격 Candidate
 
-## Forecast candidate / Forecast Candidate
+`market-price-fact-candidate-v0.1` requires:
 
-`forecast-scenario-assumption-candidate-v0.1` requires:
+- positive price per share
+- uppercase quote currency
+- exact entity ID + financial scope
+- instrument ID + symbol + venue
+- security type `COMMON_EQUITY`
+- explicit quote type: `OFFICIAL_CLOSE` or `LAST_TRADE`
+- price basis `AS_TRADED_PER_SHARE`
+- exact trading date
+- timezone-aware quote observation timestamp
+- valuation `as_of`
+- source publisher/type/tier/locator
+- source snapshot SHA-256
+- explicit max-age freshness policy
 
-- explicit unique scenario names
-- explicit scenario rationale
-- one identical strictly ascending future-year set across all scenarios
-- every forecast year strictly after the valuation `as_of` year
-- complete six-component rows
-- exact entity / financial scope / capital currency / `as_of`
-
-Numeric gates:
+Review eligibility requires:
 
 ```text
-revenue >= 0
--1 <= ebit_margin <= 1
-0 <= tax_rate < 1
-D&A >= 0
-CAPEX >= 0
-ΔNWC finite; negative allowed
+source tier ∈ {A, B}
+AND
+freshness = FRESH
 ```
 
-For each scenario/year the validator independently recomputes EBIT, NOPAT, FCFF, and revenue-growth diagnostics.
+Trading date after valuation `as_of` fails closed. Historical-price substitution and silent split adjustment are forbidden.
 
 ## Human review / 인간검토
 
-`forecast-scenario-review-assertion-v0.1` locks:
+`market-price-review-assertion-v0.1` locks:
 
 - exact candidate SHA
-- exact forecast-block SHA
-- methodology version
-- entity / scope / currency / `as_of`
-- exact scenario set
-- exact ordered forecast-year set
+- source snapshot SHA
+- exact price / currency / instrument / venue / quote type
+- trading date / quote timestamp / valuation `as_of`
+- freshness policy/status
 - reviewer
 - timezone-aware approval timestamp
 - review basis
 
-Approval cannot predate valuation `as_of`.
+Chronology is independently enforced:
+
+```text
+approved_at >= observed_at
+approved_at.date >= valuation as_of
+```
+
+The first core checkpoint passed before this additional chronology hardening. A dedicated regression test now proves that re-signing the outer assertion cannot legitimize pre-observation approval.
 
 Finalization yields:
 
 ```text
-reviewed-forecast-scenario-assumption-v0.1
-class = ASSUMPTION
-binding_eligibility = REVIEWED_INTEGRATED_FORECAST_ASSUMPTION
+reviewed-market-price-fact-v0.1
+class = FACT
 canonical = false
+binding_eligibility = REVIEWED_FRESH_MARKET_PRICE_FACT
 ```
 
-## v0.6 binding / v0.6 바인딩
+## v0.7 binding / v0.7 바인딩
 
 ```text
-validated draft-binding-proposal-v0.5
+validated draft-binding-proposal-v0.6
         +
-reviewed integrated forecast ASSUMPTION
+reviewed fresh market-price FACT
         ↓
-draft-binding-proposal-v0.6
+draft-binding-proposal-v0.7
 ```
 
-M26 accepts **only** validated v0.5 as its base.
+M27 accepts only validated v0.6 as its base.
 
-The forecast package must exactly match base entity, financial scope, capital currency, valuation `as_of`, and the v0.5 terminal-growth scenario set.
+Required exact compatibility:
 
-v0.6 replaces exactly the six forecast-year decisions. Every other base decision remains unchanged, including:
+- entity ID
+- financial scope
+- quote currency == base monetary unit / Draft currency
+- market-price `as_of` == base proposal `as_of`
+
+v0.7 replaces exactly:
 
 ```text
-scenario.wacc
-scenario.terminal_growth
-equity.cash
-equity.debt
-equity.diluted_shares
+market_price
 ```
 
-The v0.6 validator reconstructs exact policy, baseline projection, six decisions, completeness, package lineage, and final SHA.
+Every other base decision remains unchanged, including cash, debt, diluted shares, WACC, terminal growth, and all six forecast fields.
 
-## Atomic apply / 원자적 적용
+## Apply semantics / 적용 의미론
 
-M17 approval/apply now enforces:
+M27 extends the existing human binding-approval/apply path additively.
 
-```text
-if any forecast field is approved:
-    all six forecast fields must be approved
-```
-
-The target Draft must already contain the exact scenario set and the exact ordered forecast-year set for every scenario. M26 v0.1 does not silently create, remove, or reorder scenario/year rows.
-
-Each component diff records scenario/year before→after values and preserves:
+Applying `market_price` changes only the top-level Draft field and records:
 
 ```text
-source_forecast_package_sha256
-forecast_block_sha256
+before
+after
+source_market_price_package_sha256
+source_snapshot_sha256
 review_assertion_sha256
-scenario_names
-forecast_years
-forecast_component
+trading_date
+observed_at
+venue
+quote_type
 ```
 
-The input Draft remains unchanged. The result remains noncanonical.
+The input Draft remains unchanged and the result remains noncanonical.
 
-## Result-integrity hardening / 결과 무결성 강화
-
-During M26 review a generic bound-result validation gap was discovered.
-
-Pre-hardening, the validator required only:
-
-```text
-len(applied_diffs) == len(approved_fields)
-```
-
-A re-signed forged result could repeat one sequentially valid diff and omit another approved field.
-
-M26 now requires:
+M26 result-integrity hardening remains enforced:
 
 ```text
 all applied diff fields are unique
@@ -215,126 +196,118 @@ AND
 set(applied_diff.field) == set(approved_fields)
 ```
 
-Red→green evidence:
+## M27 CI history / M27 CI 이력
 
-- exploit reproduction test-only head `2b30bbfe0372e51358a42b6d3df03c60a3699220`
-  - CI `34708359543`: expected `failure`
-- production guard + hardening tests
-  - later hardened CI is green
+- Initial core head `c26790fa8e81e37b0fdffd9c772a978809202c6f`
+  - CI `34709265076`: Python 3.11/3.12 success
+- Quote-review chronology hardened head `6329f48f9f0233134d70dcd564f3c6362b050717`
+  - CI `34721348673`: Python 3.11/3.12 success
+- Interface/schema checkpoint follows the active branch after CLI entrypoint/schema changes.
 
-## M26 CI history / M26 CI 이력
-
-- Initial core head `06dacd6806b32b1b9d168e6bc63497303866f049`
-  - CI `34708138491`: Python 3.11/3.12 `success`
-- Exploit reproduction test-only head `2b30bbfe0372e51358a42b6d3df03c60a3699220`
-  - CI `34708359543`: expected `failure`
-- Hardened core + re-signing head `1e225fccea82ba14d404d808fbedeffac6fb3f42`
-  - CI `34708455989`: Python 3.11/3.12 `success`
-- Interface/schema head `ad6fcf8b5107f33b7d69c21b5a69ff6acdb21c86`
-  - CI `34708632795`: Python 3.11/3.12 `success`
-
-A fresh final-head CI is required after the documentation/README/PROJECT_STATE handoff. Only that exact tested head may authorize merge.
+A fresh final-head Python 3.11/3.12 CI is required after README/docs/PROJECT_STATE changes. Only that exact final tested head may authorize merge.
 
 ## Interfaces / 인터페이스
 
-M26 CLI is additive through `src/valuation_hub/cli_entry_m26.py`. All older M1–M25 commands delegate to the M25 dispatcher.
+Installed CLI entrypoint:
 
 ```text
-forecast-candidate-build
-forecast-candidate-validate
-forecast-review-build
-forecast-review-validate
-forecast-finalize
-forecast-validate
-binding-build-with-forecast
+vih = valuation_hub.cli_entry_m27:main
+```
+
+M27 commands:
+
+```text
+market-price-candidate-build
+market-price-candidate-validate
+market-price-review-build
+market-price-review-validate
+market-price-finalize
+market-price-validate
+binding-build-with-market-price
 binding-validate
 ```
+
+All M1–M26 commands delegate unchanged to the M26 dispatcher.
 
 Web:
 
 ```text
-/forecast
-/api/forecast/candidate-build
-/api/forecast/candidate-validate
-/api/forecast/review-build
-/api/forecast/review-validate
-/api/forecast/finalize
-/api/forecast/validate
-/api/forecast/binding-build
-/api/forecast/binding-validate
+/market-price
+/api/market-price/candidate-build
+/api/market-price/candidate-validate
+/api/market-price/review-build
+/api/market-price/review-validate
+/api/market-price/finalize
+/api/market-price/validate
+/api/market-price/binding-build
+/api/market-price/binding-validate
 ```
 
-M26 Web is calculate/validate preparation only. It has no Draft-apply, file-write, promotion, admission, or canonical-write endpoint.
+M27 Web is preparation/validation only. It has no direct Draft-apply, file-write, promotion, admission, or canonical-write endpoint.
 
-## M26 files / M26 파일
+## M27 files / M27 파일
 
-- `src/valuation_hub/forecast_assumption.py`
-- `src/valuation_hub/forecast_draft_binding.py`
-- `src/valuation_hub/binding_apply.py`
-- `src/valuation_hub/cli_entry_m26.py`
-- `src/valuation_hub/web_forecast.py`
-- `schemas/forecast_scenario_assumption_candidate.schema.json`
-- `schemas/forecast_scenario_review_assertion.schema.json`
-- `schemas/reviewed_forecast_scenario_assumption.schema.json`
-- `schemas/draft_binding_proposal_v06.schema.json`
-- `tests/test_m26_integrated_forecast_binding.py`
-- `tests/test_m26_result_diff_hardening.py`
-- `tests/test_m26_hardening.py`
-- `tests/test_m26_interfaces.py`
-- `docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md`
-- `docs/M26_ACCEPTANCE.md`
-- `docs/M26_IMPLEMENTATION_SUMMARY.md`
+- `src/valuation_hub/market_price.py`
+- `src/valuation_hub/market_price_draft_binding.py`
+- `src/valuation_hub/binding_apply_m27.py`
+- `src/valuation_hub/cli_entry_m27.py`
+- `src/valuation_hub/web_market_price.py`
+- `schemas/market_price_fact_candidate.schema.json`
+- `schemas/market_price_review_assertion.schema.json`
+- `schemas/reviewed_market_price_fact.schema.json`
+- `schemas/draft_binding_proposal_v07.schema.json`
+- `tests/test_m27_market_price_binding.py`
+- `tests/test_m27_review_chronology_hardening.py`
+- `tests/test_m27_interfaces.py`
+- `docs/MARKET_PRICE_FACT_BINDING.md`
+- `docs/M27_ACCEPTANCE.md`
+- `docs/M27_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
-1. merged `main` files and decisions
+1. merged `main` files and completed Issue/PR decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. M25 v0.5 proposal SHA → forecast candidate/block SHA → review assertion SHA → reviewed forecast package SHA → v0.6 proposal SHA → M17 approval/result SHA
+3. v0.6 proposal SHA → market-price candidate/source SHA → review assertion SHA → reviewed FACT package SHA → v0.7 proposal SHA → binding approval/result SHA
 4. current chat
 5. AI recollection
 
-## Remaining material gaps after M26 / M26 이후 잔여 중요입력
+## Remaining material gap after M27 / M27 이후 잔여 중요입력
 
-Once M26 is canonical, the M16 material-field matrix will have governed paths for cash, debt, diluted shares, WACC, terminal growth, and all six explicit forecast inputs.
-
-M26 정식화 이후 cash, debt, diluted shares, WACC, terminal growth, 여섯 Forecast 입력은 모두 거버넌스 경로를 갖는다.
-
-Remaining likely material gaps:
+Once M27 is canonical, the M16 equity-FCFF material-field matrix will have governed paths for every material field except likely:
 
 ```text
-market_price
 equity.minority_interest
 ```
 
-Do not start either until M26 is merged and latest `main` is re-grounded.
+Do not start M28 until M27 is merged and latest `main` is re-grounded.
 
-M26 병합 및 최신 main 재근거화 전에는 다음 미션을 시작하지 않는다.
+M27 병합 및 최신 main 재근거화 전에는 M28을 시작하지 않는다.
 
 ## Exact resume point / 정확한 재개점
 
-Run fresh full Python 3.11/3.12 CI on the exact current PR #57 head after this handoff update.
+1. Verify the interface/schema checkpoint CI on the current branch.
+2. Run fresh full Python 3.11/3.12 CI on the exact final PR #59 head after this handoff update.
+3. Update PR #59 with exact tested head + CI run.
+4. Merge using `expected_head_sha` only.
+5. Confirm Issue #58 closes as completed.
+6. Verify post-merge `main` Python 3.11/3.12 CI.
+7. Re-ground latest `main` before selecting M28.
 
 Merge only if all remain green:
 
-- forecast candidate authority separation
-- exact common future-year set
-- complete six-component rows and numeric guards
-- diagnostic independent recomputation
-- human review SHA lock
+- FACT candidate/reviewed FACT authority separation
+- exact quote identity and as-traded boundary
+- Tier A/B + freshness review gate
+- trading-date/as-of chronology
+- approval-at/quote-observation chronology
 - nested candidate/assertion tamper blocking
-- v0.5-only base requirement
-- exact scenario/entity/scope/currency/as-of compatibility
-- v0.6 exact policy reconstruction
-- only six forecast decisions replaced
-- all-six-or-none approval
-- exact Draft scenario/year target sets
-- unique applied diff fields exactly equal to approved fields
-- scenario/year/component diff reconstruction
+- v0.6-only base requirement
+- exact entity/scope/currency/as-of compatibility
+- only `market_price` decision replaced
+- source/package/review/quote lineage
+- top-level Draft market-price-only mutation
 - source Draft immutability
+- M26 unique-diff-field integrity guard
 - additive CLI delegation
 - Web no-write boundary
-- all M1–M25 regressions
-
-After final-head CI passes, update PR #57 with the exact tested SHA/run, merge using `expected_head_sha`, confirm Issue #56 closes as completed, and verify post-merge `main` Python 3.11/3.12 CI before declaring M26 canonical.
-
-After M26 closes, re-ground latest `main` and select the next mission from the remaining material gaps rather than assuming the next step from chat memory.
+- all M1–M26 regressions

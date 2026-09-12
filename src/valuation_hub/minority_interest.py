@@ -22,8 +22,15 @@ OBSERVATION_SCHEMA = "minority-interest-observation-v0.1"
 REVIEW_SCHEMA = "minority-interest-review-assertion-v0.1"
 PACKAGE_SCHEMA = "reviewed-minority-interest-fact-v0.1"
 METRIC = "minority_interest"
-SEC_CONCEPT = ("us-gaap", "NoncontrollingInterestInConsolidatedEntity")
+SEC_CONCEPT = ("us-gaap", "NonredeemableNoncontrollingInterest")
 DART_ACCOUNT_ID = "ifrs-full_NoncontrollingInterests"
+SEC_ADAPTER = "SEC_COMPANYFACTS_EXACT_NONREDEEMABLE_NCI"
+DART_ADAPTER = "OPENDART_EXACT_ACCOUNT_NCI"
+SEMANTIC_BOUNDARY = {
+    "missing_is_zero": False,
+    "redeemable_noncontrolling_interest_included": False,
+    "derived_from_equity_difference": False,
+}
 SEC_FORMS = frozenset({"10-Q", "10-Q/A", "10-K", "10-K/A", "20-F", "20-F/A", "40-F", "40-F/A"})
 DART_STAGE = {"11013": ("Q1", 1), "11012": ("H1", 2), "11014": ("Q3", 3), "11011": ("FY", 4)}
 FRESH = "FRESH"
@@ -104,12 +111,12 @@ def extract_sec_minority_interest_candidate(snapshot: dict[str, Any], *, form: s
     units = concept_obj.get("units") if isinstance(concept_obj, dict) else None
     series = units.get("USD") if isinstance(units, dict) else None
     if not isinstance(series, list):
-        raise CaseServiceError("exact SEC noncontrolling-interest concept unavailable / 정확한 SEC 비지배지분 concept 없음")
+        raise CaseServiceError("exact SEC nonredeemable noncontrolling-interest concept unavailable / 정확한 SEC 비상환 비지배지분 concept 없음")
     candidates: list[dict[str, Any]] = []
     for raw in series:
         if not isinstance(raw, dict) or raw.get("form") not in SEC_FORMS: continue
         if requested_form and raw.get("form") != requested_form: continue
-        if raw.get("start") not in (None, ""): continue  # instant fact only
+        if raw.get("start") not in (None, ""): continue
         end = raw.get("end")
         try: canonical_end = _date(end, "SEC minority-interest end").isoformat()
         except CaseServiceError: continue
@@ -134,9 +141,10 @@ def extract_sec_minority_interest_candidate(snapshot: dict[str, Any], *, form: s
         "schema_version": CANDIDATE_SCHEMA, "status": "MINORITY_INTEREST_EVIDENCE_CANDIDATE", "canonical": False, "class": "FACT_CANDIDATE", "metric": METRIC,
         "value": chosen["val"], "unit": "USD", "entity": {"id": f"SEC_CIK:{validation['cik']}", "financial_scope": "CFS"},
         "period": {"end": chosen["end"], "date_precision": "EXACT", "report_stage": None, "report_stage_ordinal": None},
-        "source_adapter": "SEC_COMPANYFACTS_EXACT", "source_identity": {"taxonomy": taxonomy, "concept": concept, "form": chosen["form"], "accession": chosen["accn"], "filed": chosen["filed"]},
+        "source_adapter": SEC_ADAPTER, "source_identity": {"taxonomy": taxonomy, "concept": concept, "form": chosen["form"], "accession": chosen["accn"], "filed": chosen["filed"]},
         "source": {"publisher": sec_live.SEC_PUBLISHER, "source_type": sec_live.SEC_SOURCE_TYPE, "tier": sec_live.SEC_TIER, "locator": snapshot["source"]["final_locator"], "snapshot_sha256": snapshot["snapshot_sha256"], "body_sha256": snapshot["response"]["body_sha256"]},
-        "selection": {"rule": "EXACT_CONCEPT_THEN_LATEST_FILED_THEN_LATEST_END", "equal_precedence_count": len(top)}, "candidate_sha256": "",
+        "selection": {"rule": "EXACT_NONREDEEMABLE_NCI_THEN_LATEST_FILED_THEN_LATEST_END", "equal_precedence_count": len(top)},
+        "semantic_boundary": copy.deepcopy(SEMANTIC_BOUNDARY), "candidate_sha256": "",
     })
 
 
@@ -158,9 +166,10 @@ def extract_dart_minority_interest_candidate(snapshot: dict[str, Any]) -> dict[s
         "schema_version": CANDIDATE_SCHEMA, "status": "MINORITY_INTEREST_EVIDENCE_CANDIDATE", "canonical": False, "class": "FACT_CANDIDATE", "metric": METRIC,
         "value": value, "unit": currency, "entity": {"id": f"DART_CORP:{validation['corp_code']}", "financial_scope": "CFS"},
         "period": {"end": None, "date_precision": "REPORT_STAGE_ONLY", "report_stage": stage, "report_stage_ordinal": ordinal, "bsns_year": validation["bsns_year"], "reprt_code": validation["reprt_code"]},
-        "source_adapter": "OPENDART_EXACT_ACCOUNT", "source_identity": {"account_id": DART_ACCOUNT_ID, "account_nm": chosen.get("account_nm"), "rcept_no": chosen.get("rcept_no")},
+        "source_adapter": DART_ADAPTER, "source_identity": {"account_id": DART_ACCOUNT_ID, "account_nm": chosen.get("account_nm"), "rcept_no": chosen.get("rcept_no")},
         "source": {"publisher": dart_live.DART_PUBLISHER, "source_type": dart_live.DART_SOURCE_TYPE, "tier": dart_live.DART_TIER, "locator": snapshot["source"]["final_locator"], "snapshot_sha256": snapshot["snapshot_sha256"], "body_sha256": snapshot["response"]["body_sha256"]},
-        "selection": {"rule": "EXACT_ACCOUNT_ID_ONLY", "equal_precedence_count": len(selected)}, "candidate_sha256": "",
+        "selection": {"rule": "EXACT_ACCOUNT_ID_ONLY", "equal_precedence_count": len(selected)},
+        "semantic_boundary": copy.deepcopy(SEMANTIC_BOUNDARY), "candidate_sha256": "",
     })
 
 
@@ -169,11 +178,24 @@ def validate_minority_interest_candidate(candidate: dict[str, Any]) -> dict[str,
         raise CaseServiceError("minority-interest candidate schema/status invalid / 비지배지분 candidate 스키마·상태 오류")
     _number(candidate.get("value"), "minority interest")
     if not isinstance(candidate.get("unit"), str) or not candidate["unit"]: raise CaseServiceError("minority-interest unit required / 비지배지분 단위 필요")
-    entity, period, source = candidate.get("entity"), candidate.get("period"), candidate.get("source")
-    if not all(isinstance(x, dict) for x in (entity, period, source)): raise CaseServiceError("minority-interest candidate structure incomplete / 비지배지분 candidate 구조 불완전")
+    entity, period, source, identity = candidate.get("entity"), candidate.get("period"), candidate.get("source"), candidate.get("source_identity")
+    if not all(isinstance(x, dict) for x in (entity, period, source, identity)): raise CaseServiceError("minority-interest candidate structure incomplete / 비지배지분 candidate 구조 불완전")
     _text(entity.get("id"), "entity.id", 200)
     if entity.get("financial_scope") != "CFS": raise CaseServiceError("minority interest requires consolidated CFS / 비지배지분은 연결 CFS 필요")
     precision = period.get("date_precision")
+    adapter = candidate.get("source_adapter")
+    if adapter == SEC_ADAPTER:
+        if identity.get("taxonomy") != SEC_CONCEPT[0] or identity.get("concept") != SEC_CONCEPT[1]:
+            raise CaseServiceError("SEC minority-interest exact concept identity invalid / SEC 비지배지분 exact concept 식별 오류")
+        if not str(entity.get("id", "")).startswith("SEC_CIK:") or candidate.get("unit") != "USD" or precision != "EXACT":
+            raise CaseServiceError("SEC minority-interest adapter semantics invalid / SEC 비지배지분 adapter 의미 오류")
+    elif adapter == DART_ADAPTER:
+        if identity.get("account_id") != DART_ACCOUNT_ID:
+            raise CaseServiceError("OpenDART minority-interest exact account identity invalid / OpenDART 비지배지분 exact account 식별 오류")
+        if not str(entity.get("id", "")).startswith("DART_CORP:") or precision != "REPORT_STAGE_ONLY":
+            raise CaseServiceError("OpenDART minority-interest adapter semantics invalid / OpenDART 비지배지분 adapter 의미 오류")
+    else:
+        raise CaseServiceError("minority-interest source adapter invalid / 비지배지분 source adapter 오류")
     if precision == "EXACT":
         _date(period.get("end"), "period.end")
         if period.get("report_stage") is not None: raise CaseServiceError("EXACT period cannot carry report stage / EXACT 기간의 report stage 불가")
@@ -185,9 +207,11 @@ def validate_minority_interest_candidate(candidate: dict[str, Any]) -> dict[str,
     if source.get("tier") != "A": raise CaseServiceError("minority-interest source must be Tier A in v0.1 / M28 v0.1 비지배지분은 Tier A 필요")
     for field in ("snapshot_sha256", "body_sha256"):
         if not isinstance(source.get(field), str) or not SHA_RE.fullmatch(source[field]): raise CaseServiceError("minority-interest source SHA invalid / 비지배지분 source SHA 오류")
+    if candidate.get("semantic_boundary") != SEMANTIC_BOUNDARY:
+        raise CaseServiceError("minority-interest semantic boundary invalid / 비지배지분 의미경계 오류")
     expected = _sha(_without(candidate, "candidate_sha256"))
     if candidate.get("candidate_sha256") != expected: raise CaseServiceError("minority-interest candidate SHA mismatch / 비지배지분 candidate SHA 불일치")
-    return {"status": "PASS_MINORITY_INTEREST_CANDIDATE_VALIDATION", "candidate_sha256": expected, "date_precision": precision}
+    return {"status": "PASS_MINORITY_INTEREST_CANDIDATE_VALIDATION", "candidate_sha256": expected, "date_precision": precision, "source_adapter": adapter}
 
 
 def normalize_minority_interest_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
@@ -196,7 +220,7 @@ def normalize_minority_interest_candidate(candidate: dict[str, Any]) -> dict[str
         "schema_version": OBSERVATION_SCHEMA, "status": "MINORITY_INTEREST_NORMALIZED", "canonical": False, "class": "NORMALIZED_FACT_CANDIDATE", "metric": METRIC,
         "value": candidate["value"], "unit": candidate["unit"], "entity": copy.deepcopy(candidate["entity"]), "period": copy.deepcopy(candidate["period"]),
         "source": copy.deepcopy(candidate["source"]), "source_adapter": candidate["source_adapter"], "source_identity": copy.deepcopy(candidate["source_identity"]),
-        "source_candidate_sha256": candidate["candidate_sha256"], "candidate": copy.deepcopy(candidate), "observation_sha256": "",
+        "semantic_boundary": copy.deepcopy(candidate["semantic_boundary"]), "source_candidate_sha256": candidate["candidate_sha256"], "candidate": copy.deepcopy(candidate), "observation_sha256": "",
     }
     observation["observation_sha256"] = _sha(_without(observation, "observation_sha256")); validate_minority_interest_observation(observation); return observation
 
@@ -207,7 +231,7 @@ def validate_minority_interest_observation(observation: dict[str, Any]) -> dict[
     candidate = observation.get("candidate")
     if not isinstance(candidate, dict): raise CaseServiceError("minority-interest source candidate missing / 비지배지분 source candidate 누락")
     validate_minority_interest_candidate(candidate)
-    for key in ("value", "unit", "entity", "period", "source", "source_adapter", "source_identity"):
+    for key in ("value", "unit", "entity", "period", "source", "source_adapter", "source_identity", "semantic_boundary"):
         if observation.get(key) != candidate.get(key): raise CaseServiceError("minority-interest normalization projection mismatch / 비지배지분 정규화 투영 불일치")
     if observation.get("source_candidate_sha256") != candidate.get("candidate_sha256"): raise CaseServiceError("minority-interest candidate lineage mismatch / 비지배지분 candidate lineage 불일치")
     expected = _sha(_without(observation, "observation_sha256"))
@@ -274,7 +298,8 @@ def finalize_reviewed_minority_interest(observation: dict[str, Any], assertion: 
         "schema_version": PACKAGE_SCHEMA, "status": "MINORITY_INTEREST_FACT_REVIEWED", "canonical": False, "class": "NORMALIZED_FACT", "metric": METRIC,
         "value": observation["value"], "unit": observation["unit"], "entity": copy.deepcopy(observation["entity"]), "as_of": assertion["as_of"],
         "resolved_period_end": assertion["resolved_period_end"], "date_resolution": assertion["date_resolution"], "freshness": copy.deepcopy(assertion["freshness"]),
-        "source": copy.deepcopy(observation["source"]), "observation": copy.deepcopy(observation), "review_assertion": copy.deepcopy(assertion),
+        "source": copy.deepcopy(observation["source"]), "semantic_boundary": copy.deepcopy(observation["semantic_boundary"]),
+        "observation": copy.deepcopy(observation), "review_assertion": copy.deepcopy(assertion),
         "binding_eligibility": {"eligible": checked["freshness"] == FRESH, "reason": "REVIEWED_FRESH_MINORITY_INTEREST_FACT" if checked["freshness"] == FRESH else "STALE_MINORITY_INTEREST"}, "package_sha256": "",
     }
     package["package_sha256"] = _sha(_without(package, "package_sha256")); validate_reviewed_minority_interest(package); return package
@@ -285,7 +310,7 @@ def validate_reviewed_minority_interest(package: dict[str, Any]) -> dict[str, An
     observation, assertion = package.get("observation"), package.get("review_assertion")
     if not isinstance(observation, dict) or not isinstance(assertion, dict): raise CaseServiceError("reviewed minority-interest lineage missing / 검토완료 비지배지분 lineage 누락")
     validate_minority_interest_observation(observation); checked = validate_minority_interest_review_assertion(assertion, observation)
-    projection = {"value": observation["value"], "unit": observation["unit"], "entity": observation["entity"], "as_of": assertion["as_of"], "resolved_period_end": assertion["resolved_period_end"], "date_resolution": assertion["date_resolution"], "freshness": assertion["freshness"], "source": observation["source"]}
+    projection = {"value": observation["value"], "unit": observation["unit"], "entity": observation["entity"], "as_of": assertion["as_of"], "resolved_period_end": assertion["resolved_period_end"], "date_resolution": assertion["date_resolution"], "freshness": assertion["freshness"], "source": observation["source"], "semantic_boundary": observation["semantic_boundary"]}
     for key, value in projection.items():
         if package.get(key) != value: raise CaseServiceError("reviewed minority-interest projection mismatch / 검토완료 비지배지분 투영 불일치")
     eligible = checked["freshness"] == FRESH; reason = "REVIEWED_FRESH_MINORITY_INTEREST_FACT" if eligible else "STALE_MINORITY_INTEREST"

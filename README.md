@@ -10,11 +10,9 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded cross-asset valu
 ```text
 OFFICIAL / USER SOURCE
         ↓
-IMMUTABLE SNAPSHOT / NOT CANONICAL
+IMMUTABLE / SOURCE-LOCKED INPUT / NOT CANONICAL
         ↓
-EVIDENCE / SOURCE INPUT / NOT CANONICAL
-        ↓
-NORMALIZED / DERIVED EVIDENCE or ASSUMPTION_CANDIDATE
+FACT / NORMALIZED FACT / ASSUMPTION_CANDIDATE
         ↓
 HUMAN-REVIEWED GOVERNED CONTEXT / ASSUMPTION
         ↓
@@ -35,6 +33,14 @@ Deterministic calculation does not automatically upgrade authority. Facts, assum
 
 \[
 FCFF = EBIT(1-T) + D\&A - CAPEX - \Delta NWC
+\]
+
+\[
+WACC = \frac{E}{D+E}R_e + \frac{D}{D+E}R_d(1-T)
+\]
+
+\[
+TV = \frac{FCFF_{n+1}}{WACC-g}, \qquad g < WACC
 \]
 
 The Hub also supports reverse valuation and probability-weighted venture valuation. Company cases are methodology references, not live investment recommendations.
@@ -60,8 +66,9 @@ python -m pip install -e ".[dev]"
 - M22: valuation-date common-share base + explicit diluted-share bridge
 - M23: complete reviewed fresh share bridge → `equity.diluted_shares` binding
 - M24: sourced WACC components → reviewed valuation `ASSUMPTION` → `scenario.wacc` binding
+- M25: reviewed WACC + long-run macro anchors → reviewed terminal-growth `ASSUMPTION` → `scenario.terminal_growth` binding
 
-## M21–M23 share semantics / 주식수 의미계약
+## Share semantics / 주식수 의미계약
 
 ```text
 shares_outstanding != diluted_shares
@@ -72,7 +79,7 @@ missing dilution category != zero
 candidate bridge total != binding authority
 ```
 
-M21 keeps historical EPS denominators reference-only. M22 builds the valuation-date common-share base and explicit dilution adjustments. M23 allows only a complete, reviewed, fresh M22 bridge to replace `equity.diluted_shares` in a v0.3 proposal while preserving all prior cash/debt decisions.
+M21 keeps historical EPS denominators reference-only. M22 builds the valuation-date common-share base and explicit dilution adjustments. M23 permits only a complete, reviewed, fresh M22 bridge to replace `equity.diluted_shares`.
 
 See:
 - [`docs/SHARE_DILUTION_REFERENCE.md`](docs/SHARE_DILUTION_REFERENCE.md)
@@ -84,22 +91,20 @@ See:
 WACC is deliberately modeled as a **valuation assumption**, not a historical fact.
 
 ```text
-source facts / sourced assumptions
+7 explicit sourced components
         ↓
 ASSUMPTION_CANDIDATE
         ↓
 SHA-locked human WACC review
         ↓
-ASSUMPTION
+reviewed ASSUMPTION
         ↓
 draft-binding-proposal-v0.4
         ↓
 scenario.wacc DIRECT_BIND
 ```
 
-### Required WACC inputs / 필수 입력
-
-Canonical v0.1 uses exactly seven sourced components:
+Required components:
 
 ```text
 risk_free_rate
@@ -111,69 +116,68 @@ debt_market_value
 tax_rate
 ```
 
-Each record carries claim class, value/unit, observation date, publisher, source type/tier, locator, source SHA, and its own integrity SHA.
+Validators independently recompute CAPM cost of equity, after-tax debt cost, capital weights, freshness, authority, and final WACC. Stale or Tier-D required inputs cannot become reviewed WACC assumptions.
 
-### WACC method / WACC 방법론
-
-```text
-cost_of_equity = rf + beta × ERP
-after_tax_cost_of_debt = Rd × (1 - T)
-weight_equity = E / (D + E)
-weight_debt = D / (D + E)
-WACC = weight_equity × cost_of_equity
-     + weight_debt × after_tax_cost_of_debt
-```
-
-Validators independently recompute every calculated field. Missing/nonfinite arithmetic cannot be legitimized by recomputing only the outer SHA.
-
-### Freshness / 최신성
-
-```text
-risk-free rate       30 days
-ERP                  90 days
-levered beta        180 days
-pre-tax debt cost   180 days
-equity market value  30 days
-debt market value   550 days
-tax rate             550 days
-```
-
-Stale required inputs block review. Tier D is exploratory and cannot become a reviewed WACC package in v0.1.
-
-### Human review / 인간검토
-
-A separate `wacc-review-assertion-v0.1` locks the exact candidate SHA, methodology, valuation `as_of`, scenario targets, reviewer, approval timestamp, and review basis. Approval cannot predate valuation `as_of`.
-
-Only the resulting `reviewed-wacc-assumption-v0.1` has:
-
-```text
-class = ASSUMPTION
-binding_eligibility.eligible = true
-```
-
-### v0.4 binding / v0.4 바인딩
-
-M24 wraps a validated v0.1, v0.2, or v0.3 proposal and may replace **only**:
-
-```text
-scenario.wacc
-```
-
-Every other cash/debt/diluted-share and unresolved decision must remain identical to the embedded base proposal.
-
-At M17 approval time, the WACC package's `scenario_names` must exactly equal the Draft's full scenario set. Partial scenario overwrite is prohibited in v0.1.
-
-Applied WACC diffs preserve:
-
-```text
-source_package_sha256
-review_assertion_sha256
-scenario_names
-```
-
-The source Draft remains unchanged; the bound result remains noncanonical.
+M24 may replace only `scenario.wacc`. The target scenario set must exactly equal the full Draft scenario set.
 
 See [`docs/WACC_ASSUMPTION_BINDING.md`](docs/WACC_ASSUMPTION_BINDING.md).
+
+## M25 — Governed terminal-growth assumption / 거버넌스 영구성장률 가정
+
+Terminal growth is also a **valuation assumption**, never a historical fact or an automatically generated macro number.
+
+```text
+reviewed M24 WACC package
+        +
+long_run_inflation
+        +
+long_run_real_growth
+        +
+explicit scenario g + rationale
+        ↓
+ASSUMPTION_CANDIDATE
+        ↓
+SHA-locked human review
+        ↓
+reviewed ASSUMPTION
+        ↓
+draft-binding-proposal-v0.5
+        ↓
+scenario.terminal_growth DIRECT_BIND
+```
+
+The nominal macro ceiling is independently reconstructed:
+
+```text
+nominal_growth_anchor = (1 + inflation) × (1 + real_growth) - 1
+```
+
+This ceiling does **not** automatically create terminal growth. Every scenario still requires an explicit reviewed value and rationale.
+
+M25 enforces:
+
+```text
+g > -1
+g < reviewed WACC
+g <= nominal_growth_anchor
+```
+
+Negative perpetual growth is allowed when explicitly reviewed. Positive growth above the macro nominal ceiling is fail-closed.
+
+### Exact WACC dependency / 정확한 WACC 의존성
+
+A v0.5 proposal accepts only a validated M24 v0.4 base. The terminal-growth package must depend on the **exact same reviewed WACC package SHA** embedded in that v0.4 proposal.
+
+`scenario.terminal_growth` may be approved only when either:
+
+1. the target Draft already contains that exact reviewed WACC in every scenario, or
+2. `scenario.wacc` is approved in the same binding approval.
+
+This prevents a growth assumption reviewed under one discount rate from being applied against another.
+
+M25 may replace only `scenario.terminal_growth`; every v0.4 decision, including `scenario.wacc`, must otherwise remain unchanged.
+
+See [`docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md`](docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md).
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -184,9 +188,13 @@ historical margin                   ≠ forecast margin
 historical revenue                  ≠ forecast revenue
 calculated WACC                     ≠ reviewed WACC assumption
 reviewed WACC assumption            ≠ historical fact
+macro growth anchor                 ≠ terminal-growth fact
+selected terminal growth            ≠ reviewed terminal-growth assumption
 ASSUMPTION_CANDIDATE                ≠ ASSUMPTION
-stale/Tier-D WACC input             ≠ review eligible
-partial scenario targeting          ≠ scenario.wacc DIRECT_BIND
+stale/Tier-D required input         ≠ review eligible
+g >= WACC                           ≠ valid Gordon terminal state
+g > nominal macro anchor            ≠ v0.1 review eligible
+partial scenario targeting          ≠ governed scenario binding
 ```
 
 ## Web product / Web 제품
@@ -198,35 +206,36 @@ vih web
 Default: `http://127.0.0.1:8765`
 
 ```text
-/source         — SEC source inspection
-/dart-source    — OpenDART source inspection
-/normalize      — financial normalization + TTM
-/binding        — evidence → Draft binding proposal
-/binding-apply  — human approval + in-memory Draft binding
-/derived        — governed historical derived evidence
-/debt           — governed debt aggregation + binding preparation
-/dilution       — historical dilution reference
-/shares         — valuation-date common-share base + diluted-share bridge
-/share-binding  — complete share bridge → v0.3 proposal
-/wacc           — governed WACC candidate/review/v0.4 preparation
+/source           — SEC source inspection
+/dart-source      — OpenDART source inspection
+/normalize        — financial normalization + TTM
+/binding          — evidence → Draft binding proposal
+/binding-apply    — human approval + in-memory Draft binding
+/derived          — governed historical derived evidence
+/debt             — governed debt aggregation + binding preparation
+/dilution         — historical dilution reference
+/shares           — valuation-date common-share base + diluted-share bridge
+/share-binding    — complete share bridge → v0.3 proposal
+/wacc             — governed WACC candidate/review/v0.4 preparation
+/terminal-growth  — governed terminal-growth candidate/review/v0.5 preparation
 ```
 
-`/wacc` is calculate/validate only. It exposes no M24 Draft apply, file write, promotion, admission, or canonical-write endpoint.
+`/wacc` and `/terminal-growth` are calculate/validate preparation surfaces. They expose no direct Draft apply, file write, promotion, admission, or canonical-write endpoint.
 
-## M24 CLI
+## M25 CLI / M25 CLI
 
-M24 uses an additive wrapper: old M1–M23 commands delegate unchanged to the previous dispatcher.
+M25 uses an additive wrapper. All M1–M24 commands delegate unchanged to the previous dispatcher.
 
 ```text
-wacc-source-build
-wacc-source-validate
-wacc-candidate-build
-wacc-candidate-validate
-wacc-review-build
-wacc-review-validate
-wacc-finalize
-wacc-validate
-binding-build-with-wacc
+terminal-growth-anchor-build
+terminal-growth-anchor-validate
+terminal-growth-candidate-build
+terminal-growth-candidate-validate
+terminal-growth-review-build
+terminal-growth-review-validate
+terminal-growth-finalize
+terminal-growth-validate
+binding-build-with-terminal-growth
 binding-validate
 ```
 
@@ -246,8 +255,10 @@ Existing M17 `binding-approval-*`, `binding-apply`, and `bound-draft-validate` c
 - [x] M21 governed historical dilution reference
 - [x] M22 valuation-date common-share base + diluted-share bridge
 - [x] M23 complete reviewed bridge → `equity.diluted_shares` binding
-- [ ] **M24 governed WACC assumption → `scenario.wacc` binding — active finalization**
-- [ ] remaining equity-FCFF material assumptions/inputs
+- [x] M24 governed WACC assumption → `scenario.wacc` binding
+- [ ] **M25 governed terminal-growth assumption → `scenario.terminal_growth` binding — active finalization**
+- [ ] governed forecast-scenario package
+- [ ] remaining market-price/minority-interest material facts
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
@@ -268,8 +279,9 @@ Existing M17 `binding-approval-*`, `binding-apply`, and `bound-draft-validate` c
 - [`docs/VALUATION_SHARE_BRIDGE.md`](docs/VALUATION_SHARE_BRIDGE.md)
 - [`docs/SHARE_DRAFT_BINDING.md`](docs/SHARE_DRAFT_BINDING.md)
 - [`docs/WACC_ASSUMPTION_BINDING.md`](docs/WACC_ASSUMPTION_BINDING.md)
-- [`docs/M23_ACCEPTANCE.md`](docs/M23_ACCEPTANCE.md)
-- [`docs/M23_IMPLEMENTATION_SUMMARY.md`](docs/M23_IMPLEMENTATION_SUMMARY.md)
+- [`docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md`](docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md)
 - [`docs/M24_ACCEPTANCE.md`](docs/M24_ACCEPTANCE.md)
 - [`docs/M24_IMPLEMENTATION_SUMMARY.md`](docs/M24_IMPLEMENTATION_SUMMARY.md)
+- [`docs/M25_ACCEPTANCE.md`](docs/M25_ACCEPTANCE.md)
+- [`docs/M25_IMPLEMENTATION_SUMMARY.md`](docs/M25_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

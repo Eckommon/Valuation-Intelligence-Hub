@@ -27,7 +27,7 @@ DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
 CANONICAL
 ```
 
-Deterministic calculation does not automatically upgrade authority. Facts, assumptions, review decisions, Draft binding, and canonical repository state remain distinct.
+Deterministic calculation never upgrades authority by itself. Facts, assumptions, review decisions, Draft binding, and canonical repository state remain distinct.
 
 ## Valuation kernel / 가치평가 커널
 
@@ -67,6 +67,7 @@ python -m pip install -e ".[dev]"
 - M23: complete reviewed fresh share bridge → `equity.diluted_shares` binding
 - M24: sourced WACC components → reviewed valuation `ASSUMPTION` → `scenario.wacc` binding
 - M25: reviewed WACC + long-run macro anchors → reviewed terminal-growth `ASSUMPTION` → `scenario.terminal_growth` binding
+- M26: six FCFF forecast inputs → one reviewed integrated scenario `ASSUMPTION` → atomic forecast Draft binding
 
 ## Share semantics / 주식수 의미계약
 
@@ -88,7 +89,7 @@ See:
 
 ## M24 — Governed WACC assumption / 거버넌스 WACC 가정
 
-WACC is deliberately modeled as a **valuation assumption**, not a historical fact.
+WACC is a **valuation assumption**, not a historical fact.
 
 ```text
 7 explicit sourced components
@@ -104,55 +105,35 @@ draft-binding-proposal-v0.4
 scenario.wacc DIRECT_BIND
 ```
 
-Required components:
+Required components are risk-free rate, ERP, levered beta, pre-tax cost of debt, equity market value, debt market value, and tax rate. Validators independently recompute CAPM cost of equity, after-tax debt cost, capital weights, freshness, authority, and final WACC.
 
-```text
-risk_free_rate
-equity_risk_premium
-levered_beta
-pre_tax_cost_of_debt
-equity_market_value
-debt_market_value
-tax_rate
-```
-
-Validators independently recompute CAPM cost of equity, after-tax debt cost, capital weights, freshness, authority, and final WACC. Stale or Tier-D required inputs cannot become reviewed WACC assumptions.
-
-M24 may replace only `scenario.wacc`. The target scenario set must exactly equal the full Draft scenario set.
+M24 may replace only `scenario.wacc`, and the target scenario set must exactly equal the full Draft scenario set.
 
 See [`docs/WACC_ASSUMPTION_BINDING.md`](docs/WACC_ASSUMPTION_BINDING.md).
 
 ## M25 — Governed terminal-growth assumption / 거버넌스 영구성장률 가정
 
-Terminal growth is also a **valuation assumption**, never a historical fact or an automatically generated macro number.
+Terminal growth is also a valuation `ASSUMPTION`.
 
 ```text
 reviewed M24 WACC package
         +
-long_run_inflation
-        +
-long_run_real_growth
+long_run_inflation + long_run_real_growth
         +
 explicit scenario g + rationale
         ↓
-ASSUMPTION_CANDIDATE
-        ↓
-SHA-locked human review
-        ↓
-reviewed ASSUMPTION
+ASSUMPTION_CANDIDATE → human review → ASSUMPTION
         ↓
 draft-binding-proposal-v0.5
         ↓
 scenario.terminal_growth DIRECT_BIND
 ```
 
-The nominal macro ceiling is independently reconstructed:
+Nominal macro ceiling:
 
 ```text
 nominal_growth_anchor = (1 + inflation) × (1 + real_growth) - 1
 ```
-
-This ceiling does **not** automatically create terminal growth. Every scenario still requires an explicit reviewed value and rationale.
 
 M25 enforces:
 
@@ -162,22 +143,58 @@ g < reviewed WACC
 g <= nominal_growth_anchor
 ```
 
-Negative perpetual growth is allowed when explicitly reviewed. Positive growth above the macro nominal ceiling is fail-closed.
-
-### Exact WACC dependency / 정확한 WACC 의존성
-
-A v0.5 proposal accepts only a validated M24 v0.4 base. The terminal-growth package must depend on the **exact same reviewed WACC package SHA** embedded in that v0.4 proposal.
-
-`scenario.terminal_growth` may be approved only when either:
-
-1. the target Draft already contains that exact reviewed WACC in every scenario, or
-2. `scenario.wacc` is approved in the same binding approval.
-
-This prevents a growth assumption reviewed under one discount rate from being applied against another.
-
-M25 may replace only `scenario.terminal_growth`; every v0.4 decision, including `scenario.wacc`, must otherwise remain unchanged.
+The terminal-growth package must depend on the exact reviewed WACC package already embedded in v0.4. Terminal growth may be applied only when that WACC is already in the Draft or is approved together.
 
 See [`docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md`](docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md).
+
+## M26 — Integrated FCFF forecast / 통합 FCFF Forecast
+
+M26 treats the six explicit forecast-year inputs as **one atomic valuation-assumption block**:
+
+```text
+scenario.years.revenue
+scenario.years.ebit_margin
+scenario.years.tax_rate
+scenario.years.depreciation_amortization
+scenario.years.capex
+scenario.years.delta_nwc
+```
+
+```text
+explicit scenario rows + rationale
+        ↓
+ASSUMPTION_CANDIDATE
+        ↓
+independent EBIT / NOPAT / FCFF diagnostics
+        ↓
+SHA-locked human review
+        ↓
+reviewed ASSUMPTION
+        ↓
+draft-binding-proposal-v0.6
+        ↓
+all-six-or-none Draft binding
+```
+
+All scenarios must use the same ordered future-year set. M26 does not silently create, delete, or reorder Draft years. Historical facts and deterministic diagnostics may inform review but never become forecast authority automatically.
+
+모든 시나리오는 동일한 미래 연도집합을 사용해야 하며 M26은 Draft의 연도를 암묵적으로 생성·삭제·재정렬하지 않는다. 과거 사실과 진단계산은 검토를 보조할 뿐 Forecast 권위를 자동 생성하지 않는다.
+
+M26 accepts only a validated v0.5 base and replaces exactly the six forecast decisions. WACC, terminal growth, cash, debt, diluted shares, conflicts, and all other base decisions remain unchanged.
+
+### Atomic result integrity / 원자적 결과 무결성
+
+Bound-result validation requires:
+
+```text
+unique(applied_diff.field)
+AND
+set(applied_diff.field) == set(approved_fields)
+```
+
+This prevents a re-signed result from repeating one valid diff while omitting another approved field.
+
+See [`docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md`](docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md).
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -190,11 +207,13 @@ calculated WACC                     ≠ reviewed WACC assumption
 reviewed WACC assumption            ≠ historical fact
 macro growth anchor                 ≠ terminal-growth fact
 selected terminal growth            ≠ reviewed terminal-growth assumption
+calculated EBIT/NOPAT/FCFF          ≠ forecast authority
 ASSUMPTION_CANDIDATE                ≠ ASSUMPTION
 stale/Tier-D required input         ≠ review eligible
 g >= WACC                           ≠ valid Gordon terminal state
 g > nominal macro anchor            ≠ v0.1 review eligible
 partial scenario targeting          ≠ governed scenario binding
+partial six-field forecast approval ≠ governed forecast binding
 ```
 
 ## Web product / Web 제품
@@ -218,24 +237,23 @@ Default: `http://127.0.0.1:8765`
 /share-binding    — complete share bridge → v0.3 proposal
 /wacc             — governed WACC candidate/review/v0.4 preparation
 /terminal-growth  — governed terminal-growth candidate/review/v0.5 preparation
+/forecast         — integrated forecast candidate/review/v0.6 preparation
 ```
 
-`/wacc` and `/terminal-growth` are calculate/validate preparation surfaces. They expose no direct Draft apply, file write, promotion, admission, or canonical-write endpoint.
+`/wacc`, `/terminal-growth`, and `/forecast` are calculate/validate preparation surfaces. They expose no direct Draft apply, file write, promotion, admission, or canonical-write endpoint.
 
-## M25 CLI / M25 CLI
+## M26 CLI / M26 CLI
 
-M25 uses an additive wrapper. All M1–M24 commands delegate unchanged to the previous dispatcher.
+M26 uses an additive wrapper. All M1–M25 commands delegate unchanged to the previous dispatcher.
 
 ```text
-terminal-growth-anchor-build
-terminal-growth-anchor-validate
-terminal-growth-candidate-build
-terminal-growth-candidate-validate
-terminal-growth-review-build
-terminal-growth-review-validate
-terminal-growth-finalize
-terminal-growth-validate
-binding-build-with-terminal-growth
+forecast-candidate-build
+forecast-candidate-validate
+forecast-review-build
+forecast-review-validate
+forecast-finalize
+forecast-validate
+binding-build-with-forecast
 binding-validate
 ```
 
@@ -256,9 +274,9 @@ Existing M17 `binding-approval-*`, `binding-apply`, and `bound-draft-validate` c
 - [x] M22 valuation-date common-share base + diluted-share bridge
 - [x] M23 complete reviewed bridge → `equity.diluted_shares` binding
 - [x] M24 governed WACC assumption → `scenario.wacc` binding
-- [ ] **M25 governed terminal-growth assumption → `scenario.terminal_growth` binding — active finalization**
-- [ ] governed forecast-scenario package
-- [ ] remaining market-price/minority-interest material facts
+- [x] M25 governed terminal-growth assumption → `scenario.terminal_growth` binding
+- [ ] **M26 integrated forecast scenario package → six-field atomic Draft binding — active finalization**
+- [ ] remaining `market_price` / `equity.minority_interest` material gaps
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
@@ -280,8 +298,9 @@ Existing M17 `binding-approval-*`, `binding-apply`, and `bound-draft-validate` c
 - [`docs/SHARE_DRAFT_BINDING.md`](docs/SHARE_DRAFT_BINDING.md)
 - [`docs/WACC_ASSUMPTION_BINDING.md`](docs/WACC_ASSUMPTION_BINDING.md)
 - [`docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md`](docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md)
+- [`docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md`](docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md)
 - [`docs/M24_ACCEPTANCE.md`](docs/M24_ACCEPTANCE.md)
-- [`docs/M24_IMPLEMENTATION_SUMMARY.md`](docs/M24_IMPLEMENTATION_SUMMARY.md)
 - [`docs/M25_ACCEPTANCE.md`](docs/M25_ACCEPTANCE.md)
-- [`docs/M25_IMPLEMENTATION_SUMMARY.md`](docs/M25_IMPLEMENTATION_SUMMARY.md)
+- [`docs/M26_ACCEPTANCE.md`](docs/M26_ACCEPTANCE.md)
+- [`docs/M26_IMPLEMENTATION_SUMMARY.md`](docs/M26_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

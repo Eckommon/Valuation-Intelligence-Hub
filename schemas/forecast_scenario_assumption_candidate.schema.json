@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/forecast_scenario_assumption_candidate.schema.json",
+  "title": "Integrated Forecast Scenario Assumption Candidate v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "class", "methodology_version", "entity", "capital_currency", "as_of", "scenario_names", "forecast_years", "scenarios", "diagnostics", "review_readiness", "forecast_block_sha256", "candidate_sha256"],
+  "properties": {
+    "schema_version": {"const": "forecast-scenario-assumption-candidate-v0.1"},
+    "status": {"const": "FORECAST_SCENARIO_ASSUMPTION_CANDIDATE"},
+    "canonical": {"const": false},
+    "class": {"const": "ASSUMPTION_CANDIDATE"},
+    "methodology_version": {"const": "integrated-fcff-forecast-v0.1"},
+    "entity": {"type": "object", "required": ["id", "financial_scope"]},
+    "capital_currency": {"type": "string", "minLength": 3, "maxLength": 8},
+    "as_of": {"type": "string", "format": "date"},
+    "scenario_names": {"type": "array", "minItems": 1, "maxItems": 12, "uniqueItems": true, "items": {"type": "string"}},
+    "forecast_years": {"type": "array", "minItems": 1, "maxItems": 30, "uniqueItems": true, "items": {"type": "integer"}},
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": ["scenario_name", "rationale", "years"],
+        "properties": {
+          "scenario_name": {"type": "string"},
+          "rationale": {"type": "string", "minLength": 1},
+          "years": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 30,
+            "items": {
+              "type": "object",
+              "required": ["year", "revenue", "ebit_margin", "tax_rate", "depreciation_amortization", "capex", "delta_nwc"],
+              "properties": {
+                "year": {"type": "integer"},
+                "revenue": {"type": "number", "minimum": 0},
+                "ebit_margin": {"type": "number", "minimum": -1, "maximum": 1},
+                "tax_rate": {"type": "number", "minimum": 0, "exclusiveMaximum": 1},
+                "depreciation_amortization": {"type": "number", "minimum": 0},
+                "capex": {"type": "number", "minimum": 0},
+                "delta_nwc": {"type": "number"}
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "diagnostics": {"type": "object"},
+    "review_readiness": {"type": "object", "required": ["complete_scenario_set", "common_forecast_year_set", "all_rows_complete", "eligible_for_human_review"]},
+    "forecast_block_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

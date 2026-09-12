@@ -21,7 +21,7 @@ MAX_DEBT_REQUEST_BYTES = 16 * 1024 * 1024
 def render_debt_lab() -> str:
     body = """
 <div class="breadcrumbs"><a href="/">Dashboard</a><span>›</span><strong>Interest-Bearing Debt / 이자부채</strong></div>
-<div class="section-head"><div><h2>Governed Debt Components + Binding Prep / 이자부채 구성요소 + 바인딩 준비</h2><p class="muted">Aggregate explicit debt, resolve report-stage dates only by human assertion, and prepare noncanonical debt-aware binding context. / 명시적 debt를 집계하고 report-stage 날짜는 인간승인으로만 해소하며 비정식 바인딩 context를 준비합니다.</p></div><span class="state-preview">LIABILITIES ≠ DEBT · HUMAN DATE LOCK · NO WRITE</span></div>
+<div class="section-head"><div><h2>Governed Debt Components + Binding Prep / 이자부채 구성요소 + 바인딩 준비</h2><p class="muted">Aggregate explicit debt, resolve report-stage dates only by human assertion, and prepare noncanonical debt-aware binding context. / 명시적 debt를 집계하고 report-stage 날짜는 인간승인으로만 해소하며 비정식 바인딩 context를 준비합니다.</p></div><span class="state-preview">LIABILITIES ≠ DEBT · CALCULATE ONLY · HUMAN DATE LOCK · NO WRITE</span></div>
 <div class="card"><p class="warn"><strong>Missing ≠ zero / 누락 ≠ 0</strong></p><p>Partial/conflict/candidate debt never binds. <code>REPORT_STAGE_ONLY</code> debt requires a SHA-locked human date assertion. No endpoint writes a Draft or canonical state.</p></div>
 <label>Normalized debt-component observations JSON array<textarea id="debt-input" spellcheck="false" style="width:100%;min-height:240px;background:#0b1220;color:#e5e7eb;border:1px solid #334155;border-radius:10px;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace"></textarea></label>
 <p><button class="primary" onclick="aggregateDebt()">Aggregate / 집계</button></p>

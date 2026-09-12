@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/historical_dilution_evidence.schema.json",
+  "title": "Historical Dilution Evidence v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","status","canonical","class","entity","period","historical_dilution_factor","historical_incremental_diluted_shares","unit","sources","semantic_boundary","derived_sha256"],
+  "properties": {
+    "schema_version": {"const": "historical-dilution-evidence-v0.1"},
+    "status": {"const": "HISTORICAL_DILUTION_EVIDENCE"},
+    "canonical": {"const": false},
+    "class": {"enum": ["DERIVED_FACT","DERIVED_FACT_CANDIDATE"]},
+    "entity": {"type": "object"},
+    "period": {"type": "object"},
+    "historical_dilution_factor": {"type": "number", "minimum": 1},
+    "historical_incremental_diluted_shares": {"type": "number", "minimum": 0},
+    "unit": {"const": "ratio+shares"},
+    "sources": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["metric","value","class","observation_sha256"],
+        "properties": {
+          "metric": {"enum": ["weighted_average_basic_shares","weighted_average_diluted_shares"]},
+          "value": {"type": "number", "minimum": 0},
+          "class": {"enum": ["NORMALIZED_FACT","NORMALIZED_FACT_CANDIDATE"]},
+          "observation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "semantic_boundary": {
+      "type": "object",
+      "required": ["historical_only","valuation_date_direct_bind","forecast_direct_bind","shares_outstanding_substitution","warning_en","warning_ko"],
+      "properties": {
+        "historical_only": {"const": true},
+        "valuation_date_direct_bind": {"const": false},
+        "forecast_direct_bind": {"const": false},
+        "shares_outstanding_substitution": {"const": false},
+        "warning_en": {"type": "string", "minLength": 1},
+        "warning_ko": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "derived_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

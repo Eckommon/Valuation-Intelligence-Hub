@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "derived-financial-evidence-v0.1",
+  "title": "Derived Financial Evidence v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "class", "metric", "value", "unit", "entity", "period", "derivation", "semantic_boundary", "derived_sha256"],
+  "properties": {
+    "schema_version": {"const": "derived-financial-evidence-v0.1"},
+    "status": {"const": "DERIVED_FINANCIAL_EVIDENCE"},
+    "canonical": {"const": false},
+    "class": {"enum": ["DERIVED_FACT", "DERIVED_FACT_CANDIDATE"]},
+    "metric": {"enum": ["historical_operating_margin", "historical_net_income_margin"]},
+    "value": {"type": "number"},
+    "unit": {"const": "ratio"},
+    "entity": {
+      "type": "object",
+      "required": ["id", "financial_scope"],
+      "properties": {"id": {"type": "string", "minLength": 1}, "financial_scope": {"type": "string", "minLength": 1}},
+      "additionalProperties": true
+    },
+    "period": {"type": "object"},
+    "derivation": {
+      "type": "object",
+      "required": ["rule", "formula", "numerator_metric", "denominator_metric", "numerator_value", "denominator_value", "source_unit", "source_observation_sha256", "source_classes"],
+      "properties": {
+        "rule": {"enum": ["HISTORICAL_OPERATING_MARGIN_V01", "HISTORICAL_NET_INCOME_MARGIN_V01"]},
+        "source_observation_sha256": {
+          "type": "object",
+          "required": ["numerator", "denominator"],
+          "properties": {
+            "numerator": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "denominator": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "semantic_boundary": {
+      "type": "object",
+      "required": ["historical_only", "forecast_direct_bind"],
+      "properties": {"historical_only": {"const": true}, "forecast_direct_bind": {"const": false}},
+      "additionalProperties": true
+    },
+    "derived_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": true
+}

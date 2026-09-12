@@ -11,14 +11,16 @@ from valuation_hub import cli as legacy_cli
 from valuation_hub.binding_apply import build_binding_approval, validate_binding_approval, apply_binding_approval, validate_bound_draft_result
 from valuation_hub.case_service import CaseServiceError
 from valuation_hub.dart_live import DART_METRIC_SPECS, capture_dart_snapshot, extract_dart_evidence_candidate, load_dart_snapshot, materialize_dart_snapshot, validate_dart_snapshot
+from valuation_hub.derived_financial import derive_historical_net_income_margin, derive_historical_operating_margin, validate_derived_financial_evidence
 from valuation_hub.draft_binding import build_binding_proposal, validate_binding_proposal
 from valuation_hub.financial_normalization import DURATION_ANNUAL, DURATION_QUARTER, DURATION_YTD, normalize_dart_candidate, normalize_sec_candidate, reconcile_same_period, ttm_annual_bridge, ttm_four_quarters, validate_financial_observation, validate_ttm_result
-from valuation_hub.web_binding_apply import serve as serve_web
+from valuation_hub.web_derived import serve as serve_web
 
 DART_COMMANDS = {"dart-fetch", "dart-snapshot-validate", "dart-extract"}
 NORMALIZATION_COMMANDS = {"normalize-sec", "normalize-dart", "normalize-validate", "ttm-four-quarters", "ttm-annual-bridge", "ttm-validate", "normalize-reconcile"}
 BINDING_COMMANDS = {"binding-build", "binding-validate"}
 BINDING_APPLY_COMMANDS = {"binding-approval-build", "binding-approval-validate", "binding-apply", "bound-draft-validate"}
+DERIVED_COMMANDS = {"derive-operating-margin", "derive-net-margin", "derived-validate"}
 
 
 def _dump(payload: Any) -> None:
@@ -44,7 +46,7 @@ def _load_object_list(path: Path, label: str) -> list[dict[str, Any]]:
 
 
 def _command(argv: list[str]) -> str | None:
-    known = DART_COMMANDS | NORMALIZATION_COMMANDS | BINDING_COMMANDS | BINDING_APPLY_COMMANDS | {"web"}
+    known = DART_COMMANDS | NORMALIZATION_COMMANDS | BINDING_COMMANDS | BINDING_APPLY_COMMANDS | DERIVED_COMMANDS | {"web"}
     return next((token for token in argv if token in known), None)
 
 
@@ -75,6 +77,14 @@ def _binding_apply_parser() -> argparse.ArgumentParser:
     a=s.add_parser("binding-approval-validate"); a.add_argument("approval",type=Path); a.add_argument("proposal",type=Path); a.add_argument("draft",type=Path)
     a=s.add_parser("binding-apply"); a.add_argument("proposal",type=Path); a.add_argument("draft",type=Path); a.add_argument("approval",type=Path)
     s.add_parser("bound-draft-validate").add_argument("result",type=Path); return p
+
+
+def _derived_parser() -> argparse.ArgumentParser:
+    p=argparse.ArgumentParser(prog="vih"); p.add_argument("--root",type=Path,default=None); p.add_argument("--json",action="store_true",dest="as_json"); s=p.add_subparsers(dest="command",required=True)
+    d=s.add_parser("derive-operating-margin",help="Derive historical operating margin / 역사적 영업마진 파생"); d.add_argument("operating_income",type=Path); d.add_argument("revenue",type=Path)
+    d=s.add_parser("derive-net-margin",help="Derive historical net-income margin / 역사적 순이익률 파생"); d.add_argument("net_income",type=Path); d.add_argument("revenue",type=Path)
+    s.add_parser("derived-validate",help="Validate derived financial evidence / 파생재무근거 검증").add_argument("file",type=Path)
+    return p
 
 
 def _web_parser() -> argparse.ArgumentParser:
@@ -129,6 +139,16 @@ def _run_binding_apply(argv:list[str])->int:
     except (CaseServiceError,ValueError,OSError) as exc: return _error(a,exc)
 
 
+def _run_derived(argv:list[str])->int:
+    a=_derived_parser().parse_args(argv)
+    try:
+        if a.command=="derive-operating-margin": _dump(derive_historical_operating_margin(_load_object(a.operating_income,"operating income observation"),_load_object(a.revenue,"revenue observation"))); return 0
+        if a.command=="derive-net-margin": _dump(derive_historical_net_income_margin(_load_object(a.net_income,"net income observation"),_load_object(a.revenue,"revenue observation"))); return 0
+        if a.command=="derived-validate": _dump(validate_derived_financial_evidence(_load_object(a.file,"derived financial evidence"))); return 0
+        raise CaseServiceError("unsupported derived command / 미지원 파생근거 명령")
+    except (CaseServiceError,ValueError,OSError) as exc: return _error(a,exc)
+
+
 def _run_web(argv:list[str])->int:
     a=_web_parser().parse_args(argv)
     try:
@@ -143,6 +163,7 @@ def main(argv:list[str]|None=None)->int:
     if command in NORMALIZATION_COMMANDS: return _run_normalization(values)
     if command in BINDING_COMMANDS: return _run_binding(values)
     if command in BINDING_APPLY_COMMANDS: return _run_binding_apply(values)
+    if command in DERIVED_COMMANDS: return _run_derived(values)
     if command=="web": return _run_web(values)
     return legacy_cli.main(values)
 

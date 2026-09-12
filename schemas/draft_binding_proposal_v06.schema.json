@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/draft_binding_proposal_v06.schema.json",
+  "title": "Draft Binding Proposal v0.6 — Integrated Forecast",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "target", "policy", "identity", "baseline_context", "conflicts", "draft_input_matrix", "completeness", "source_observation_sha256", "source_forecast_package_sha256", "forecast_block_sha256", "forecast_package", "base_proposal", "base_proposal_sha256", "proposal_sha256"],
+  "properties": {
+    "schema_version": {"const": "draft-binding-proposal-v0.6"},
+    "status": {"const": "DRAFT_BINDING_PROPOSED"},
+    "canonical": {"const": false},
+    "target": {
+      "type": "object",
+      "required": ["draft_schema_version", "model"],
+      "properties": {
+        "draft_schema_version": {"const": "draft-case-v0.1"},
+        "model": {"const": "equity_fcff"}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["version", "as_of", "base_policy_version", "direct_bind_requires", "atomic_forecast_fields"],
+      "properties": {
+        "version": {"const": "evidence-draft-binding-v0.6-integrated-forecast"},
+        "as_of": {"type": "string", "format": "date"},
+        "base_policy_version": {"type": "string"},
+        "direct_bind_requires": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "atomic_forecast_fields": {
+          "const": [
+            "scenario.years.revenue",
+            "scenario.years.ebit_margin",
+            "scenario.years.tax_rate",
+            "scenario.years.depreciation_amortization",
+            "scenario.years.capex",
+            "scenario.years.delta_nwc"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "identity": {"type": "object"},
+    "baseline_context": {"type": "object"},
+    "conflicts": {"type": "object"},
+    "draft_input_matrix": {"type": "array", "minItems": 13, "maxItems": 13},
+    "completeness": {"type": "object"},
+    "source_observation_sha256": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "source_forecast_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "forecast_block_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "forecast_package": {"type": "object"},
+    "base_proposal": {"type": "object"},
+    "base_proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "warning_en": {"type": "string"},
+    "warning_ko": {"type": "string"},
+    "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

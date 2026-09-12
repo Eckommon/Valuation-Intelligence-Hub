@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/terminal_growth_anchor_input.schema.json",
+  "title": "Terminal Growth Anchor Input v0.1 / 영구성장률 Anchor 입력 v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "claim_class", "metric", "value", "unit", "observed_on", "source", "input_sha256"],
+  "properties": {
+    "schema_version": {"const": "terminal-growth-anchor-input-v0.1"},
+    "status": {"const": "TERMINAL_GROWTH_ANCHOR_INPUT"},
+    "canonical": {"const": false},
+    "claim_class": {"enum": ["FACT", "NORMALIZED_FACT", "ASSUMPTION"]},
+    "metric": {"enum": ["long_run_inflation", "long_run_real_growth"]},
+    "value": {"type": "number", "exclusiveMinimum": -0.5, "exclusiveMaximum": 0.5},
+    "unit": {"const": "decimal"},
+    "observed_on": {"type": "string", "format": "date"},
+    "source": {
+      "type": "object",
+      "required": ["publisher", "type", "tier", "locator", "source_sha256"],
+      "properties": {
+        "publisher": {"type": "string", "minLength": 1},
+        "type": {"type": "string", "minLength": 1},
+        "tier": {"enum": ["A", "B", "C", "D"]},
+        "locator": {"type": "string", "minLength": 1},
+        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "input_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

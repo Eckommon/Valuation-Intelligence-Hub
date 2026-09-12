@@ -14,9 +14,9 @@ IMMUTABLE SNAPSHOT / NOT CANONICAL
         ↓
 EVIDENCE CANDIDATE / NOT CANONICAL
         ↓
-NORMALIZED OBSERVATION / TTM / NOT CANONICAL
+NORMALIZED / DERIVED EVIDENCE / NOT CANONICAL
         ↓
-GOVERNED DERIVED EVIDENCE / NOT CANONICAL
+GOVERNED BINDING CONTEXT / NOT CANONICAL
         ↓
 DRAFT BINDING PROPOSAL / NOT CANONICAL
         ↓
@@ -24,14 +24,12 @@ HUMAN APPROVAL LOCK
         ↓
 BOUND DRAFT RESULT / NOT CANONICAL
         ↓
-DRAFT EVIDENCE GOVERNANCE + HUMAN REVIEW
-        ↓
-PROMOTION → ADMISSION → guarded branch apply → PR/CI merge
+DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
         ↓
 CANONICAL
 ```
 
-Facts, calculations, derivations, binding proposals, and Draft application are intentionally separate authority states.
+Facts, calculations, derivations, binding contexts, proposals, and Draft application are intentionally separate authority states.
 
 ## Valuation kernel / 가치평가 커널
 
@@ -53,99 +51,107 @@ python -m pip install -e ".[dev]"
 - M13: immutable SEC CompanyFacts acquisition
 - M14: immutable OpenDART financial-statement acquisition
 - M15: period semantics, normalization, reconciliation, TTM
-- M16: normalized-evidence → equity-FCFF Draft binding proposal
+- M16: normalized-evidence → equity-FCFF Draft binding proposal v0.1
 - M17: SHA-locked human approval + in-memory noncanonical Draft binding application
-- M18: governed historical operating/net margin derivation, explicitly separated from forecast assumptions
+- M18: governed historical operating/net margin derivation separated from forecast assumptions
+- M19: explicit interest-bearing-debt component evidence, normalization, completeness and aggregation
 
-## M19 — Governed interest-bearing debt components
+## M20 — Reviewed debt → `equity.debt` binding
 
-M19 creates interest-bearing debt only from explicit component evidence.
+M20 connects only **complete, reviewed M19 debt** to the equity-FCFF Draft path.
 
 ```text
 liabilities ≠ interest_bearing_debt
-missing ≠ zero
+REPORT_STAGE_ONLY ≠ invented exact date
+complete reviewed fresh debt → eligible for DIRECT_BIND
 ```
 
-Core v0.1 components:
+### Date resolution / 날짜 해소
 
-```text
-short_term_borrowings
-current_portion_long_term_borrowings
-long_term_borrowings
-current_portion_bonds
-bonds_noncurrent
-```
+For debt whose source period is already `EXACT`, M20 uses the source period end directly and forbids a human assertion from overriding it.
 
-### Source mapping / 원천 매핑
+For OpenDART-style `REPORT_STAGE_ONLY` debt, M20 requires a separate noncanonical `debt-date-assertion-v0.1`. It SHA-locks reviewer, approval timestamp, exact M19 debt hash, entity/scope, original period identity, asserted period-end date, and human review basis.
 
-M19 uses a **separate debt source registry** so M13/M14 registries remain unchanged.
+No assertion means no resolved exact date and therefore no binding-ready context.
 
-OpenDART supports all five components with exact IFRS account IDs and exact Korean account-name fallback. SEC CompanyFacts v0.1 intentionally supports only exact `us-gaap:ShortTermBorrowings`; broad `LongTermDebt*` concepts are not forced into narrower borrowing/bond categories.
+### Binding context / 바인딩 context
 
-### Isolated normalization / 분리 정규화
-
-Debt source candidates normalize into:
-
-```text
-debt-component-observation-v0.1
-```
-
-Each observation is `INSTANT`, `canonical=false`, SHA-locked, and preserves exact source concept/account lineage.
-
-### Aggregation coverage / 집계 coverage
+`debt-binding-context-v0.1` is created only from:
 
 ```text
 COMPLETE_CORE_COMPONENTS
-PARTIAL_COMPONENTS
-CONFLICT_BLOCKED
++ DERIVED_FACT
++ M19 Draft-eligibility=true
 ```
 
-- **Complete:** all five explicit components, no conflict → final debt value exists.
-- **Partial:** `known_component_sum` is visible, but final debt value remains `null`.
-- **Conflict:** both known sum and final debt value remain `null`.
+Freshness is evaluated after exact date resolution. Fresh debt is eligible; stale debt remains `STALE_BLOCKED`.
 
-Authority never upgrades by summation:
+Partial, conflict-blocked, or candidate debt is rejected before a binding context can be produced.
+
+### Proposal compatibility / Proposal 호환성
+
+The historical M16 `build_binding_proposal()` remains unchanged and still produces `draft-binding-proposal-v0.1`.
+
+M20 adds `draft-binding-proposal-v0.2`, which embeds the complete v0.1 proposal and complete debt binding context, then changes **only** the `equity.debt` decision. Every other material-field decision must remain identical to v0.1.
+
+This preserves old cash behavior while adding an auditable debt path.
+
+### Human approval and apply / 인간 승인·적용
+
+M20 reuses the existing M17 `binding-approval-v0.1` contract. When v0.2 marks `equity.debt` as `DIRECT_BIND`, a human may explicitly approve that field.
+
+Debt applied-diff lineage preserves:
 
 ```text
-all NORMALIZED_FACT inputs → DERIVED_FACT
-any candidate input         → DERIVED_FACT_CANDIDATE
+debt binding context SHA-256
+M19 source debt SHA-256
+date assertion SHA-256 (when required)
 ```
 
-Only `COMPLETE_CORE_COMPONENTS + DERIVED_FACT` is marked eligible for a **future** governed Draft binding. M19 itself does not mutate a Draft.
-
-Lease liabilities remain explicitly excluded pending a separate policy.
+The source Draft is never mutated; the output remains noncanonical and in-memory.
 
 ### CLI
 
-```bash
-vih debt-sec-extract sec-snapshot.json short_term_borrowings
-vih debt-dart-extract dart-snapshot.json long_term_borrowings
-vih debt-normalize debt-candidate.json
-vih debt-component-validate debt-observation.json
-vih debt-aggregate debt-observations.json
-vih debt-validate debt.json
+```text
+debt-date-assertion-build
+debt-date-assertion-validate
+debt-binding-context-build
+debt-binding-context-validate
+binding-build-with-debt
+binding-validate
+binding-approval-build
+binding-approval-validate
+binding-apply
+bound-draft-validate
 ```
 
 ### Web
 
+The `/debt` Lab remains calculate/validate-only and now includes M20 preparation endpoints:
+
 ```text
-/debt
-POST /api/debt/aggregate
-POST /api/debt/validate
+POST /api/debt/date-assertion-build
+POST /api/debt/date-assertion-validate
+POST /api/debt/binding-context-build
+POST /api/debt/binding-context-validate
+POST /api/debt/binding-proposal-build
+POST /api/debt/binding-proposal-validate
 ```
 
-Web is calculate/validate only; it has no Draft mutation or canonical-write path.
+There is no Draft-file write, admission, promotion, or canonical-write route.
 
-See [`docs/INTEREST_BEARING_DEBT.md`](docs/INTEREST_BEARING_DEBT.md).
+See [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md).
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
 ```text
-liabilities        ≠ debt
-shares_outstanding ≠ diluted_shares
-historical revenue ≠ forecast revenue
-historical margin  ≠ forecast margin
-missing component  ≠ zero
+liabilities             ≠ debt
+shares_outstanding      ≠ diluted_shares
+historical revenue      ≠ forecast revenue
+historical margin       ≠ forecast margin
+missing debt component  ≠ zero
+REPORT_STAGE_ONLY       ≠ exact date
+stale debt              ≠ DIRECT_BIND
 ```
 
 ## Web product / Web 제품
@@ -163,7 +169,7 @@ Default: `http://127.0.0.1:8765`
 /binding       — evidence → Draft binding proposal
 /binding-apply — human approval + in-memory Draft binding
 /derived       — governed historical derived evidence
-/debt          — governed interest-bearing debt aggregation
+/debt          — governed debt aggregation + M20 binding preparation
 ```
 
 ## Milestones / 마일스톤
@@ -175,8 +181,8 @@ Default: `http://127.0.0.1:8765`
 - [x] M16 governed evidence → Draft binding proposal
 - [x] M17 human-approved noncanonical Draft binding application
 - [x] M18 governed derived financial evidence + historical margins
-- [ ] **M19 governed interest-bearing debt components + aggregation — active finalization**
-- [ ] governed reviewed-debt → Draft binding integration
+- [x] M19 governed interest-bearing debt components + aggregation
+- [ ] **M20 reviewed debt → `equity.debt` binding + human date assertion — active finalization**
 - [ ] governed diluted-share evidence/derivation
 - [ ] first non-equity valuation adapter
 
@@ -194,6 +200,7 @@ Default: `http://127.0.0.1:8765`
 - [`docs/BINDING_APPLICATION.md`](docs/BINDING_APPLICATION.md)
 - [`docs/DERIVED_FINANCIAL_EVIDENCE.md`](docs/DERIVED_FINANCIAL_EVIDENCE.md)
 - [`docs/INTEREST_BEARING_DEBT.md`](docs/INTEREST_BEARING_DEBT.md)
-- [`docs/M19_ACCEPTANCE.md`](docs/M19_ACCEPTANCE.md)
-- [`docs/M19_IMPLEMENTATION_SUMMARY.md`](docs/M19_IMPLEMENTATION_SUMMARY.md)
+- [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md)
+- [`docs/M20_ACCEPTANCE.md`](docs/M20_ACCEPTANCE.md)
+- [`docs/M20_IMPLEMENTATION_SUMMARY.md`](docs/M20_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

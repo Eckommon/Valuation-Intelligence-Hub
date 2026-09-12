@@ -22,8 +22,11 @@
 | M19 Governed interest-bearing debt components + aggregation | `5b2ab53b0c83632abae187f12e1a682ecc254b77` | #42 |
 | M20 Reviewed debt → `equity.debt` binding | `236547512919b5d68e283b3431183f56f5fc845c` | #44 |
 | M21 Governed historical dilution reference | `03af933835b8fbcf9ef4e6b3fd1b3db7603782fc` | #46 |
+| M22 Valuation-date common-share base + diluted-share bridge | `0a476cc9927b2d63164143447428f3e69b06051b` | #48 |
 
-M21 final PR CI `34690797078` and post-merge `main` CI `34690857449` completed `success` on Python 3.11/3.12.
+M21 final PR CI `34690797078` and post-merge main CI `34690857449` passed on Python 3.11/3.12.
+
+M22 final PR CI `34691494304` and post-merge main CI `34691545005` passed on Python 3.11/3.12. Issue #48 is completed.
 
 Earlier M1–M11 milestones remain completed and regression-locked in repository history.
 
@@ -55,228 +58,172 @@ Source acquisition, normalization, derivation, coverage assertion, binding prepa
 
 ## Active mission / 활성 미션
 
-- Issue: `#48 [M22] Valuation-date common-share base + diluted-share bridge foundation`
-- PR: `#49 M22 Valuation-date common-share base + diluted-share bridge foundation`
-- Branch: `mission/m22-valuation-share-bridge-v01`
-- Base main: `03af933835b8fbcf9ef4e6b3fd1b3db7603782fc`
+- Issue: `#50 [M23] Complete reviewed share bridge → equity.diluted_shares binding`
+- PR: `#51 M23 Complete reviewed share bridge → equity.diluted_shares binding`
+- Branch: `mission/m23-diluted-shares-binding-v01`
+- Base main: `0a476cc9927b2d63164143447428f3e69b06051b`
 - Status: `ACTIVE_FINALIZATION`
 
-### M22 CI history / M22 CI 이력
+## M23 CI history / M23 CI 이력
 
-- Core tested head `2e4ec06e79bbd8279d1b7d4cd0a9adc12910f008`
-- Core CI `34691138178`: Python 3.11/3.12 `success`
+- Core tested head: `1dc2fee8cb400ef642f7dd64460bb60956a88a29`
+- Core CI `34692432321`: Python 3.11/3.12 `success`
+- Interface/schema tested head: `005a1dd58dae6a2a3162c6a2b06629860540fffd`
+- Interface/schema CI `34692614288`: Python 3.11/3.12 `success`
 
-A fresh final-head CI is required after CLI/Web, schemas, docs, README, and PROJECT_STATE changes. Only that exact final-head run may authorize merge.
+A fresh final-head CI is required after M23 docs/README/PROJECT_STATE changes. Only the exact current PR head after this handoff commit may authorize merge.
 
-## M22 semantic boundary / M22 의미경계
-
-```text
-current_common_shares != fully_diluted_shares
-weighted_average_diluted_shares != current_common_shares
-historical_dilution_factor != automatic current dilution adjustment
-missing dilution category != zero
-```
-
-M22 builds the evidence bridge toward `equity.diluted_shares`; M22 itself does not mutate a Draft or directly bind that field.
-
-## SEC current-share base / SEC 현재주식수 기준
-
-M22 v0.1 uses an isolated exact mapping:
+## M23 architecture / M23 구조
 
 ```text
-dei:EntityCommonStockSharesOutstanding
+validated M16 v0.1 proposal
+or validated M20 v0.2 proposal
+        +
+complete reviewed fresh M22 diluted-share bridge
+        ↓
+draft-binding-proposal-v0.3
+        ↓
+M17 binding-approval-v0.1
+        ↓
+noncanonical bound Draft result
 ```
 
-M13 and M21 registries remain unchanged.
-
-The point-in-time pipeline is:
+M23 never rebuilds the base proposal. It may replace only:
 
 ```text
-SEC immutable snapshot
-  ↓
-current-common-shares-candidate-v0.1
-  ↓
-current-common-shares-observation-v0.1
-  ↓
-valuation-share-base-context-v0.1
+equity.diluted_shares
 ```
 
-Rules:
-- exact `INSTANT` date only
-- `shares` unit only
-- equal-precedence distinct values fail closed
-- candidate authority is preserved
-- only reviewed `NORMALIZED_FACT` may enter valuation share-base context
-- context freshness is independently recomputed from source date, `as_of`, and max-age policy
-- stale evidence remains visible but cannot support complete reviewed coverage
+Every other M16/M20 matrix decision must remain exactly equivalent to the embedded base proposal.
 
-## Explicit dilution adjustments / 명시적 희석조정
+## M23 direct-bind gate / M23 직접바인딩 게이트
 
-`dilution-adjustment-v0.1` separates current-share base from instrument-level dilution evidence.
-
-Supported structural categories:
+The M22 bridge must validate as:
 
 ```text
-options_treasury_stock_method
-rsu_restricted_stock
-warrants
-convertibles_if_converted
-contingent_shares
-other_explicit
+schema = diluted-share-bridge-v0.1
+class = DERIVED_FACT
+coverage = COMPLETE_REVIEWED_DILUTION_COVERAGE
+binding_eligibility.eligible_for_future_direct_bind = true
+candidate_fully_diluted_shares > 0
 ```
 
-Every adjustment carries:
-- unique adjustment ID
-- category
-- nonnegative share amount
-- source SHA
-- source description
-- authority class
-- adjustment SHA
+Additional exact compatibility requirements:
 
-The builder creates candidate authority. Arithmetic never promotes it to reviewed authority.
+- entity ID match
+- financial-scope match
+- bridge `as_of` == base proposal `as_of`
+- full nested M22 validation remains valid
 
-## Human coverage assertion / 인간 coverage 승인
-
-`dilution-coverage-assertion-v0.1` may declare complete coverage only when:
-- base context is fresh
-- all included adjustments are reviewed facts
-- all supported categories are explicitly reviewed
-- reviewer and timezone-aware approval time are present
-- coverage basis is explicit
-- exact base-context and adjustment hashes are locked
-
-An empty adjustment set can become complete only through this explicit all-category human review. Missing categories are not silently treated as zero.
-
-## Diluted-share bridge / 희석주식 bridge
-
-Output:
-
-```text
-diluted-share-bridge-v0.1
-```
-
-Coverage states:
+The following fail closed before proposal creation:
 
 ```text
 BASE_ONLY
 PARTIAL_DILUTION_COVERAGE
-COMPLETE_REVIEWED_DILUTION_COVERAGE
 CONFLICT_BLOCKED
+candidate authority
+stale/ineligible bridge
+entity/scope mismatch
+as_of mismatch
 ```
 
-Arithmetic for non-conflict states:
+## v0.3 lineage / v0.3 lineage
+
+The full base proposal and full M22 bridge are embedded. The projected `baseline_context.fully_diluted_shares` and the `equity.diluted_shares` DIRECT_BIND decision preserve:
 
 ```text
-candidate_fully_diluted_shares
-  = current_common_shares_base
-  + sum(explicit selected adjustments)
+source_bridge_sha256
+base_context_sha256
+coverage_assertion_sha256
 ```
 
-A candidate total is not authority. Future binding eligibility requires:
+The v0.3 validator independently validates the embedded base proposal and M22 bridge, reconstructs the baseline projection and share decision, verifies that all non-share matrix decisions remain unchanged, recomputes completeness, and verifies the final proposal SHA.
+
+## M17 apply extension / M17 적용 확장
+
+`binding-approval-v0.1` remains the approval contract.
+
+M17 can now apply:
 
 ```text
-COMPLETE_REVIEWED_DILUTION_COVERAGE
-+ FRESH base
-+ all selected adjustments reviewed
-+ valid coverage assertion
+equity.cash
+equity.debt
+equity.diluted_shares
 ```
 
-Duplicate adjustment IDs with different evidence produce `CONFLICT_BLOCKED` and hide the candidate total.
+only when each approved field is DIRECT_BIND in the supplied proposal.
 
-## M21 relationship / M21 관계
-
-Full M21 historical dilution evidence may be embedded only as reference:
+For `equity.diluted_shares`, the applied diff preserves:
 
 ```text
-reference_only = true
-auto_adjustment_created = false
+source_bridge_sha256
+base_context_sha256
+coverage_assertion_sha256
 ```
 
-Historical dilution never estimates or creates a current adjustment automatically.
-
-## Nested validation / 중첩 검증
-
-The M22 bridge embeds and revalidates:
-- full base context
-- all input adjustments
-- selected adjustments
-- full coverage assertion when present
-- full M21 historical reference when present
-
-Validator logic recomputes reconciliation, conflicts, arithmetic, coverage, authority, and future-binding eligibility. Re-sealing only the outer bridge SHA cannot legitimize a modified nested source or approval object.
+The original Draft object remains unchanged. The result remains `canonical=false` and must continue through existing Draft governance before any canonical state can exist.
 
 ## Interfaces / 인터페이스
 
 CLI:
 
 ```text
-share-sec-extract
-share-normalize
-share-observation-validate
-share-base-context-build
-share-base-context-validate
-share-adjustment-build
-share-adjustment-validate
-share-coverage-assertion-build
-share-coverage-assertion-validate
-share-bridge-build
-share-bridge-validate
+binding-build-with-diluted-shares <base_proposal.json> <share_bridge.json>
+binding-validate <proposal.json>
 ```
+
+`binding-validate` now follows the v0.1 → v0.2 → v0.3 governed validator chain.
 
 Web:
 
 ```text
-/shares
-/api/shares/*
+/share-binding
+/api/share-binding/build
+/api/share-binding/validate
 ```
 
-M22 interfaces are calculate/validate only. No Draft-file write, promotion, admission, or canonical-write M22 route exists.
+M23 Web is proposal calculate/validate only. There is no M23 approval/apply, Draft-file write, promotion, admission, or canonical-write route.
 
-## M22 files / M22 파일
+## M23 files / M23 파일
 
-- `src/valuation_hub/valuation_shares.py`
-- `src/valuation_hub/web_valuation_shares.py`
+- `src/valuation_hub/share_draft_binding.py`
+- `src/valuation_hub/binding_apply.py`
+- `src/valuation_hub/web_share_binding.py`
 - `src/valuation_hub/cli_entry.py`
-- `schemas/current_common_shares_observation.schema.json`
-- `schemas/valuation_share_base_context.schema.json`
-- `schemas/dilution_adjustment.schema.json`
-- `schemas/dilution_coverage_assertion.schema.json`
-- `schemas/diluted_share_bridge.schema.json`
-- `tests/test_m22_valuation_shares.py`
-- `tests/test_m22_interfaces.py`
-- `docs/VALUATION_SHARE_BRIDGE.md`
-- `docs/M22_ACCEPTANCE.md`
-- `docs/M22_IMPLEMENTATION_SUMMARY.md`
+- `schemas/draft_binding_proposal_v03.schema.json`
+- `tests/test_m23_binding.py`
+- `tests/test_m23_interfaces.py`
+- `docs/SHARE_DRAFT_BINDING.md`
+- `docs/M23_ACCEPTANCE.md`
+- `docs/M23_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. SEC snapshot → current-share observation → base-context SHA → adjustment evidence → coverage assertion → bridge SHA lineage
-4. M21 historical evidence only as reference
-5. current chat
-6. AI recollection
+3. M22 bridge SHA → v0.3 proposal SHA → M17 approval SHA → bound Draft result SHA
+4. current chat
+5. AI recollection
 
 ## Exact resume point / 정확한 재개점
 
-Run fresh full Python 3.11/3.12 CI on the final PR #49 head after all interface/schema/docs/state changes.
+Run a fresh full Python 3.11/3.12 CI on the exact final PR #51 head after this handoff update.
 
 Merge only if all remain green:
-- M13/M21 registry isolation
-- exact DEI current-share mapping
-- exact instant semantics and equal-precedence conflict blocking
-- reviewed-only base-context admission
-- independently recomputable freshness
-- explicit adjustment authority and source lineage
-- no historical-factor auto-adjustment
-- no missing-category-as-zero inference
-- complete coverage assertion lock
-- BASE_ONLY/PARTIAL/CONFLICT non-bindability
-- nested source/assertion revalidation
+
+- v0.1/v0.2 base proposal validation
+- complete reviewed fresh M22 bridge gate
+- BASE_ONLY/PARTIAL/CONFLICT/candidate/stale fail-closed behavior
+- exact entity/scope/as-of compatibility
+- only `equity.diluted_shares` replacement in v0.3
+- full nested M22 bridge revalidation
+- share bridge/base-context/coverage-assertion lineage preservation
+- M17 human approval lock for diluted shares
+- original Draft immutability
+- existing cash/debt apply regression compatibility
 - CLI/Web no-write boundaries
-- all M1–M22 regressions
+- all M1-M23 regressions
 
-After merge, verify Issue #48 closure and post-merge `main` CI before declaring M22 canonical.
+After final-head CI passes, update PR #51 body with exact tested SHA and CI run, merge with `expected_head_sha`, confirm Issue #50 closes as completed, then verify post-merge `main` Python 3.11/3.12 CI before declaring M23 canonical.
 
-If M22 closes cleanly, the next mission should integrate **only complete, reviewed, fresh M22 bridges** into M16/M17/M20 as `equity.diluted_shares`, while keeping BASE_ONLY/PARTIAL/CONFLICT/stale/candidate bridges non-bindable.
+If M23 closes cleanly, the next mission should be selected from the remaining valuation-completeness gaps rather than adding another parallel share layer. Reassess the equity-FCFF Draft material-field matrix and choose the highest-value unresolved governed input or the first non-equity valuation adapter.

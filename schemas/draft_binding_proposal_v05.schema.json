@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/draft_binding_proposal_v05.schema.json",
+  "title": "Draft Binding Proposal v0.5 — Terminal Growth / Draft 바인딩 제안 v0.5 — 영구성장률",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "target", "policy", "identity", "baseline_context", "conflicts", "draft_input_matrix", "completeness", "source_observation_sha256", "source_terminal_growth_package_sha256", "source_wacc_package_sha256", "terminal_growth_package", "base_proposal", "base_proposal_sha256", "proposal_sha256"],
+  "properties": {
+    "schema_version": {"const": "draft-binding-proposal-v0.5"},
+    "status": {"const": "DRAFT_BINDING_PROPOSED"},
+    "canonical": {"const": false},
+    "target": {
+      "type": "object",
+      "required": ["draft_schema_version", "model"],
+      "properties": {
+        "draft_schema_version": {"const": "draft-case-v0.1"},
+        "model": {"const": "equity_fcff"}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["version", "as_of", "base_policy_version", "direct_bind_requires"],
+      "properties": {
+        "version": {"const": "evidence-draft-binding-v0.5-terminal-growth"},
+        "as_of": {"type": "string", "format": "date"},
+        "base_policy_version": {"type": "string", "minLength": 1},
+        "direct_bind_requires": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "identity": {"type": "object"},
+    "baseline_context": {"type": "object"},
+    "conflicts": {"type": "object"},
+    "draft_input_matrix": {"type": "array", "minItems": 13, "maxItems": 13, "items": {"type": "object"}},
+    "completeness": {"type": "object"},
+    "source_observation_sha256": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "source_terminal_growth_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_wacc_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "terminal_growth_package": {"type": "object"},
+    "base_proposal": {"type": "object", "properties": {"schema_version": {"const": "draft-binding-proposal-v0.4"}}},
+    "base_proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "warning_en": {"type": "string"},
+    "warning_ko": {"type": "string"},
+    "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

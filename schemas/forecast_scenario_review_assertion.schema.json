@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/forecast_scenario_review_assertion.schema.json",
+  "title": "Forecast Scenario Review Assertion v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "decision", "candidate_sha256", "forecast_block_sha256", "methodology_version", "entity", "capital_currency", "as_of", "scenario_names", "forecast_years", "reviewer", "approved_at", "review_basis", "assertion_sha256"],
+  "properties": {
+    "schema_version": {"const": "forecast-scenario-review-assertion-v0.1"},
+    "status": {"const": "FORECAST_SCENARIO_REVIEW_APPROVED"},
+    "canonical": {"const": false},
+    "decision": {"const": "APPROVE_FORECAST_SCENARIO_ASSUMPTION"},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "forecast_block_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "methodology_version": {"const": "integrated-fcff-forecast-v0.1"},
+    "entity": {"type": "object", "required": ["id", "financial_scope"]},
+    "capital_currency": {"type": "string", "minLength": 3, "maxLength": 8},
+    "as_of": {"type": "string", "format": "date"},
+    "scenario_names": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "forecast_years": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer"}},
+    "reviewer": {"type": "string", "minLength": 1, "maxLength": 160},
+    "approved_at": {"type": "string", "format": "date-time"},
+    "review_basis": {"type": "string", "minLength": 1, "maxLength": 8000},
+    "assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

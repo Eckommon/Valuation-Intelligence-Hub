@@ -25,8 +25,11 @@
 | M22 Valuation-date common-share base + diluted-share bridge | `0a476cc9927b2d63164143447428f3e69b06051b` | #48 |
 | M23 Complete reviewed share bridge → `equity.diluted_shares` | `58d963238992f562c89c8325b42046ae35ac71bf` | #50 |
 | M24 Governed WACC assumption → `scenario.wacc` | `ca85f04c1bd84c5189f78c81e2653cc4f65bccca` | #52 |
+| M25 Governed terminal growth → `scenario.terminal_growth` | `0c0a7591a59f163fa34aba54fdeb6001fb9b7dc0` | #54 |
 
-M24 final PR CI `34693544084` and post-merge `main` CI `34693990230` both passed Python 3.11/3.12. Issue #52 is completed.
+M24 final PR CI `34693544084` and post-merge main CI `34693990230` passed Python 3.11/3.12.
+
+M25 final PR CI `34694777238` and post-merge main CI `34694840768` passed Python 3.11/3.12. Issue #54 is completed.
 
 Earlier milestones remain completed and regression-locked in repository history.
 
@@ -56,257 +59,282 @@ Calculation never silently upgrades `ASSUMPTION_CANDIDATE` to `ASSUMPTION`, nor 
 
 ## Active mission / 활성 미션
 
-- Issue: `#54 [M25] Governed terminal-growth assumption + scenario.terminal_growth binding`
-- PR: `#55 M25 Governed terminal growth + scenario.terminal_growth binding`
-- Branch: `mission/m25-terminal-growth-binding-v01`
-- Base main: `ca85f04c1bd84c5189f78c81e2653cc4f65bccca`
+- Issue: `#56 [M26] Integrated forecast-scenario assumption package + atomic Draft binding`
+- PR: `#57 M26 Integrated forecast package + atomic Draft binding`
+- Branch: `mission/m26-integrated-forecast-binding-v01`
+- Base main: `0c0a7591a59f163fa34aba54fdeb6001fb9b7dc0`
 - Status: `ACTIVE_FINALIZATION`
 
-## M25 CI history / M25 CI 이력
+## M26 mission / M26 미션
 
-- Core head: `9e1c6d34c8d8d1189ae6703d6cce2b0608585d6f`
-  - CI `34694364761`: Python 3.11/3.12 `success`
-- Hardened core head: `fb9b54dab458582e569ff7ced994f10cefb82c42`
-  - CI `34694428378`: Python 3.11/3.12 `success`
-- Interface/schema head: `cb0a83d32c9492d18a8168cfc233ead9c90d837a`
-  - CI `34694626345`: Python 3.11/3.12 `success`
+Govern the six explicit FCFF forecast-year material inputs as one coherent human-reviewed assumption package and bind them atomically into the equity-FCFF Draft.
 
-A fresh final-head CI is required after M25 docs/README/PROJECT_STATE changes. Only that exact tested head may authorize merge.
+명시기간 FCFF의 여섯 미래 중요입력을 하나의 일관된 인간검토 가정패키지로 거버넌스하고 equity-FCFF Draft에 원자적으로 바인딩한다.
 
-## M25 authority boundary / M25 권위경계
+Atomic fields:
 
 ```text
-macro forecast / anchor != terminal-growth fact
-selected g              != reviewed terminal-growth assumption
-ASSUMPTION_CANDIDATE     != ASSUMPTION
-reviewed ASSUMPTION      != canonical state
+scenario.years.revenue
+scenario.years.ebit_margin
+scenario.years.tax_rate
+scenario.years.depreciation_amortization
+scenario.years.capex
+scenario.years.delta_nwc
 ```
 
-M25 never auto-generates terminal growth from a macro forecast. Macro evidence constrains a scenario assumption; human review creates assumption authority.
-
-M25는 거시 전망에서 영구성장률을 자동 생성하지 않는다. 거시 근거는 시나리오 가정의 경계를 제공하며 인간 검토가 가정 권위를 만든다.
-
-## Required dependency / 필수 의존성
-
-M25 requires a valid M24:
+## M26 authority boundary / M26 권위경계
 
 ```text
-reviewed-wacc-assumption-v0.1
+historical fact != forecast assumption
+historical trend != automatic forecast
+calculated EBIT/NOPAT/FCFF != forecast authority
+ASSUMPTION_CANDIDATE != ASSUMPTION
+reviewed ASSUMPTION != canonical state
 ```
 
-The full WACC package is embedded in the M25 candidate and independently revalidated. The WACC package SHA used by M25 must exactly equal the WACC package SHA embedded in the v0.4 base proposal.
+Forecast diagnostics are review aids only.
 
-M25 candidate에 전체 WACC 패키지를 내장하고 독립 재검증한다. M25가 사용한 WACC package SHA는 v0.4 base proposal에 내장된 WACC package SHA와 정확히 같아야 한다.
+Forecast 진단값은 검토 보조값일 뿐 authority를 생성하지 않는다.
 
-## Macro anchor / 거시 Anchor
+## Forecast candidate / Forecast Candidate
 
-Required source-backed inputs:
+`forecast-scenario-assumption-candidate-v0.1` requires:
+
+- explicit unique scenario names
+- explicit scenario rationale
+- one identical strictly ascending future-year set across all scenarios
+- every forecast year strictly after the valuation `as_of` year
+- complete six-component rows
+- exact entity / financial scope / capital currency / `as_of`
+
+Numeric gates:
 
 ```text
-long_run_inflation
-long_run_real_growth
+revenue >= 0
+-1 <= ebit_margin <= 1
+0 <= tax_rate < 1
+D&A >= 0
+CAPEX >= 0
+ΔNWC finite; negative allowed
 ```
 
-Each carries value, observed date, claim class, source publisher/type/tier/locator, source SHA, and input SHA.
-
-Both anchors use a v0.1 freshness maximum of 365 days. Future-dated anchors fail closed. Tier D cannot become human-review eligible.
-
-The nominal ceiling is independently reconstructed:
-
-```text
-nominal_growth_anchor
-  = (1 + long_run_inflation)
-  × (1 + long_run_real_growth)
-  - 1
-```
-
-This ceiling is not itself terminal growth.
-
-이 상한은 영구성장률 그 자체가 아니다.
-
-## Scenario terminal growth / 시나리오 영구성장률
-
-Every target scenario must include exactly one:
-
-```text
-scenario_name
-terminal_growth
-rationale
-```
-
-The candidate validator enforces:
-
-```text
-g > -1
-g < reviewed WACC
-g <= nominal_growth_anchor
-```
-
-Negative terminal growth is supported when explicitly selected and reviewed.
-
-명시적으로 선택·검토된 음의 영구성장률은 허용한다.
+For each scenario/year the validator independently recomputes EBIT, NOPAT, FCFF, and revenue-growth diagnostics.
 
 ## Human review / 인간검토
 
-`terminal-growth-review-assertion-v0.1` locks:
+`forecast-scenario-review-assertion-v0.1` locks:
 
 - exact candidate SHA
-- exact source WACC package SHA
+- exact forecast-block SHA
 - methodology version
-- valuation `as_of`
+- entity / scope / currency / `as_of`
 - exact scenario set
-- exact scenario growth values and rationales
+- exact ordered forecast-year set
 - reviewer
-- timezone-aware `approved_at`
+- timezone-aware approval timestamp
 - review basis
-- assertion SHA
 
 Approval cannot predate valuation `as_of`.
 
 Finalization yields:
 
 ```text
-reviewed-terminal-growth-assumption-v0.1
+reviewed-forecast-scenario-assumption-v0.1
 class = ASSUMPTION
-binding_eligibility = REVIEWED_TERMINAL_GROWTH_ASSUMPTION
+binding_eligibility = REVIEWED_INTEGRATED_FORECAST_ASSUMPTION
+canonical = false
 ```
 
-## v0.5 binding / v0.5 바인딩
+## v0.6 binding / v0.6 바인딩
 
 ```text
-validated draft-binding-proposal-v0.4
+validated draft-binding-proposal-v0.5
         +
-reviewed terminal-growth ASSUMPTION
+reviewed integrated forecast ASSUMPTION
         ↓
-draft-binding-proposal-v0.5
+draft-binding-proposal-v0.6
 ```
 
-M25 accepts **only** v0.4 as its base and may replace only:
+M26 accepts **only** validated v0.5 as its base.
+
+The forecast package must exactly match base entity, financial scope, capital currency, valuation `as_of`, and the v0.5 terminal-growth scenario set.
+
+v0.6 replaces exactly the six forecast-year decisions. Every other base decision remains unchanged, including:
 
 ```text
+scenario.wacc
 scenario.terminal_growth
+equity.cash
+equity.debt
+equity.diluted_shares
 ```
 
-All other matrix entries, including `scenario.wacc`, must remain equivalent to the embedded v0.4 proposal.
+The v0.6 validator reconstructs exact policy, baseline projection, six decisions, completeness, package lineage, and final SHA.
 
-The v0.5 validator reconstructs the exact policy, projection, decision, completeness, WACC dependency, and final SHA. Re-signing only the outer object cannot legitimize altered nested state.
+## Atomic apply / 원자적 적용
 
-## Apply-time WACC dependency / 적용시점 WACC 의존성
-
-A terminal-growth assumption reviewed under one WACC cannot be applied against another Draft WACC.
-
-한 WACC를 기준으로 검토한 영구성장률을 다른 Draft WACC에 적용할 수 없다.
-
-If `scenario.terminal_growth` is approved alone, the Draft must already carry the exact reviewed WACC for every target scenario.
-
-If the Draft does not already carry that WACC, `scenario.wacc` must be approved in the same M17 approval.
-
-Applied terminal-growth diff form:
+M17 approval/apply now enforces:
 
 ```text
-before = {scenario_name: old_g, ...}
-after  = {scenario_name: reviewed_g, ...}
+if any forecast field is approved:
+    all six forecast fields must be approved
 ```
 
-and preserves:
+The target Draft must already contain the exact scenario set and the exact ordered forecast-year set for every scenario. M26 v0.1 does not silently create, remove, or reorder scenario/year rows.
+
+Each component diff records scenario/year before→after values and preserves:
 
 ```text
-source_terminal_growth_package_sha256
-source_wacc_package_sha256
+source_forecast_package_sha256
+forecast_block_sha256
 review_assertion_sha256
 scenario_names
+forecast_years
+forecast_component
 ```
 
-The input Draft remains unchanged and the result remains noncanonical.
+The input Draft remains unchanged. The result remains noncanonical.
+
+## Result-integrity hardening / 결과 무결성 강화
+
+During M26 review a generic bound-result validation gap was discovered.
+
+Pre-hardening, the validator required only:
+
+```text
+len(applied_diffs) == len(approved_fields)
+```
+
+A re-signed forged result could repeat one sequentially valid diff and omit another approved field.
+
+M26 now requires:
+
+```text
+all applied diff fields are unique
+AND
+set(applied_diff.field) == set(approved_fields)
+```
+
+Red→green evidence:
+
+- exploit reproduction test-only head `2b30bbfe0372e51358a42b6d3df03c60a3699220`
+  - CI `34708359543`: expected `failure`
+- production guard + hardening tests
+  - later hardened CI is green
+
+## M26 CI history / M26 CI 이력
+
+- Initial core head `06dacd6806b32b1b9d168e6bc63497303866f049`
+  - CI `34708138491`: Python 3.11/3.12 `success`
+- Exploit reproduction test-only head `2b30bbfe0372e51358a42b6d3df03c60a3699220`
+  - CI `34708359543`: expected `failure`
+- Hardened core + re-signing head `1e225fccea82ba14d404d808fbedeffac6fb3f42`
+  - CI `34708455989`: Python 3.11/3.12 `success`
+- Interface/schema head `ad6fcf8b5107f33b7d69c21b5a69ff6acdb21c86`
+  - CI `34708632795`: Python 3.11/3.12 `success`
+
+A fresh final-head CI is required after the documentation/README/PROJECT_STATE handoff. Only that exact tested head may authorize merge.
 
 ## Interfaces / 인터페이스
 
-M25 CLI is additive. It intercepts only M25 commands plus v0.5-aware `binding-validate` and `web`; every older M1-M24 command delegates to the M24 dispatcher.
-
-CLI:
+M26 CLI is additive through `src/valuation_hub/cli_entry_m26.py`. All older M1–M25 commands delegate to the M25 dispatcher.
 
 ```text
-terminal-growth-anchor-build
-terminal-growth-anchor-validate
-terminal-growth-candidate-build
-terminal-growth-candidate-validate
-terminal-growth-review-build
-terminal-growth-review-validate
-terminal-growth-finalize
-terminal-growth-validate
-binding-build-with-terminal-growth
+forecast-candidate-build
+forecast-candidate-validate
+forecast-review-build
+forecast-review-validate
+forecast-finalize
+forecast-validate
+binding-build-with-forecast
 binding-validate
 ```
 
 Web:
 
 ```text
-/terminal-growth
-/api/terminal-growth/candidate-build
-/api/terminal-growth/candidate-validate
-/api/terminal-growth/review-build
-/api/terminal-growth/review-validate
-/api/terminal-growth/finalize
-/api/terminal-growth/validate
-/api/terminal-growth/binding-build
-/api/terminal-growth/binding-validate
+/forecast
+/api/forecast/candidate-build
+/api/forecast/candidate-validate
+/api/forecast/review-build
+/api/forecast/review-validate
+/api/forecast/finalize
+/api/forecast/validate
+/api/forecast/binding-build
+/api/forecast/binding-validate
 ```
 
-The M25 Web layer has no Draft-apply, file-write, promotion, admission, or canonical-write endpoint.
+M26 Web is calculate/validate preparation only. It has no Draft-apply, file-write, promotion, admission, or canonical-write endpoint.
 
-## M25 files / M25 파일
+## M26 files / M26 파일
 
-- `src/valuation_hub/terminal_growth_assumption.py`
-- `src/valuation_hub/terminal_growth_draft_binding.py`
+- `src/valuation_hub/forecast_assumption.py`
+- `src/valuation_hub/forecast_draft_binding.py`
 - `src/valuation_hub/binding_apply.py`
-- `src/valuation_hub/cli_entry_m25.py`
-- `src/valuation_hub/web_terminal_growth.py`
-- `schemas/terminal_growth_anchor_input.schema.json`
-- `schemas/terminal_growth_assumption_candidate.schema.json`
-- `schemas/terminal_growth_review_assertion.schema.json`
-- `schemas/reviewed_terminal_growth_assumption.schema.json`
-- `schemas/draft_binding_proposal_v05.schema.json`
-- `tests/test_m25_terminal_growth_binding.py`
-- `tests/test_m25_hardening.py`
-- `tests/test_m25_interfaces.py`
-- `docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md`
-- `docs/M25_ACCEPTANCE.md`
-- `docs/M25_IMPLEMENTATION_SUMMARY.md`
+- `src/valuation_hub/cli_entry_m26.py`
+- `src/valuation_hub/web_forecast.py`
+- `schemas/forecast_scenario_assumption_candidate.schema.json`
+- `schemas/forecast_scenario_review_assertion.schema.json`
+- `schemas/reviewed_forecast_scenario_assumption.schema.json`
+- `schemas/draft_binding_proposal_v06.schema.json`
+- `tests/test_m26_integrated_forecast_binding.py`
+- `tests/test_m26_result_diff_hardening.py`
+- `tests/test_m26_hardening.py`
+- `tests/test_m26_interfaces.py`
+- `docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md`
+- `docs/M26_ACCEPTANCE.md`
+- `docs/M26_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. macro-anchor input SHA → M24 WACC package SHA → M25 candidate SHA → review assertion SHA → reviewed terminal-growth package SHA → v0.5 proposal SHA → M17 approval/result SHA
+3. M25 v0.5 proposal SHA → forecast candidate/block SHA → review assertion SHA → reviewed forecast package SHA → v0.6 proposal SHA → M17 approval/result SHA
 4. current chat
 5. AI recollection
 
+## Remaining material gaps after M26 / M26 이후 잔여 중요입력
+
+Once M26 is canonical, the M16 material-field matrix will have governed paths for cash, debt, diluted shares, WACC, terminal growth, and all six explicit forecast inputs.
+
+M26 정식화 이후 cash, debt, diluted shares, WACC, terminal growth, 여섯 Forecast 입력은 모두 거버넌스 경로를 갖는다.
+
+Remaining likely material gaps:
+
+```text
+market_price
+equity.minority_interest
+```
+
+Do not start either until M26 is merged and latest `main` is re-grounded.
+
+M26 병합 및 최신 main 재근거화 전에는 다음 미션을 시작하지 않는다.
+
 ## Exact resume point / 정확한 재개점
 
-Run a fresh full Python 3.11/3.12 CI on the exact current PR #55 head after this handoff update.
+Run fresh full Python 3.11/3.12 CI on the exact current PR #57 head after this handoff update.
 
 Merge only if all remain green:
 
-- anchor provenance/integrity validation
-- anchor freshness and Tier-D review blocking
-- nominal macro ceiling recomputation
-- exact M24 reviewed-WACC dependency
-- `g > -1`, `g < WACC`, and `g <= nominal_growth_anchor`
-- candidate/reviewed authority separation
-- human review lineage lock
-- v0.4-only base requirement
-- exact WACC package SHA equality
-- v0.5 exact policy reconstruction
-- only `scenario.terminal_growth` replacement
-- exact full-Draft scenario target set
-- terminal-growth-only apply requires reviewed WACC already in Draft
-- otherwise WACC + terminal growth approved together
-- scenario-by-scenario diff reconstruction
+- forecast candidate authority separation
+- exact common future-year set
+- complete six-component rows and numeric guards
+- diagnostic independent recomputation
+- human review SHA lock
+- nested candidate/assertion tamper blocking
+- v0.5-only base requirement
+- exact scenario/entity/scope/currency/as-of compatibility
+- v0.6 exact policy reconstruction
+- only six forecast decisions replaced
+- all-six-or-none approval
+- exact Draft scenario/year target sets
+- unique applied diff fields exactly equal to approved fields
+- scenario/year/component diff reconstruction
 - source Draft immutability
-- existing M1-M24 regression compatibility
 - additive CLI delegation
 - Web no-write boundary
+- all M1–M25 regressions
 
-After final-head CI passes, update PR #55 with the exact tested SHA/run, merge with `expected_head_sha`, confirm Issue #54 closes as completed, then verify post-merge `main` Python 3.11/3.12 CI before declaring M25 canonical.
+After final-head CI passes, update PR #57 with the exact tested SHA/run, merge using `expected_head_sha`, confirm Issue #56 closes as completed, and verify post-merge `main` Python 3.11/3.12 CI before declaring M26 canonical.
 
-If M25 closes cleanly, the next high-value mission should be selected by re-grounding the remaining `MATERIAL_FIELDS`. Current architecture suggests a **single governed forecast-scenario package** covering revenue, EBIT margin, tax, D&A, CAPEX, and ΔNWC together is likely more coherent than six independent one-field missions.
+After M26 closes, re-ground latest `main` and select the next mission from the remaining material gaps rather than assuming the next step from chat memory.

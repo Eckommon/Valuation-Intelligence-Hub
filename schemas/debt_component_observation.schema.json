@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "debt-component-observation-v0.1",
+  "title": "Debt Component Observation v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "class", "metric", "value", "unit", "entity", "period", "lineage", "observation_sha256"],
+  "properties": {
+    "schema_version": {"const": "debt-component-observation-v0.1"},
+    "status": {"const": "DEBT_COMPONENT_NORMALIZED"},
+    "canonical": {"const": false},
+    "class": {"enum": ["NORMALIZED_FACT", "NORMALIZED_FACT_CANDIDATE"]},
+    "metric": {"enum": ["short_term_borrowings", "current_portion_long_term_borrowings", "long_term_borrowings", "current_portion_bonds", "bonds_noncurrent"]},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"type": "string", "minLength": 1},
+    "entity": {
+      "type": "object",
+      "required": ["id", "source_system", "financial_scope"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "source_system": {"type": "string", "minLength": 1},
+        "financial_scope": {"type": "string", "minLength": 1}
+      }
+    },
+    "period": {
+      "type": "object",
+      "required": ["kind", "date_precision"],
+      "properties": {"kind": {"const": "INSTANT"}, "date_precision": {"enum": ["EXACT", "REPORT_STAGE_ONLY"]}}
+    },
+    "lineage": {
+      "type": "object",
+      "required": ["normalization_rule", "source_candidate_sha256", "source_class", "source_detail"],
+      "properties": {
+        "source_candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "source_class": {"enum": ["FACT", "FACT_CANDIDATE"]},
+        "source_detail": {"type": "object"}
+      }
+    },
+    "observation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": true
+}

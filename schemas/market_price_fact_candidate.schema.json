@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/market_price_fact_candidate.schema.json",
+  "title": "Market Price Fact Candidate v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","methodology_version","metric","price","currency","price_basis","quote_type","trading_date","observed_at","as_of","entity","instrument","source","policy","freshness","semantic_boundary","review_readiness","candidate_sha256"],
+  "properties": {
+    "schema_version": {"const": "market-price-fact-candidate-v0.1"},
+    "status": {"const": "MARKET_PRICE_FACT_CANDIDATE"},
+    "canonical": {"const": false},
+    "class": {"const": "FACT_CANDIDATE"},
+    "methodology_version": {"const": "market-price-as-traded-v0.1"},
+    "metric": {"const": "market_price"},
+    "price": {"type": "number", "exclusiveMinimum": 0},
+    "currency": {"type": "string", "minLength": 3, "maxLength": 8},
+    "price_basis": {"const": "AS_TRADED_PER_SHARE"},
+    "quote_type": {"enum": ["OFFICIAL_CLOSE","LAST_TRADE"]},
+    "trading_date": {"type": "string", "format": "date"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "as_of": {"type": "string", "format": "date"},
+    "entity": {"type": "object", "required": ["id","financial_scope"]},
+    "instrument": {"type": "object", "required": ["id","symbol","venue","security_type"]},
+    "source": {"type": "object", "required": ["publisher","source_type","tier","locator","snapshot_sha256"]},
+    "policy": {"type": "object", "required": ["version","max_age_days"]},
+    "freshness": {"type": "object", "required": ["status","age_days","max_age_days"]},
+    "semantic_boundary": {"type": "object"},
+    "review_readiness": {"type": "object"},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

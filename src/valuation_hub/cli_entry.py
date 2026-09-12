@@ -18,7 +18,21 @@ from valuation_hub.derived_financial import derive_historical_net_income_margin,
 from valuation_hub.draft_binding import build_binding_proposal
 from valuation_hub.financial_normalization import DURATION_ANNUAL, DURATION_QUARTER, DURATION_YTD, normalize_dart_candidate, normalize_sec_candidate, reconcile_same_period, ttm_annual_bridge, ttm_four_quarters, validate_financial_observation, validate_ttm_result
 from valuation_hub.share_dilution import METRICS as DILUTION_METRICS, derive_historical_dilution, extract_sec_dilution_candidate, normalize_share_dilution_candidate, validate_historical_dilution, validate_share_dilution_observation
-from valuation_hub.web_dilution import serve as serve_web
+from valuation_hub.valuation_shares import (
+    ADJUSTMENT_CATEGORIES,
+    build_diluted_share_bridge,
+    build_dilution_adjustment,
+    build_dilution_coverage_assertion,
+    build_valuation_share_base_context,
+    extract_sec_current_common_shares_candidate,
+    normalize_current_common_shares_candidate,
+    validate_current_common_shares_observation,
+    validate_diluted_share_bridge,
+    validate_dilution_adjustment,
+    validate_dilution_coverage_assertion,
+    validate_valuation_share_base_context,
+)
+from valuation_hub.web_valuation_shares import serve as serve_web
 
 DART_COMMANDS={"dart-fetch","dart-snapshot-validate","dart-extract"}
 NORMALIZATION_COMMANDS={"normalize-sec","normalize-dart","normalize-validate","ttm-four-quarters","ttm-annual-bridge","ttm-validate","normalize-reconcile"}
@@ -27,6 +41,7 @@ BINDING_APPLY_COMMANDS={"binding-approval-build","binding-approval-validate","bi
 DERIVED_COMMANDS={"derive-operating-margin","derive-net-margin","derived-validate"}
 DEBT_COMMANDS={"debt-sec-extract","debt-dart-extract","debt-normalize","debt-component-validate","debt-aggregate","debt-validate","debt-date-assertion-build","debt-date-assertion-validate","debt-binding-context-build","debt-binding-context-validate"}
 DILUTION_COMMANDS={"dilution-sec-extract","dilution-normalize","dilution-observation-validate","dilution-derive","dilution-validate"}
+SHARE_COMMANDS={"share-sec-extract","share-normalize","share-observation-validate","share-base-context-build","share-base-context-validate","share-adjustment-build","share-adjustment-validate","share-coverage-assertion-build","share-coverage-assertion-validate","share-bridge-build","share-bridge-validate"}
 
 
 def _dump(payload:Any)->None: print(json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True))
@@ -46,8 +61,13 @@ def _load_object_list(path:Path,label:str)->list[dict[str,Any]]:
     if not isinstance(payload,list) or not payload or not all(isinstance(x,dict) for x in payload):raise CaseServiceError(f"{label} must be a non-empty JSON object array / {label} 비어있지 않은 JSON 객체 배열 필요")
     return payload
 
+def _load_object_array(path:Path,label:str)->list[dict[str,Any]]:
+    payload=_load_json(path,label)
+    if not isinstance(payload,list) or not all(isinstance(x,dict) for x in payload):raise CaseServiceError(f"{label} must be a JSON object array / {label} JSON 객체 배열 필요")
+    return payload
+
 def _command(argv:list[str])->str|None:
-    known=DART_COMMANDS|NORMALIZATION_COMMANDS|BINDING_COMMANDS|BINDING_APPLY_COMMANDS|DERIVED_COMMANDS|DEBT_COMMANDS|DILUTION_COMMANDS|{"web"}
+    known=DART_COMMANDS|NORMALIZATION_COMMANDS|BINDING_COMMANDS|BINDING_APPLY_COMMANDS|DERIVED_COMMANDS|DEBT_COMMANDS|DILUTION_COMMANDS|SHARE_COMMANDS|{"web"}
     return next((token for token in argv if token in known),None)
 
 
@@ -100,6 +120,20 @@ def _dilution_parser()->argparse.ArgumentParser:
     s.add_parser("dilution-normalize").add_argument("candidate",type=Path);s.add_parser("dilution-observation-validate").add_argument("file",type=Path)
     x=s.add_parser("dilution-derive");x.add_argument("basic",type=Path);x.add_argument("diluted",type=Path)
     s.add_parser("dilution-validate").add_argument("file",type=Path);return p
+
+def _share_parser()->argparse.ArgumentParser:
+    p=argparse.ArgumentParser(prog="vih");p.add_argument("--root",type=Path,default=None);p.add_argument("--json",action="store_true",dest="as_json");s=p.add_subparsers(dest="command",required=True)
+    x=s.add_parser("share-sec-extract");x.add_argument("snapshot",type=Path);x.add_argument("--period-end",required=True);x.add_argument("--form",default=None)
+    s.add_parser("share-normalize").add_argument("candidate",type=Path)
+    s.add_parser("share-observation-validate").add_argument("file",type=Path)
+    x=s.add_parser("share-base-context-build");x.add_argument("observation",type=Path);x.add_argument("--as-of",required=True);x.add_argument("--max-age-days",type=int,default=180)
+    s.add_parser("share-base-context-validate").add_argument("file",type=Path)
+    x=s.add_parser("share-adjustment-build");x.add_argument("--adjustment-id",required=True);x.add_argument("--category",required=True,choices=ADJUSTMENT_CATEGORIES);x.add_argument("--shares",required=True,type=float);x.add_argument("--source-sha256",required=True);x.add_argument("--source-description",required=True)
+    s.add_parser("share-adjustment-validate").add_argument("file",type=Path)
+    x=s.add_parser("share-coverage-assertion-build");x.add_argument("base_context",type=Path);x.add_argument("adjustments",type=Path);x.add_argument("--reviewer",required=True);x.add_argument("--approved-at",required=True);x.add_argument("--coverage-basis",required=True);x.add_argument("--reviewed-category",action="append",default=[])
+    x=s.add_parser("share-coverage-assertion-validate");x.add_argument("assertion",type=Path);x.add_argument("base_context",type=Path);x.add_argument("adjustments",type=Path)
+    x=s.add_parser("share-bridge-build");x.add_argument("base_context",type=Path);x.add_argument("adjustments",type=Path);x.add_argument("--coverage-assertion",type=Path,default=None);x.add_argument("--historical-reference",type=Path,default=None)
+    s.add_parser("share-bridge-validate").add_argument("file",type=Path);return p
 
 def _web_parser()->argparse.ArgumentParser:
     p=argparse.ArgumentParser(prog="vih");p.add_argument("--root",type=Path,default=None);p.add_argument("--json",action="store_true",dest="as_json");s=p.add_subparsers(dest="command",required=True);w=s.add_parser("web");w.add_argument("--host",default="127.0.0.1");w.add_argument("--port",type=int,default=8765);return p
@@ -186,6 +220,26 @@ def _run_dilution(argv:list[str])->int:
         raise CaseServiceError("unsupported dilution command / 미지원 희석주식 명령")
     except (CaseServiceError,ValueError,OSError) as exc:return _error(a,exc)
 
+def _run_shares(argv:list[str])->int:
+    a=_share_parser().parse_args(argv)
+    try:
+        if a.command=="share-sec-extract":_dump(extract_sec_current_common_shares_candidate(_load_object(a.snapshot,"SEC source snapshot"),period_end=a.period_end,form=a.form));return 0
+        if a.command=="share-normalize":_dump(normalize_current_common_shares_candidate(_load_object(a.candidate,"current-share candidate")));return 0
+        if a.command=="share-observation-validate":_dump(validate_current_common_shares_observation(_load_object(a.file,"current-share observation")));return 0
+        if a.command=="share-base-context-build":_dump(build_valuation_share_base_context(_load_object(a.observation,"current-share observation"),as_of=a.as_of,max_age_days=a.max_age_days));return 0
+        if a.command=="share-base-context-validate":_dump(validate_valuation_share_base_context(_load_object(a.file,"valuation share-base context")));return 0
+        if a.command=="share-adjustment-build":_dump(build_dilution_adjustment(adjustment_id=a.adjustment_id,category=a.category,shares=a.shares,source_sha256=a.source_sha256,source_description=a.source_description));return 0
+        if a.command=="share-adjustment-validate":_dump(validate_dilution_adjustment(_load_object(a.file,"dilution adjustment")));return 0
+        if a.command=="share-coverage-assertion-build":_dump(build_dilution_coverage_assertion(_load_object(a.base_context,"valuation share-base context"),_load_object_array(a.adjustments,"dilution adjustments"),reviewer=a.reviewer,approved_at=a.approved_at,coverage_basis=a.coverage_basis,reviewed_categories=a.reviewed_category));return 0
+        if a.command=="share-coverage-assertion-validate":_dump(validate_dilution_coverage_assertion(_load_object(a.assertion,"dilution coverage assertion"),_load_object(a.base_context,"valuation share-base context"),_load_object_array(a.adjustments,"dilution adjustments")));return 0
+        if a.command=="share-bridge-build":
+            assertion=_load_object(a.coverage_assertion,"dilution coverage assertion") if a.coverage_assertion else None
+            historical=_load_object(a.historical_reference,"historical dilution reference") if a.historical_reference else None
+            _dump(build_diluted_share_bridge(_load_object(a.base_context,"valuation share-base context"),_load_object_array(a.adjustments,"dilution adjustments"),coverage_assertion=assertion,historical_reference=historical));return 0
+        if a.command=="share-bridge-validate":_dump(validate_diluted_share_bridge(_load_object(a.file,"diluted-share bridge")));return 0
+        raise CaseServiceError("unsupported valuation-share command / 미지원 가치평가 주식수 명령")
+    except (CaseServiceError,ValueError,OSError) as exc:return _error(a,exc)
+
 def _run_web(argv:list[str])->int:
     a=_web_parser().parse_args(argv)
     try:
@@ -203,6 +257,7 @@ def main(argv:list[str]|None=None)->int:
     if command in DERIVED_COMMANDS:return _run_derived(values)
     if command in DEBT_COMMANDS:return _run_debt(values)
     if command in DILUTION_COMMANDS:return _run_dilution(values)
+    if command in SHARE_COMMANDS:return _run_shares(values)
     if command=="web":return _run_web(values)
     return legacy_cli.main(values)
 

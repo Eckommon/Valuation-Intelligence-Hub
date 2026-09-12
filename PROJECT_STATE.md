@@ -21,8 +21,9 @@
 | M18 Governed derived financial evidence + historical margins | `fb33cfbf401ab9c2e36ccd831bd059c8951214ba` | #40 |
 | M19 Governed interest-bearing debt components + aggregation | `5b2ab53b0c83632abae187f12e1a682ecc254b77` | #42 |
 | M20 Reviewed debt → `equity.debt` binding | `236547512919b5d68e283b3431183f56f5fc845c` | #44 |
+| M21 Governed historical dilution reference | `03af933835b8fbcf9ef4e6b3fd1b3db7603782fc` | #46 |
 
-M20 final PR CI `34688790288` and post-merge `main` CI `34688853460` completed `success` on Python 3.11/3.12.
+M21 final PR CI `34690797078` and post-merge `main` CI `34690857449` completed `success` on Python 3.11/3.12.
 
 Earlier M1–M11 milestones remain completed and regression-locked in repository history.
 
@@ -37,7 +38,7 @@ EVIDENCE CANDIDATE / NOT CANONICAL
   ↓
 NORMALIZED / DERIVED EVIDENCE / NOT CANONICAL
   ↓
-GOVERNED BINDING CONTEXT / NOT CANONICAL
+GOVERNED CONTEXT / NOT CANONICAL
   ↓
 BINDING PROPOSAL / NOT CANONICAL
   ↓
@@ -50,169 +51,232 @@ DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
 CANONICAL
 ```
 
-Source acquisition, normalization, derivation, date assertion, binding preparation, and Draft application never upgrade evidence authority by themselves.
+Source acquisition, normalization, derivation, coverage assertion, binding preparation, and Draft application never upgrade evidence authority by themselves.
 
 ## Active mission / 활성 미션
 
-- Issue: `#46 [M21] Governed dilution reference evidence + valuation-share boundary`
-- PR: `#47 M21 Governed dilution reference evidence + valuation-share boundary`
-- Branch: `mission/m21-dilution-reference-v01`
-- Base main: `236547512919b5d68e283b3431183f56f5fc845c`
+- Issue: `#48 [M22] Valuation-date common-share base + diluted-share bridge foundation`
+- PR: `#49 M22 Valuation-date common-share base + diluted-share bridge foundation`
+- Branch: `mission/m22-valuation-share-bridge-v01`
+- Base main: `03af933835b8fbcf9ef4e6b3fd1b3db7603782fc`
 - Status: `ACTIVE_FINALIZATION`
 
-### M21 CI history / M21 CI 이력
+### M22 CI history / M22 CI 이력
 
-- Core checkpoint head `6514684f9bf72ce146ed9d360d8ac2b73f1db2d6`
-- Core checkpoint CI `34688999080`: Python 3.11/3.12 `success`
-- Interface checkpoint head `9ae168d04f2a564125f95c6e698f896b8989f56d`
-- Interface checkpoint CI `34689111081`: Python 3.11/3.12 `success`
+- Core tested head `2e4ec06e79bbd8279d1b7d4cd0a9adc12910f008`
+- Core CI `34691138178`: Python 3.11/3.12 `success`
 
-A fresh final-head CI is still required after schemas/docs/state changes. Only that fresh final-head run may authorize merge.
+A fresh final-head CI is required after CLI/Web, schemas, docs, README, and PROJECT_STATE changes. Only that exact final-head run may authorize merge.
 
-## M21 core semantic boundary / M21 핵심 의미경계
+## M22 semantic boundary / M22 의미경계
 
 ```text
-shares_outstanding != weighted_average_basic_shares
-weighted_average_diluted_shares != valuation_date_fully_diluted_shares
-historical_dilution_factor != valuation denominator
+current_common_shares != fully_diluted_shares
+weighted_average_diluted_shares != current_common_shares
+historical_dilution_factor != automatic current dilution adjustment
+missing dilution category != zero
 ```
 
-M21 does **not** resolve `equity.diluted_shares`. It creates historical dilution reference evidence only.
+M22 builds the evidence bridge toward `equity.diluted_shares`; M22 itself does not mutate a Draft or directly bind that field.
 
-## Source mapping / 원천 매핑
+## SEC current-share base / SEC 현재주식수 기준
 
-M21 v0.1 uses an isolated SEC mapping and does not mutate the M13 source registry.
-
-Exact US-GAAP concepts only:
+M22 v0.1 uses an isolated exact mapping:
 
 ```text
-WeightedAverageNumberOfSharesOutstandingBasic
-WeightedAverageNumberOfDilutedSharesOutstanding
+dei:EntityCommonStockSharesOutstanding
 ```
 
-Unit is `shares`. OpenDART is intentionally unsupported in v0.1 because denominator shares are not inferred from EPS or current shares.
+M13 and M21 registries remain unchanged.
 
-## Period safety / 기간 안전성
-
-SEC extraction requires explicit:
+The point-in-time pipeline is:
 
 ```text
-period_start
-period_end
-```
-
-Selection rule:
-
-```text
-EXACT_START_END_THEN_LATEST_FILED
-```
-
-This prevents quarterly and YTD 10-Q denominator facts with the same end date from being conflated.
-
-Normalized observations are duration evidence:
-
-```text
-DURATION_QUARTER
-DURATION_YTD
-DURATION_ANNUAL
-```
-
-and always preserve exact start/end dates.
-
-## Historical dilution derivation / 역사적 희석도 파생
-
-For exact same entity, unit, and complete period identity:
-
-```text
-historical_dilution_factor
-  = weighted_average_diluted_shares / weighted_average_basic_shares
-
-historical_incremental_diluted_shares
-  = weighted_average_diluted_shares - weighted_average_basic_shares
+SEC immutable snapshot
+  ↓
+current-common-shares-candidate-v0.1
+  ↓
+current-common-shares-observation-v0.1
+  ↓
+valuation-share-base-context-v0.1
 ```
 
 Rules:
+- exact `INSTANT` date only
+- `shares` unit only
+- equal-precedence distinct values fail closed
+- candidate authority is preserved
+- only reviewed `NORMALIZED_FACT` may enter valuation share-base context
+- context freshness is independently recomputed from source date, `as_of`, and max-age policy
+- stale evidence remains visible but cannot support complete reviewed coverage
 
-- basic shares must be > 0
-- diluted shares must be >= basic shares
-- full period identity must match exactly
-- candidate authority propagates
-- arithmetic never upgrades authority
-- validators recompute arithmetic from source values
+## Explicit dilution adjustments / 명시적 희석조정
 
-## Mandatory non-binding flags / 필수 비바인딩 플래그
+`dilution-adjustment-v0.1` separates current-share base from instrument-level dilution evidence.
 
-Every `historical-dilution-evidence-v0.1` result must carry:
+Supported structural categories:
 
 ```text
-historical_only = true
-valuation_date_direct_bind = false
-forecast_direct_bind = false
-shares_outstanding_substitution = false
+options_treasury_stock_method
+rsu_restricted_stock
+warrants
+convertibles_if_converted
+contingent_shares
+other_explicit
 ```
 
-Therefore M16/M20 `equity.diluted_shares` remains unresolved.
+Every adjustment carries:
+- unique adjustment ID
+- category
+- nonnegative share amount
+- source SHA
+- source description
+- authority class
+- adjustment SHA
+
+The builder creates candidate authority. Arithmetic never promotes it to reviewed authority.
+
+## Human coverage assertion / 인간 coverage 승인
+
+`dilution-coverage-assertion-v0.1` may declare complete coverage only when:
+- base context is fresh
+- all included adjustments are reviewed facts
+- all supported categories are explicitly reviewed
+- reviewer and timezone-aware approval time are present
+- coverage basis is explicit
+- exact base-context and adjustment hashes are locked
+
+An empty adjustment set can become complete only through this explicit all-category human review. Missing categories are not silently treated as zero.
+
+## Diluted-share bridge / 희석주식 bridge
+
+Output:
+
+```text
+diluted-share-bridge-v0.1
+```
+
+Coverage states:
+
+```text
+BASE_ONLY
+PARTIAL_DILUTION_COVERAGE
+COMPLETE_REVIEWED_DILUTION_COVERAGE
+CONFLICT_BLOCKED
+```
+
+Arithmetic for non-conflict states:
+
+```text
+candidate_fully_diluted_shares
+  = current_common_shares_base
+  + sum(explicit selected adjustments)
+```
+
+A candidate total is not authority. Future binding eligibility requires:
+
+```text
+COMPLETE_REVIEWED_DILUTION_COVERAGE
++ FRESH base
++ all selected adjustments reviewed
++ valid coverage assertion
+```
+
+Duplicate adjustment IDs with different evidence produce `CONFLICT_BLOCKED` and hide the candidate total.
+
+## M21 relationship / M21 관계
+
+Full M21 historical dilution evidence may be embedded only as reference:
+
+```text
+reference_only = true
+auto_adjustment_created = false
+```
+
+Historical dilution never estimates or creates a current adjustment automatically.
+
+## Nested validation / 중첩 검증
+
+The M22 bridge embeds and revalidates:
+- full base context
+- all input adjustments
+- selected adjustments
+- full coverage assertion when present
+- full M21 historical reference when present
+
+Validator logic recomputes reconciliation, conflicts, arithmetic, coverage, authority, and future-binding eligibility. Re-sealing only the outer bridge SHA cannot legitimize a modified nested source or approval object.
 
 ## Interfaces / 인터페이스
 
 CLI:
 
 ```text
-dilution-sec-extract
-dilution-normalize
-dilution-observation-validate
-dilution-derive
-dilution-validate
+share-sec-extract
+share-normalize
+share-observation-validate
+share-base-context-build
+share-base-context-validate
+share-adjustment-build
+share-adjustment-validate
+share-coverage-assertion-build
+share-coverage-assertion-validate
+share-bridge-build
+share-bridge-validate
 ```
 
 Web:
 
 ```text
-/dilution
+/shares
+/api/shares/*
 ```
 
-M21 interfaces are calculate/validate only. No Draft mutation, promotion, admission, or canonical-write M21 route exists.
+M22 interfaces are calculate/validate only. No Draft-file write, promotion, admission, or canonical-write M22 route exists.
 
-## M21 files / M21 파일
+## M22 files / M22 파일
 
-- `src/valuation_hub/share_dilution.py`
-- `src/valuation_hub/web_dilution.py`
+- `src/valuation_hub/valuation_shares.py`
+- `src/valuation_hub/web_valuation_shares.py`
 - `src/valuation_hub/cli_entry.py`
-- `schemas/share_dilution_observation.schema.json`
-- `schemas/historical_dilution_evidence.schema.json`
-- `tests/test_share_dilution.py`
-- `tests/test_m21_interfaces.py`
-- `docs/SHARE_DILUTION_REFERENCE.md`
-- `docs/M21_ACCEPTANCE.md`
-- `docs/M21_IMPLEMENTATION_SUMMARY.md`
+- `schemas/current_common_shares_observation.schema.json`
+- `schemas/valuation_share_base_context.schema.json`
+- `schemas/dilution_adjustment.schema.json`
+- `schemas/dilution_coverage_assertion.schema.json`
+- `schemas/diluted_share_bridge.schema.json`
+- `tests/test_m22_valuation_shares.py`
+- `tests/test_m22_interfaces.py`
+- `docs/VALUATION_SHARE_BRIDGE.md`
+- `docs/M22_ACCEPTANCE.md`
+- `docs/M22_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. SEC snapshot SHA → M21 candidate SHA → observation SHA → derived evidence SHA lineage
-4. current chat
-5. AI recollection
+3. SEC snapshot → current-share observation → base-context SHA → adjustment evidence → coverage assertion → bridge SHA lineage
+4. M21 historical evidence only as reference
+5. current chat
+6. AI recollection
 
 ## Exact resume point / 정확한 재개점
 
-Run a fresh full Python 3.11/3.12 CI on the final PR #47 head after schemas/docs/README/PROJECT_STATE are committed.
+Run fresh full Python 3.11/3.12 CI on the final PR #49 head after all interface/schema/docs/state changes.
 
-Merge only if all of the following remain green:
-
-- M13 SEC registry non-mutation
-- exact basic/diluted SEC concept mappings
-- exact start/end period selection
-- quarter/YTD/annual duration classification
-- observation SHA integrity
-- exact entity/unit/full-period derivation compatibility
-- basic > 0 and diluted >= basic arithmetic guards
-- candidate-authority propagation
-- historical-only/non-binding semantic boundary
-- `shares_outstanding` non-substitution
+Merge only if all remain green:
+- M13/M21 registry isolation
+- exact DEI current-share mapping
+- exact instant semantics and equal-precedence conflict blocking
+- reviewed-only base-context admission
+- independently recomputable freshness
+- explicit adjustment authority and source lineage
+- no historical-factor auto-adjustment
+- no missing-category-as-zero inference
+- complete coverage assertion lock
+- BASE_ONLY/PARTIAL/CONFLICT non-bindability
+- nested source/assertion revalidation
 - CLI/Web no-write boundaries
-- all M1–M21 regressions
+- all M1–M22 regressions
 
-After merge, verify Issue #46 closure and post-merge `main` CI before declaring M21 canonical.
+After merge, verify Issue #48 closure and post-merge `main` CI before declaring M22 canonical.
 
-If M21 closes cleanly, the next mission should be a separate **valuation-date fully diluted-share bridge** built from explicit current-share and instrument-level dilution evidence. Historical weighted-average EPS denominators must remain reference-only inputs to that future mission.
+If M22 closes cleanly, the next mission should integrate **only complete, reviewed, fresh M22 bridges** into M16/M17/M20 as `equity.diluted_shares`, while keeping BASE_ONLY/PARTIAL/CONFLICT/stale/candidate bridges non-bindable.

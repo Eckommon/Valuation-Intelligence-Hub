@@ -1,0 +1,21 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/dilution_adjustment.schema.json",
+  "title":"Dilution Adjustment v0.1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","status","canonical","class","adjustment_id","category","shares","source_sha256","source_description","semantic_boundary","adjustment_sha256"],
+  "properties":{
+    "schema_version":{"const":"dilution-adjustment-v0.1"},
+    "status":{"const":"DILUTION_ADJUSTMENT_EVIDENCE"},
+    "canonical":{"const":false},
+    "class":{"enum":["NORMALIZED_FACT","NORMALIZED_FACT_CANDIDATE"]},
+    "adjustment_id":{"type":"string","minLength":1,"maxLength":120},
+    "category":{"enum":["options_treasury_stock_method","rsu_restricted_stock","warrants","convertibles_if_converted","contingent_shares","other_explicit"]},
+    "shares":{"type":"number","minimum":0},
+    "source_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "source_description":{"type":"string","minLength":1,"maxLength":1000},
+    "semantic_boundary":{"type":"object","required":["explicit_only","historical_factor_generated"],"properties":{"explicit_only":{"const":true},"historical_factor_generated":{"const":false}},"additionalProperties":false},
+    "adjustment_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

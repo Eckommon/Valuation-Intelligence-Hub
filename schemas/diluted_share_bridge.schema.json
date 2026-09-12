@@ -1,0 +1,28 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/diluted_share_bridge.schema.json",
+  "title":"Diluted Share Bridge v0.1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","status","canonical","class","entity","unit","as_of","base_context","input_adjustments","selected_adjustments","conflicts","coverage","coverage_assertion","candidate_fully_diluted_shares","historical_reference","binding_eligibility","semantic_boundary","bridge_sha256"],
+  "properties":{
+    "schema_version":{"const":"diluted-share-bridge-v0.1"},
+    "status":{"const":"DILUTED_SHARE_BRIDGE_EVALUATED"},
+    "canonical":{"const":false},
+    "class":{"enum":["DERIVED_FACT","DERIVED_FACT_CANDIDATE"]},
+    "entity":{"type":"object"},
+    "unit":{"const":"shares"},
+    "as_of":{"type":"string","format":"date"},
+    "base_context":{"type":"object"},
+    "input_adjustments":{"type":"array","items":{"type":"object"}},
+    "selected_adjustments":{"type":"array","items":{"type":"object"}},
+    "conflicts":{"type":"array","items":{"type":"object"}},
+    "coverage":{"type":"object","required":["status","missing_as_zero"],"properties":{"status":{"enum":["BASE_ONLY","PARTIAL_DILUTION_COVERAGE","COMPLETE_REVIEWED_DILUTION_COVERAGE","CONFLICT_BLOCKED"]},"missing_as_zero":{"const":false}},"additionalProperties":false},
+    "coverage_assertion":{"type":["object","null"]},
+    "candidate_fully_diluted_shares":{"type":["number","null"],"exclusiveMinimum":0},
+    "historical_reference":{"type":["object","null"]},
+    "binding_eligibility":{"type":"object","required":["eligible_for_future_direct_bind","reason"],"properties":{"eligible_for_future_direct_bind":{"type":"boolean"},"reason":{"enum":["BASE_ONLY","PARTIAL_DILUTION_COVERAGE","COMPLETE_REVIEWED_DILUTION_COVERAGE","CONFLICT_BLOCKED","COMPLETE_REVIEWED_FRESH"]}},"additionalProperties":false},
+    "semantic_boundary":{"type":"object","required":["current_common_shares_equal_fully_diluted","historical_factor_auto_adjustment","missing_adjustments_as_zero"],"properties":{"current_common_shares_equal_fully_diluted":{"const":false},"historical_factor_auto_adjustment":{"const":false},"missing_adjustments_as_zero":{"const":false}},"additionalProperties":false},
+    "bridge_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

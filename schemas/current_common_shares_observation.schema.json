@@ -1,0 +1,22 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/current_common_shares_observation.schema.json",
+  "title":"Current Common Shares Observation v0.1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","status","canonical","class","metric","value","unit","entity","period","lineage","semantic_boundary","observation_sha256"],
+  "properties":{
+    "schema_version":{"const":"current-common-shares-observation-v0.1"},
+    "status":{"const":"CURRENT_COMMON_SHARES_OBSERVATION_NORMALIZED"},
+    "canonical":{"const":false},
+    "class":{"enum":["NORMALIZED_FACT","NORMALIZED_FACT_CANDIDATE"]},
+    "metric":{"const":"current_common_shares"},
+    "value":{"type":"number","exclusiveMinimum":0},
+    "unit":{"const":"shares"},
+    "entity":{"type":"object"},
+    "period":{"type":"object","required":["kind","start","end","date_precision"],"properties":{"kind":{"const":"INSTANT"},"start":{"type":"null"},"end":{"type":"string","format":"date"},"date_precision":{"const":"EXACT"}},"additionalProperties":false},
+    "lineage":{"type":"object"},
+    "semantic_boundary":{"type":"object","required":["current_common_shares_only","fully_diluted_shares"],"properties":{"current_common_shares_only":{"const":true},"fully_diluted_shares":{"const":false}},"additionalProperties":false},
+    "observation_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

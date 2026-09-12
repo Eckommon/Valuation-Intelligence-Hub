@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/terminal_growth_review_assertion.schema.json",
+  "title": "Terminal Growth Review Assertion v0.1 / 영구성장률 검토승인 v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "decision", "candidate_sha256", "source_wacc_package_sha256", "methodology_version", "as_of", "scenario_names", "scenario_assumptions", "reviewer", "approved_at", "review_basis", "assertion_sha256"],
+  "properties": {
+    "schema_version": {"const": "terminal-growth-review-assertion-v0.1"},
+    "status": {"const": "TERMINAL_GROWTH_REVIEW_APPROVED"},
+    "canonical": {"const": false},
+    "decision": {"const": "APPROVE_TERMINAL_GROWTH_ASSUMPTION"},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_wacc_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "methodology_version": {"const": "terminal-growth-macro-anchor-v0.1"},
+    "as_of": {"type": "string", "format": "date"},
+    "scenario_names": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "scenario_assumptions": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "reviewer": {"type": "string", "minLength": 1, "maxLength": 160},
+    "approved_at": {"type": "string", "format": "date-time"},
+    "review_basis": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/market_price_review_assertion.schema.json",
+  "title": "Market Price Review Assertion v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","decision","candidate_sha256","source_snapshot_sha256","methodology_version","metric","price","currency","price_basis","quote_type","trading_date","observed_at","as_of","entity","instrument","policy","freshness","reviewer","approved_at","review_basis","assertion_sha256"],
+  "properties": {
+    "schema_version": {"const": "market-price-review-assertion-v0.1"},
+    "status": {"const": "MARKET_PRICE_REVIEW_APPROVED"},
+    "canonical": {"const": false},
+    "decision": {"const": "APPROVE_MARKET_PRICE_FACT"},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "methodology_version": {"const": "market-price-as-traded-v0.1"},
+    "metric": {"const": "market_price"},
+    "price": {"type": "number", "exclusiveMinimum": 0},
+    "currency": {"type": "string"},
+    "price_basis": {"const": "AS_TRADED_PER_SHARE"},
+    "quote_type": {"enum": ["OFFICIAL_CLOSE","LAST_TRADE"]},
+    "trading_date": {"type": "string", "format": "date"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "as_of": {"type": "string", "format": "date"},
+    "entity": {"type": "object"},
+    "instrument": {"type": "object"},
+    "policy": {"type": "object"},
+    "freshness": {"type": "object"},
+    "reviewer": {"type": "string", "minLength": 1},
+    "approved_at": {"type": "string", "format": "date-time"},
+    "review_basis": {"type": "string", "minLength": 1},
+    "assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

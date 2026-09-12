@@ -18,7 +18,6 @@ REVIEW_STATUS = "MARKET_PRICE_REVIEW_APPROVED"
 PACKAGE_SCHEMA = "reviewed-market-price-fact-v0.1"
 PACKAGE_STATUS = "MARKET_PRICE_FACT_REVIEWED"
 METHODOLOGY_VERSION = "market-price-as-traded-v0.1"
-
 QUOTE_TYPES = ("OFFICIAL_CLOSE", "LAST_TRADE")
 REVIEWABLE_TIERS = frozenset({"A", "B"})
 PRICE_BASIS = "AS_TRADED_PER_SHARE"
@@ -89,34 +88,28 @@ def _freshness(trading_date: str, as_of: str, max_age_days: int) -> dict[str, An
     return {"status": FRESH if age <= max_age_days else STALE_BLOCKED, "age_days": age, "max_age_days": max_age_days}
 
 
+def _review_chronology(approved_at: Any, candidate: dict[str, Any]) -> datetime:
+    approved = _timestamp(approved_at, "approved_at")
+    quote = _timestamp(candidate.get("observed_at"), "observed_at")
+    if approved < quote:
+        raise CaseServiceError("market-price approval cannot predate quote observation / 시장가격 승인은 quote 관측시각보다 빠를 수 없음")
+    if approved.date() < _date(candidate.get("as_of"), "as_of"):
+        raise CaseServiceError("market-price approval cannot predate valuation as_of / 시장가격 승인은 가치평가일보다 빠를 수 없음")
+    return approved
+
+
 def build_market_price_candidate(
-    *,
-    price: float,
-    currency: str,
-    entity_id: str,
-    financial_scope: str,
-    instrument_id: str,
-    symbol: str,
-    venue: str,
-    quote_type: str,
-    trading_date: str,
-    observed_at: str,
-    as_of: str,
-    source_publisher: str,
-    source_type: str,
-    source_tier: str,
-    source_locator: str,
-    source_snapshot_sha256: str,
-    max_age_days: int = 7,
+    *, price: float, currency: str, entity_id: str, financial_scope: str,
+    instrument_id: str, symbol: str, venue: str, quote_type: str,
+    trading_date: str, observed_at: str, as_of: str, source_publisher: str,
+    source_type: str, source_tier: str, source_locator: str,
+    source_snapshot_sha256: str, max_age_days: int = 7,
 ) -> dict[str, Any]:
     value = _positive(price, "market price")
     ccy = _text(currency, "currency", maximum=8).upper()
     if not 3 <= len(ccy) <= 8:
         raise CaseServiceError("market-price currency invalid / 시장가격 통화 오류")
-    entity = {
-        "id": _text(entity_id, "entity_id", maximum=200),
-        "financial_scope": _text(financial_scope, "financial_scope", maximum=80),
-    }
+    entity = {"id": _text(entity_id, "entity_id", maximum=200), "financial_scope": _text(financial_scope, "financial_scope", maximum=80)}
     instrument = {
         "id": _text(instrument_id, "instrument_id", maximum=200),
         "symbol": _text(symbol, "symbol", maximum=80),
@@ -146,34 +139,15 @@ def build_market_price_candidate(
     freshness = _freshness(trading_date, as_of, max_age_days)
     reviewable = source_tier in REVIEWABLE_TIERS and freshness["status"] == FRESH
     candidate = {
-        "schema_version": CANDIDATE_SCHEMA,
-        "status": CANDIDATE_STATUS,
-        "canonical": False,
-        "class": "FACT_CANDIDATE",
-        "methodology_version": METHODOLOGY_VERSION,
-        "metric": "market_price",
-        "price": value,
-        "currency": ccy,
-        "price_basis": PRICE_BASIS,
-        "quote_type": quote_type,
-        "trading_date": trading_date,
-        "observed_at": quote_ts.isoformat(),
-        "as_of": as_of,
-        "entity": entity,
-        "instrument": instrument,
-        "source": source,
+        "schema_version": CANDIDATE_SCHEMA, "status": CANDIDATE_STATUS, "canonical": False,
+        "class": "FACT_CANDIDATE", "methodology_version": METHODOLOGY_VERSION, "metric": "market_price",
+        "price": value, "currency": ccy, "price_basis": PRICE_BASIS, "quote_type": quote_type,
+        "trading_date": trading_date, "observed_at": quote_ts.isoformat(), "as_of": as_of,
+        "entity": entity, "instrument": instrument, "source": source,
         "policy": {"version": "MARKET_PRICE_FRESHNESS_V01", "max_age_days": max_age_days},
         "freshness": freshness,
-        "semantic_boundary": {
-            "valuation_date_market_price": True,
-            "historical_price_substitution": False,
-            "split_adjustment_performed": False,
-        },
-        "review_readiness": {
-            "source_tier_reviewable": source_tier in REVIEWABLE_TIERS,
-            "fresh": freshness["status"] == FRESH,
-            "eligible_for_human_review": reviewable,
-        },
+        "semantic_boundary": {"valuation_date_market_price": True, "historical_price_substitution": False, "split_adjustment_performed": False},
+        "review_readiness": {"source_tier_reviewable": source_tier in REVIEWABLE_TIERS, "fresh": freshness["status"] == FRESH, "eligible_for_human_review": reviewable},
         "candidate_sha256": "",
     }
     candidate["candidate_sha256"] = _sha(_without(candidate, "candidate_sha256"))
@@ -183,12 +157,9 @@ def build_market_price_candidate(
 
 def validate_market_price_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
     if (
-        not isinstance(candidate, dict)
-        or candidate.get("schema_version") != CANDIDATE_SCHEMA
-        or candidate.get("status") != CANDIDATE_STATUS
-        or candidate.get("canonical") is not False
-        or candidate.get("class") != "FACT_CANDIDATE"
-        or candidate.get("methodology_version") != METHODOLOGY_VERSION
+        not isinstance(candidate, dict) or candidate.get("schema_version") != CANDIDATE_SCHEMA
+        or candidate.get("status") != CANDIDATE_STATUS or candidate.get("canonical") is not False
+        or candidate.get("class") != "FACT_CANDIDATE" or candidate.get("methodology_version") != METHODOLOGY_VERSION
         or candidate.get("metric") != "market_price"
     ):
         raise CaseServiceError("market-price candidate schema/status/authority invalid / 시장가격 candidate 스키마·상태·권위 오류")
@@ -198,17 +169,11 @@ def validate_market_price_candidate(candidate: dict[str, Any]) -> dict[str, Any]
         raise CaseServiceError("market-price candidate currency invalid / 시장가격 candidate 통화 오류")
     if candidate.get("price_basis") != PRICE_BASIS or candidate.get("quote_type") not in QUOTE_TYPES:
         raise CaseServiceError("market-price candidate price basis/quote type invalid / 시장가격 candidate 가격기준·quote 유형 오류")
-    entity = candidate.get("entity")
-    instrument = candidate.get("instrument")
-    source = candidate.get("source")
-    policy = candidate.get("policy")
+    entity, instrument, source, policy = candidate.get("entity"), candidate.get("instrument"), candidate.get("source"), candidate.get("policy")
     if not all(isinstance(item, dict) for item in (entity, instrument, source, policy)):
         raise CaseServiceError("market-price candidate identity/provenance incomplete / 시장가격 candidate 식별·출처 불완전")
-    _text(entity.get("id"), "entity.id", maximum=200)
-    _text(entity.get("financial_scope"), "entity.financial_scope", maximum=80)
-    _text(instrument.get("id"), "instrument.id", maximum=200)
-    _text(instrument.get("symbol"), "instrument.symbol", maximum=80)
-    _text(instrument.get("venue"), "instrument.venue", maximum=120)
+    _text(entity.get("id"), "entity.id", maximum=200); _text(entity.get("financial_scope"), "entity.financial_scope", maximum=80)
+    _text(instrument.get("id"), "instrument.id", maximum=200); _text(instrument.get("symbol"), "instrument.symbol", maximum=80); _text(instrument.get("venue"), "instrument.venue", maximum=120)
     if instrument.get("security_type") != SECURITY_TYPE:
         raise CaseServiceError("market-price security type invalid / 시장가격 security type 오류")
     trade = _date(candidate.get("trading_date"), "trading_date")
@@ -229,11 +194,7 @@ def validate_market_price_candidate(candidate: dict[str, Any]) -> dict[str, Any]
     expected_freshness = _freshness(candidate["trading_date"], candidate["as_of"], policy.get("max_age_days"))
     if candidate.get("freshness") != expected_freshness:
         raise CaseServiceError("market-price freshness mismatch / 시장가격 최신성 불일치")
-    expected_boundary = {
-        "valuation_date_market_price": True,
-        "historical_price_substitution": False,
-        "split_adjustment_performed": False,
-    }
+    expected_boundary = {"valuation_date_market_price": True, "historical_price_substitution": False, "split_adjustment_performed": False}
     if candidate.get("semantic_boundary") != expected_boundary:
         raise CaseServiceError("market-price semantic boundary invalid / 시장가격 의미경계 오류")
     expected_ready = {
@@ -246,49 +207,24 @@ def validate_market_price_candidate(candidate: dict[str, Any]) -> dict[str, Any]
     expected = _sha(_without(candidate, "candidate_sha256"))
     if candidate.get("candidate_sha256") != expected:
         raise CaseServiceError("market-price candidate SHA mismatch / 시장가격 candidate SHA 불일치")
-    return {
-        "status": "PASS_MARKET_PRICE_CANDIDATE_VALIDATION",
-        "candidate_sha256": expected,
-        "eligible_for_human_review": expected_ready["eligible_for_human_review"],
-        "freshness": expected_freshness["status"],
-    }
+    return {"status": "PASS_MARKET_PRICE_CANDIDATE_VALIDATION", "candidate_sha256": expected, "eligible_for_human_review": expected_ready["eligible_for_human_review"], "freshness": expected_freshness["status"]}
 
 
-def build_market_price_review_assertion(
-    candidate: dict[str, Any], *, reviewer: str, approved_at: str, review_basis: str
-) -> dict[str, Any]:
+def build_market_price_review_assertion(candidate: dict[str, Any], *, reviewer: str, approved_at: str, review_basis: str) -> dict[str, Any]:
     checked = validate_market_price_candidate(candidate)
     if checked["eligible_for_human_review"] is not True:
         raise CaseServiceError("market-price candidate not eligible for review / 시장가격 candidate 인간검토 부적격")
-    reviewer_value = _text(reviewer, "reviewer", maximum=160)
-    basis = _text(review_basis, "review_basis", maximum=4000)
-    approved = _timestamp(approved_at, "approved_at")
-    if approved.date() < _date(candidate["as_of"], "as_of"):
-        raise CaseServiceError("market-price approval cannot predate valuation as_of / 시장가격 승인은 가치평가일보다 빠를 수 없음")
+    approved = _review_chronology(approved_at, candidate)
     assertion = {
-        "schema_version": REVIEW_SCHEMA,
-        "status": REVIEW_STATUS,
-        "canonical": False,
-        "decision": "APPROVE_MARKET_PRICE_FACT",
-        "candidate_sha256": candidate["candidate_sha256"],
-        "source_snapshot_sha256": candidate["source"]["snapshot_sha256"],
-        "methodology_version": candidate["methodology_version"],
-        "metric": "market_price",
-        "price": candidate["price"],
-        "currency": candidate["currency"],
-        "price_basis": candidate["price_basis"],
-        "quote_type": candidate["quote_type"],
-        "trading_date": candidate["trading_date"],
-        "observed_at": candidate["observed_at"],
-        "as_of": candidate["as_of"],
-        "entity": copy.deepcopy(candidate["entity"]),
-        "instrument": copy.deepcopy(candidate["instrument"]),
-        "policy": copy.deepcopy(candidate["policy"]),
-        "freshness": copy.deepcopy(candidate["freshness"]),
-        "reviewer": reviewer_value,
-        "approved_at": approved.isoformat(),
-        "review_basis": basis,
-        "assertion_sha256": "",
+        "schema_version": REVIEW_SCHEMA, "status": REVIEW_STATUS, "canonical": False,
+        "decision": "APPROVE_MARKET_PRICE_FACT", "candidate_sha256": candidate["candidate_sha256"],
+        "source_snapshot_sha256": candidate["source"]["snapshot_sha256"], "methodology_version": candidate["methodology_version"],
+        "metric": "market_price", "price": candidate["price"], "currency": candidate["currency"], "price_basis": candidate["price_basis"],
+        "quote_type": candidate["quote_type"], "trading_date": candidate["trading_date"], "observed_at": candidate["observed_at"], "as_of": candidate["as_of"],
+        "entity": copy.deepcopy(candidate["entity"]), "instrument": copy.deepcopy(candidate["instrument"]),
+        "policy": copy.deepcopy(candidate["policy"]), "freshness": copy.deepcopy(candidate["freshness"]),
+        "reviewer": _text(reviewer, "reviewer", maximum=160), "approved_at": approved.isoformat(),
+        "review_basis": _text(review_basis, "review_basis", maximum=4000), "assertion_sha256": "",
     }
     assertion["assertion_sha256"] = _sha(_without(assertion, "assertion_sha256"))
     validate_market_price_review_assertion(assertion, candidate)
@@ -300,38 +236,22 @@ def validate_market_price_review_assertion(assertion: dict[str, Any], candidate:
     if checked["eligible_for_human_review"] is not True:
         raise CaseServiceError("market-price candidate not reviewable / 시장가격 candidate 검토 불가")
     if (
-        not isinstance(assertion, dict)
-        or assertion.get("schema_version") != REVIEW_SCHEMA
-        or assertion.get("status") != REVIEW_STATUS
-        or assertion.get("canonical") is not False
-        or assertion.get("decision") != "APPROVE_MARKET_PRICE_FACT"
+        not isinstance(assertion, dict) or assertion.get("schema_version") != REVIEW_SCHEMA or assertion.get("status") != REVIEW_STATUS
+        or assertion.get("canonical") is not False or assertion.get("decision") != "APPROVE_MARKET_PRICE_FACT"
     ):
         raise CaseServiceError("market-price review schema/status invalid / 시장가격 검토 스키마·상태 오류")
     expected_projection = {
-        "candidate_sha256": candidate["candidate_sha256"],
-        "source_snapshot_sha256": candidate["source"]["snapshot_sha256"],
-        "methodology_version": candidate["methodology_version"],
-        "metric": "market_price",
-        "price": candidate["price"],
-        "currency": candidate["currency"],
-        "price_basis": candidate["price_basis"],
-        "quote_type": candidate["quote_type"],
-        "trading_date": candidate["trading_date"],
-        "observed_at": candidate["observed_at"],
-        "as_of": candidate["as_of"],
-        "entity": candidate["entity"],
-        "instrument": candidate["instrument"],
-        "policy": candidate["policy"],
-        "freshness": candidate["freshness"],
+        "candidate_sha256": candidate["candidate_sha256"], "source_snapshot_sha256": candidate["source"]["snapshot_sha256"],
+        "methodology_version": candidate["methodology_version"], "metric": "market_price", "price": candidate["price"],
+        "currency": candidate["currency"], "price_basis": candidate["price_basis"], "quote_type": candidate["quote_type"],
+        "trading_date": candidate["trading_date"], "observed_at": candidate["observed_at"], "as_of": candidate["as_of"],
+        "entity": candidate["entity"], "instrument": candidate["instrument"], "policy": candidate["policy"], "freshness": candidate["freshness"],
     }
     for key, expected_value in expected_projection.items():
         if assertion.get(key) != expected_value:
             raise CaseServiceError("market-price review/candidate projection mismatch / 시장가격 검토·candidate 투영 불일치")
-    _text(assertion.get("reviewer"), "reviewer", maximum=160)
-    _text(assertion.get("review_basis"), "review_basis", maximum=4000)
-    approved = _timestamp(assertion.get("approved_at"), "approved_at")
-    if approved.date() < _date(candidate["as_of"], "as_of"):
-        raise CaseServiceError("market-price approval predates valuation as_of / 시장가격 승인시각이 가치평가일보다 빠름")
+    _text(assertion.get("reviewer"), "reviewer", maximum=160); _text(assertion.get("review_basis"), "review_basis", maximum=4000)
+    _review_chronology(assertion.get("approved_at"), candidate)
     expected = _sha(_without(assertion, "assertion_sha256"))
     if assertion.get("assertion_sha256") != expected:
         raise CaseServiceError("market-price review SHA mismatch / 시장가격 검토 SHA 불일치")
@@ -339,31 +259,16 @@ def validate_market_price_review_assertion(assertion: dict[str, Any], candidate:
 
 
 def finalize_reviewed_market_price(candidate: dict[str, Any], assertion: dict[str, Any]) -> dict[str, Any]:
-    validate_market_price_candidate(candidate)
-    validate_market_price_review_assertion(assertion, candidate)
+    validate_market_price_candidate(candidate); validate_market_price_review_assertion(assertion, candidate)
     package = {
-        "schema_version": PACKAGE_SCHEMA,
-        "status": PACKAGE_STATUS,
-        "canonical": False,
-        "class": "FACT",
-        "methodology_version": candidate["methodology_version"],
-        "metric": "market_price",
-        "price": candidate["price"],
-        "currency": candidate["currency"],
-        "price_basis": candidate["price_basis"],
-        "quote_type": candidate["quote_type"],
-        "trading_date": candidate["trading_date"],
-        "observed_at": candidate["observed_at"],
-        "as_of": candidate["as_of"],
-        "entity": copy.deepcopy(candidate["entity"]),
-        "instrument": copy.deepcopy(candidate["instrument"]),
-        "source": copy.deepcopy(candidate["source"]),
-        "policy": copy.deepcopy(candidate["policy"]),
-        "freshness": copy.deepcopy(candidate["freshness"]),
-        "semantic_boundary": copy.deepcopy(candidate["semantic_boundary"]),
-        "candidate": copy.deepcopy(candidate),
-        "review_assertion": copy.deepcopy(assertion),
-        "binding_eligibility": {"eligible": True, "reason": "REVIEWED_FRESH_MARKET_PRICE_FACT"},
+        "schema_version": PACKAGE_SCHEMA, "status": PACKAGE_STATUS, "canonical": False, "class": "FACT",
+        "methodology_version": candidate["methodology_version"], "metric": "market_price", "price": candidate["price"],
+        "currency": candidate["currency"], "price_basis": candidate["price_basis"], "quote_type": candidate["quote_type"],
+        "trading_date": candidate["trading_date"], "observed_at": candidate["observed_at"], "as_of": candidate["as_of"],
+        "entity": copy.deepcopy(candidate["entity"]), "instrument": copy.deepcopy(candidate["instrument"]),
+        "source": copy.deepcopy(candidate["source"]), "policy": copy.deepcopy(candidate["policy"]), "freshness": copy.deepcopy(candidate["freshness"]),
+        "semantic_boundary": copy.deepcopy(candidate["semantic_boundary"]), "candidate": copy.deepcopy(candidate),
+        "review_assertion": copy.deepcopy(assertion), "binding_eligibility": {"eligible": True, "reason": "REVIEWED_FRESH_MARKET_PRICE_FACT"},
         "package_sha256": "",
     }
     package["package_sha256"] = _sha(_without(package, "package_sha256"))
@@ -373,39 +278,23 @@ def finalize_reviewed_market_price(candidate: dict[str, Any], assertion: dict[st
 
 def validate_reviewed_market_price(package: dict[str, Any]) -> dict[str, Any]:
     if (
-        not isinstance(package, dict)
-        or package.get("schema_version") != PACKAGE_SCHEMA
-        or package.get("status") != PACKAGE_STATUS
-        or package.get("canonical") is not False
-        or package.get("class") != "FACT"
-        or package.get("methodology_version") != METHODOLOGY_VERSION
+        not isinstance(package, dict) or package.get("schema_version") != PACKAGE_SCHEMA or package.get("status") != PACKAGE_STATUS
+        or package.get("canonical") is not False or package.get("class") != "FACT" or package.get("methodology_version") != METHODOLOGY_VERSION
         or package.get("metric") != "market_price"
     ):
         raise CaseServiceError("reviewed market-price schema/status/authority invalid / 검토완료 시장가격 스키마·상태·권위 오류")
-    candidate = package.get("candidate")
-    assertion = package.get("review_assertion")
+    candidate, assertion = package.get("candidate"), package.get("review_assertion")
     if not isinstance(candidate, dict) or not isinstance(assertion, dict):
         raise CaseServiceError("reviewed market-price nested lineage missing / 검토완료 시장가격 중첩 lineage 누락")
-    checked = validate_market_price_candidate(candidate)
-    validate_market_price_review_assertion(assertion, candidate)
+    checked = validate_market_price_candidate(candidate); validate_market_price_review_assertion(assertion, candidate)
     if checked["eligible_for_human_review"] is not True:
         raise CaseServiceError("reviewed market-price source no longer eligible / 검토완료 시장가격 source 부적격")
     projected = {
-        "methodology_version": candidate["methodology_version"],
-        "metric": "market_price",
-        "price": candidate["price"],
-        "currency": candidate["currency"],
-        "price_basis": candidate["price_basis"],
-        "quote_type": candidate["quote_type"],
-        "trading_date": candidate["trading_date"],
-        "observed_at": candidate["observed_at"],
-        "as_of": candidate["as_of"],
-        "entity": candidate["entity"],
-        "instrument": candidate["instrument"],
-        "source": candidate["source"],
-        "policy": candidate["policy"],
-        "freshness": candidate["freshness"],
-        "semantic_boundary": candidate["semantic_boundary"],
+        "methodology_version": candidate["methodology_version"], "metric": "market_price", "price": candidate["price"],
+        "currency": candidate["currency"], "price_basis": candidate["price_basis"], "quote_type": candidate["quote_type"],
+        "trading_date": candidate["trading_date"], "observed_at": candidate["observed_at"], "as_of": candidate["as_of"],
+        "entity": candidate["entity"], "instrument": candidate["instrument"], "source": candidate["source"],
+        "policy": candidate["policy"], "freshness": candidate["freshness"], "semantic_boundary": candidate["semantic_boundary"],
     }
     for key, expected_value in projected.items():
         if package.get(key) != expected_value:

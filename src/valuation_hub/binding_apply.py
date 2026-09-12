@@ -1,9 +1,9 @@
 """Human-approved binding application to a noncanonical Draft / 인간승인 비정식 Draft 바인딩 적용.
 
-M17 applies only explicitly approved DIRECT_BIND decisions in memory. M20, M23,
-M24, and M25 extend the same approval lock to debt, diluted shares, governed WACC,
-and governed terminal growth while preserving older proposal behavior. No path
-overwrites a Draft file or creates canonical state.
+M17 applies only explicitly approved DIRECT_BIND decisions in memory. M20-M26
+extend the same lock to debt, diluted shares, governed WACC, terminal growth,
+and the integrated forecast block while preserving older proposal behavior.
+No path overwrites a Draft file or creates canonical state.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from typing import Any
 from valuation_hub.case_service import CaseServiceError
 from valuation_hub.draft_binding import DIRECT_BIND
 from valuation_hub.draft_service import validate_draft
-from valuation_hub.terminal_growth_draft_binding import validate_binding_proposal_any
+from valuation_hub.forecast_draft_binding import FORECAST_FIELDS, validate_binding_proposal_any
 
 APPROVAL_SCHEMA = "binding-approval-v0.1"
 RESULT_SCHEMA = "bound-draft-result-v0.1"
@@ -68,6 +68,10 @@ def _wacc_context(proposal: dict[str, Any]) -> dict[str, Any]:
 
 def _terminal_growth_context(proposal: dict[str, Any]) -> dict[str, Any]:
     return _scenario_context(proposal, "terminal_growth_assumption", "terminal growth")
+
+
+def _forecast_context(proposal: dict[str, Any]) -> dict[str, Any]:
+    return _scenario_context(proposal, "integrated_forecast_assumption", "integrated forecast")
 
 
 def _scenario_key_map(draft: dict[str, Any]) -> dict[str, str]:
@@ -122,6 +126,24 @@ def _validate_terminal_growth_wacc_dependency(
             raise CaseServiceError("terminal growth requires reviewed WACC already in Draft or approved together / 영구성장률은 reviewed WACC가 Draft에 이미 적용되었거나 함께 승인되어야 함")
 
 
+def _validate_forecast_atomicity(fields: list[str]) -> None:
+    selected = set(fields) & set(FORECAST_FIELDS)
+    if selected and selected != set(FORECAST_FIELDS):
+        raise CaseServiceError("integrated forecast fields must be approved all-six-or-none / 통합 Forecast 필드는 6개 전부 또는 전혀 승인하지 않아야 함")
+
+
+def _validate_forecast_targets(proposal: dict[str, Any], normalized_draft: dict[str, Any]) -> None:
+    context = _forecast_context(proposal)
+    _validate_scenario_targets(context, normalized_draft, "integrated forecast")
+    years = context.get("forecast_years")
+    if not isinstance(years, list) or not years or any(isinstance(year, bool) or not isinstance(year, int) for year in years):
+        raise CaseServiceError("integrated forecast year set missing / 통합 Forecast 연도집합 누락")
+    for name, scenario in normalized_draft["equity"]["scenarios"].items():
+        actual = [row["year"] for row in scenario["years"]]
+        if actual != years:
+            raise CaseServiceError(f"integrated forecast year set must exactly match Draft scenario {name} / 통합 Forecast 연도집합과 Draft 시나리오 {name} 불일치")
+
+
 def build_binding_approval(
     proposal: dict[str, Any],
     draft: dict[str, Any],
@@ -135,7 +157,7 @@ def build_binding_approval(
     validate_binding_proposal_any(proposal)
     normalized_draft = validate_draft(draft)
     if normalized_draft["model"] != "equity_fcff":
-        raise CaseServiceError("M17/M20/M23/M24/M25 requires equity_fcff Draft / M17/M20/M23/M24/M25는 equity_fcff Draft 전용")
+        raise CaseServiceError("M17/M20/M23/M24/M25/M26 requires equity_fcff Draft / M17/M20/M23/M24/M25/M26은 equity_fcff Draft 전용")
     if not isinstance(reviewer, str) or not reviewer.strip() or len(reviewer) > 160:
         raise CaseServiceError("reviewer required / reviewer 필요")
     identity = proposal["identity"]
@@ -150,11 +172,14 @@ def build_binding_approval(
     unknown = set(approved_fields) - set(direct)
     if unknown:
         raise CaseServiceError(f"only DIRECT_BIND fields may be approved / DIRECT_BIND 필드만 승인 가능: {sorted(unknown)}")
+    _validate_forecast_atomicity(approved_fields)
     if "scenario.wacc" in approved_fields:
         _validate_wacc_targets(proposal, normalized_draft)
     if "scenario.terminal_growth" in approved_fields:
         _validate_terminal_growth_targets(proposal, normalized_draft)
         _validate_terminal_growth_wacc_dependency(proposal, normalized_draft, approved_fields)
+    if set(approved_fields) & set(FORECAST_FIELDS):
+        _validate_forecast_targets(proposal, normalized_draft)
     timestamp = _parse_timestamp(approved_at)
     approval = {
         "schema_version": APPROVAL_SCHEMA,
@@ -192,16 +217,44 @@ def validate_binding_approval(approval: dict[str, Any], proposal: dict[str, Any]
     fields = approval.get("approved_fields")
     if not isinstance(fields, list) or len(set(fields)) != len(fields) or not set(fields).issubset(direct):
         raise CaseServiceError("approval contains non-DIRECT_BIND field / 승인에 비-DIRECT_BIND 필드 포함")
+    _validate_forecast_atomicity(fields)
     if "scenario.wacc" in fields:
         _validate_wacc_targets(proposal, normalized_draft)
     if "scenario.terminal_growth" in fields:
         _validate_terminal_growth_targets(proposal, normalized_draft)
         _validate_terminal_growth_wacc_dependency(proposal, normalized_draft, fields)
+    if set(fields) & set(FORECAST_FIELDS):
+        _validate_forecast_targets(proposal, normalized_draft)
     _parse_timestamp(approval.get("approved_at"))
     expected = _sha(_without(approval, "approval_sha256"))
     if approval.get("approval_sha256") != expected:
         raise CaseServiceError("binding approval SHA-256 mismatch / 바인딩 승인 SHA-256 불일치")
     return {"status": "PASS_BINDING_APPROVAL_VALIDATION", "canonical": False, "approval_sha256": expected, "approved_field_count": len(fields)}
+
+
+def _forecast_component(field: str) -> str:
+    prefix = "scenario.years."
+    if field not in FORECAST_FIELDS or not field.startswith(prefix):
+        raise CaseServiceError("unsupported forecast binding field / 미지원 Forecast 바인딩 필드")
+    return field[len(prefix):]
+
+
+def _forecast_value_map(context: dict[str, Any], component: str) -> dict[str, list[dict[str, Any]]]:
+    scenarios = context.get("value")
+    names = context.get("scenario_names")
+    years = context.get("forecast_years")
+    if not isinstance(scenarios, list) or not isinstance(names, list) or not isinstance(years, list):
+        raise CaseServiceError("integrated forecast context malformed / 통합 Forecast context 오류")
+    by_name = {scenario.get("scenario_name"): scenario for scenario in scenarios if isinstance(scenario, dict)}
+    if set(by_name) != set(names):
+        raise CaseServiceError("integrated forecast scenario projection mismatch / 통합 Forecast 시나리오 투영 불일치")
+    result: dict[str, list[dict[str, Any]]] = {}
+    for name in sorted(names):
+        rows = by_name[name].get("years")
+        if not isinstance(rows, list) or [row.get("year") for row in rows if isinstance(row, dict)] != years:
+            raise CaseServiceError("integrated forecast projected year set mismatch / 통합 Forecast 투영 연도집합 불일치")
+        result[name] = [{"year": row["year"], "value": row[component]} for row in rows]
+    return result
 
 
 def _get_field(draft: dict[str, Any], field: str, context: dict[str, Any] | None = None) -> Any:
@@ -220,6 +273,22 @@ def _get_field(draft: dict[str, Any], field: str, context: dict[str, Any] | None
             raise CaseServiceError("scenario target set mismatch Draft / 대상 시나리오와 Draft 불일치")
         draft_key = "wacc" if field == "scenario.wacc" else "terminal_growth"
         return {name: draft["equity"]["scenarios"][keys[name]][draft_key] for name in sorted(names)}
+    if field in FORECAST_FIELDS:
+        if not isinstance(context, dict):
+            raise CaseServiceError("forecast context required for Draft read / Draft Forecast 읽기에 context 필요")
+        component = _forecast_component(field)
+        keys = _scenario_key_map(draft)
+        names = context.get("scenario_names")
+        years = context.get("forecast_years")
+        if not isinstance(names, list) or not isinstance(years, list) or set(names) != set(keys):
+            raise CaseServiceError("forecast target set mismatch Draft / Forecast 대상집합과 Draft 불일치")
+        result: dict[str, list[dict[str, Any]]] = {}
+        for name in sorted(names):
+            rows = draft["equity"]["scenarios"][keys[name]]["years"]
+            if [row["year"] for row in rows] != years:
+                raise CaseServiceError("forecast year set mismatch Draft / Forecast 연도집합과 Draft 불일치")
+            result[name] = [{"year": row["year"], "value": row[component]} for row in rows]
+        return result
     raise CaseServiceError(f"unsupported binding apply field / 미지원 바인딩 적용필드: {field}")
 
 
@@ -235,6 +304,8 @@ def _target_value(field: str, context: dict[str, Any]) -> Any:
         if not isinstance(names, list) or not names or not isinstance(values, dict) or set(values) != set(names):
             raise CaseServiceError("terminal-growth target mapping invalid / 영구성장률 대상 mapping 오류")
         return {name: values[name] for name in sorted(names)}
+    if field in FORECAST_FIELDS:
+        return _forecast_value_map(context, _forecast_component(field))
     return context.get("value")
 
 
@@ -257,6 +328,26 @@ def _set_field(draft: dict[str, Any], field: str, value: Any, context: dict[str,
         draft_key = "wacc" if field == "scenario.wacc" else "terminal_growth"
         for name, new_value in value.items():
             draft["equity"]["scenarios"][keys[name]][draft_key] = new_value
+        return
+    if field in FORECAST_FIELDS:
+        if not isinstance(context, dict) or not isinstance(value, dict):
+            raise CaseServiceError("forecast context/value mapping required / Forecast context·값 mapping 필요")
+        component = _forecast_component(field)
+        keys = _scenario_key_map(draft)
+        names = context.get("scenario_names", [])
+        years = context.get("forecast_years", [])
+        if set(value) != set(keys) or set(names) != set(keys):
+            raise CaseServiceError("forecast write target set mismatch / Forecast 쓰기 대상집합 불일치")
+        for name in names:
+            rows = draft["equity"]["scenarios"][keys[name]]["years"]
+            if [row["year"] for row in rows] != years:
+                raise CaseServiceError("forecast write year set mismatch / Forecast 쓰기 연도집합 불일치")
+            targets = value[name]
+            if not isinstance(targets, list) or [item.get("year") for item in targets if isinstance(item, dict)] != years:
+                raise CaseServiceError("forecast target value year set mismatch / Forecast 대상값 연도집합 불일치")
+            by_year = {item["year"]: item["value"] for item in targets}
+            for row in rows:
+                row[component] = by_year[row["year"]]
         return
     raise CaseServiceError(f"unsupported binding apply field / 미지원 바인딩 적용필드: {field}")
 
@@ -284,6 +375,18 @@ def _binding_context(proposal: dict[str, Any], decision: dict[str, Any]) -> dict
                 raise CaseServiceError("binding share base context lineage mismatch / 바인딩 share base context lineage 불일치")
             if context.get("coverage_assertion_sha256") != decision.get("coverage_assertion_sha256"):
                 raise CaseServiceError("binding share coverage assertion lineage mismatch / 바인딩 share coverage 승인 lineage 불일치")
+        elif "source_forecast_package_sha256" in decision:
+            if context.get("source_forecast_package_sha256") != decision.get("source_forecast_package_sha256"):
+                raise CaseServiceError("binding forecast package hash mismatch / 바인딩 Forecast 패키지 hash 불일치")
+            if context.get("forecast_block_sha256") != decision.get("forecast_block_sha256"):
+                raise CaseServiceError("binding forecast block hash mismatch / 바인딩 Forecast block hash 불일치")
+            if context.get("review_assertion_sha256") != decision.get("review_assertion_sha256"):
+                raise CaseServiceError("binding forecast review lineage mismatch / 바인딩 Forecast 검토 lineage 불일치")
+            if context.get("scenario_names") != decision.get("scenario_names") or context.get("forecast_years") != decision.get("forecast_years"):
+                raise CaseServiceError("binding forecast scenario/year lineage mismatch / 바인딩 Forecast 시나리오·연도 lineage 불일치")
+            component = decision.get("forecast_component")
+            if decision.get("field") != f"scenario.years.{component}" or component not in {field.removeprefix('scenario.years.') for field in FORECAST_FIELDS}:
+                raise CaseServiceError("binding forecast component lineage mismatch / 바인딩 Forecast component lineage 불일치")
         elif "source_terminal_growth_package_sha256" in decision:
             if context.get("source_terminal_growth_package_sha256") != decision.get("source_terminal_growth_package_sha256"):
                 raise CaseServiceError("binding terminal-growth package hash mismatch / 바인딩 영구성장률 패키지 hash 불일치")
@@ -320,6 +423,14 @@ def _diff_for(field: str, old: Any, new: Any, decision: dict[str, Any], context:
         diff["source_bridge_sha256"] = context["source_bridge_sha256"]
         diff["base_context_sha256"] = context["base_context_sha256"]
         diff["coverage_assertion_sha256"] = context["coverage_assertion_sha256"]
+    elif "source_forecast_package_sha256" in decision:
+        diff["source_context_sha256"] = context["context_sha256"]
+        diff["source_forecast_package_sha256"] = context["source_forecast_package_sha256"]
+        diff["forecast_block_sha256"] = context["forecast_block_sha256"]
+        diff["review_assertion_sha256"] = context["review_assertion_sha256"]
+        diff["scenario_names"] = copy.deepcopy(context["scenario_names"])
+        diff["forecast_years"] = copy.deepcopy(context["forecast_years"])
+        diff["forecast_component"] = decision["forecast_component"]
     elif "source_terminal_growth_package_sha256" in decision:
         diff["source_context_sha256"] = context["context_sha256"]
         diff["source_terminal_growth_package_sha256"] = context["source_terminal_growth_package_sha256"]

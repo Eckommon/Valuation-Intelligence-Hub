@@ -140,6 +140,7 @@ def aggregate_interest_bearing_debt(observations: list[dict[str, Any]]) -> dict[
                 "metric": metric,
                 "values": sorted(distinct_values),
                 "observation_sha256": sorted(item["observation_sha256"] for item in group),
+                "source_classes": sorted(item["class"] for item in group),
             })
             continue
         # Equal values reconcile deterministically. A reviewed observation outranks
@@ -243,7 +244,7 @@ def validate_interest_bearing_debt_evidence(value: dict[str, Any]) -> dict[str, 
         raise CaseServiceError("interest-bearing debt component lineage invalid / 이자부채 구성요소 lineage 오류")
     component_metrics: list[str] = []
     component_sum: int | float = 0
-    source_candidate_seen = False
+    source_classes: list[str] = []
     for component in components:
         if not isinstance(component, dict) or component.get("metric") not in CORE_COMPONENT_SET or component.get("metric") in component_metrics:
             raise CaseServiceError("interest-bearing debt selected component invalid / 이자부채 선택 구성요소 오류")
@@ -251,7 +252,7 @@ def validate_interest_bearing_debt_evidence(value: dict[str, Any]) -> dict[str, 
         component_sum += _number(component.get("value"), "component value")
         if component.get("class") not in {"NORMALIZED_FACT", "NORMALIZED_FACT_CANDIDATE"}:
             raise CaseServiceError("interest-bearing debt source class invalid / 이자부채 source class 오류")
-        source_candidate_seen = source_candidate_seen or component.get("class") == "NORMALIZED_FACT_CANDIDATE"
+        source_classes.append(component["class"])
         sha = component.get("observation_sha256")
         if not isinstance(sha, str) or not SHA256_RE.fullmatch(sha):
             raise CaseServiceError("interest-bearing debt source SHA invalid / 이자부채 source SHA 오류")
@@ -262,14 +263,16 @@ def validate_interest_bearing_debt_evidence(value: dict[str, Any]) -> dict[str, 
             raise CaseServiceError("interest-bearing debt conflict lineage invalid / 이자부채 충돌 lineage 오류")
         hashes = conflict.get("observation_sha256")
         values = conflict.get("values")
+        classes = conflict.get("source_classes")
         if not isinstance(hashes, list) or len(hashes) < 2 or any(not isinstance(sha, str) or not SHA256_RE.fullmatch(sha) for sha in hashes):
             raise CaseServiceError("interest-bearing debt conflict hashes invalid / 이자부채 충돌 hash 오류")
         if not isinstance(values, list) or len(values) < 2:
             raise CaseServiceError("interest-bearing debt conflict values invalid / 이자부채 충돌값 오류")
-    expected_class = "DERIVED_FACT_CANDIDATE" if source_candidate_seen else "DERIVED_FACT"
-    # A conflict can contain candidate observations not represented in selected components;
-    # preserve candidate authority if the producer marked it candidate.
-    if value.get("class") not in {expected_class, "DERIVED_FACT_CANDIDATE" if conflicts else expected_class}:
+        if not isinstance(classes, list) or len(classes) != len(hashes) or any(item not in {"NORMALIZED_FACT", "NORMALIZED_FACT_CANDIDATE"} for item in classes):
+            raise CaseServiceError("interest-bearing debt conflict source classes invalid / 이자부채 충돌 source class 오류")
+        source_classes.extend(classes)
+    expected_class = "DERIVED_FACT" if source_classes and all(item == "NORMALIZED_FACT" for item in source_classes) else "DERIVED_FACT_CANDIDATE"
+    if value.get("class") != expected_class:
         raise CaseServiceError("interest-bearing debt authority propagation mismatch / 이자부채 권위전파 불일치")
     status = coverage["status"]
     known_sum = value.get("known_component_sum")

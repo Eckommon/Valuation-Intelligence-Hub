@@ -23,25 +23,22 @@
 | M20 Reviewed debt → `equity.debt` binding | `236547512919b5d68e283b3431183f56f5fc845c` | #44 |
 | M21 Governed historical dilution reference | `03af933835b8fbcf9ef4e6b3fd1b3db7603782fc` | #46 |
 | M22 Valuation-date common-share base + diluted-share bridge | `0a476cc9927b2d63164143447428f3e69b06051b` | #48 |
+| M23 Complete reviewed share bridge → `equity.diluted_shares` | `58d963238992f562c89c8325b42046ae35ac71bf` | #50 |
 
-M21 final PR CI `34690797078` and post-merge main CI `34690857449` passed on Python 3.11/3.12.
+M23 final PR CI `34692745133` and post-merge `main` CI `34692789399` passed on Python 3.11/3.12. Issue #50 is completed.
 
-M22 final PR CI `34691494304` and post-merge main CI `34691545005` passed on Python 3.11/3.12. Issue #48 is completed.
-
-Earlier M1–M11 milestones remain completed and regression-locked in repository history.
+Earlier milestones remain completed and regression-locked in repository history.
 
 ## Authority model / 권위모델
 
 ```text
 SOURCE
   ↓
-IMMUTABLE SNAPSHOT / NOT CANONICAL
+IMMUTABLE / SOURCE-LOCKED INPUT / NOT CANONICAL
   ↓
-EVIDENCE CANDIDATE / NOT CANONICAL
+FACT / NORMALIZED FACT / ASSUMPTION_CANDIDATE
   ↓
-NORMALIZED / DERIVED EVIDENCE / NOT CANONICAL
-  ↓
-GOVERNED CONTEXT / NOT CANONICAL
+GOVERNED CONTEXT or HUMAN-REVIEWED ASSUMPTION / NOT CANONICAL
   ↓
 BINDING PROPOSAL / NOT CANONICAL
   ↓
@@ -54,176 +51,253 @@ DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
 CANONICAL
 ```
 
-Source acquisition, normalization, derivation, coverage assertion, binding preparation, and Draft application never upgrade evidence authority by themselves.
+Calculation never silently upgrades `ASSUMPTION_CANDIDATE` to `ASSUMPTION`, nor `ASSUMPTION` to `FACT`.
 
 ## Active mission / 활성 미션
 
-- Issue: `#50 [M23] Complete reviewed share bridge → equity.diluted_shares binding`
-- PR: `#51 M23 Complete reviewed share bridge → equity.diluted_shares binding`
-- Branch: `mission/m23-diluted-shares-binding-v01`
-- Base main: `0a476cc9927b2d63164143447428f3e69b06051b`
+- Issue: `#52 [M24] Governed WACC assumption package + scenario.wacc binding`
+- PR: `#53 M24 Governed WACC assumption + scenario.wacc binding`
+- Branch: `mission/m24-wacc-assumption-binding-v01`
+- Base main: `58d963238992f562c89c8325b42046ae35ac71bf`
 - Status: `ACTIVE_FINALIZATION`
 
-## M23 CI history / M23 CI 이력
+## M24 CI history / M24 CI 이력
 
-- Core tested head: `1dc2fee8cb400ef642f7dd64460bb60956a88a29`
-- Core CI `34692432321`: Python 3.11/3.12 `success`
-- Interface/schema tested head: `005a1dd58dae6a2a3162c6a2b06629860540fffd`
-- Interface/schema CI `34692614288`: Python 3.11/3.12 `success`
+- Initial core head: `50722f589c5dc62cfe140540514c64fd85ca38ff`
+  - CI `34693139601`: Python 3.11/3.12 `success`
+- Hardened core head: `c34fc9232aca459920727ce3502334c14fd940f2`
+  - CI `34693273291`: Python 3.11/3.12 `success`
+- Interface/schema head: `df5882ab31204aea98cc31e05eae3942ba2a619f`
+  - CI `34693425090`: Python 3.11/3.12 `success`
 
-A fresh final-head CI is required after M23 docs/README/PROJECT_STATE changes. Only the exact current PR head after this handoff commit may authorize merge.
+A fresh final-head CI is required after M24 docs/README/PROJECT_STATE changes. Only that exact tested head may authorize merge.
 
-## M23 architecture / M23 구조
+## M24 authority boundary / M24 권위경계
 
 ```text
-validated M16 v0.1 proposal
-or validated M20 v0.2 proposal
+source facts != WACC fact
+calculated WACC != reviewed valuation assumption
+ASSUMPTION_CANDIDATE != ASSUMPTION
+reviewed ASSUMPTION != canonical state
+```
+
+WACC remains a valuation assumption because source selection, beta/ERP/debt-cost choice, capital structure basis, tax treatment, valuation date, and scenario targeting involve explicit methodology choices.
+
+## Required WACC components / 필수 WACC 구성요소
+
+Canonical v0.1 order:
+
+```text
+risk_free_rate
+equity_risk_premium
+levered_beta
+pre_tax_cost_of_debt
+equity_market_value
+debt_market_value
+tax_rate
+```
+
+Every component preserves value/unit, observed date, claim class, publisher, source type/tier, locator, source SHA, and input SHA.
+
+No required component is silently supplied or zero-imputed. Debt market value may explicitly equal zero; equity market value must be positive.
+
+## WACC calculation / WACC 계산
+
+Methodology:
+
+```text
+wacc-capm-market-weights-v0.1
+```
+
+```text
+cost_of_equity = rf + beta × ERP
+after_tax_cost_of_debt = Rd × (1 - T)
+weight_equity = E / (D + E)
+weight_debt = D / (D + E)
+WACC = weight_equity × cost_of_equity
+     + weight_debt × after_tax_cost_of_debt
+```
+
+Validators independently reconstruct every calculated field, require finite values, verify capital weights, and require final `0 < WACC <= 0.99`. Missing/nonfinite calculation fields fail even if the outer candidate SHA is recomputed.
+
+## Freshness / 최신성
+
+Fixed v0.1 max ages:
+
+```text
+risk_free_rate        30
+ERP                   90
+levered_beta         180
+pre_tax_cost_of_debt 180
+equity_market_value   30
+debt_market_value    550
+tax_rate             550
+```
+
+Future-dated source inputs fail closed. Stale required inputs and Tier-D required inputs make `eligible_for_human_review=false`.
+
+## Human WACC review / 인간 WACC 검토
+
+A `wacc-review-assertion-v0.1` separately locks:
+
+- exact candidate SHA
+- methodology version
+- valuation `as_of`
+- target `scenario_names`
+- reviewer
+- timezone-aware `approved_at`
+- review basis
+- assertion SHA
+
+Approval cannot predate valuation `as_of`.
+
+Finalization yields:
+
+```text
+reviewed-wacc-assumption-v0.1
+class = ASSUMPTION
+binding_eligibility = REVIEWED_WACC_ASSUMPTION
+```
+
+The complete candidate and assertion remain embedded and independently revalidated.
+
+## v0.4 binding / v0.4 바인딩
+
+```text
+validated v0.1/v0.2/v0.3 proposal
         +
-complete reviewed fresh M22 diluted-share bridge
+reviewed WACC ASSUMPTION
         ↓
-draft-binding-proposal-v0.3
-        ↓
-M17 binding-approval-v0.1
-        ↓
-noncanonical bound Draft result
+draft-binding-proposal-v0.4
 ```
 
-M23 never rebuilds the base proposal. It may replace only:
+M24 may replace only:
 
 ```text
-equity.diluted_shares
+scenario.wacc
 ```
 
-Every other M16/M20 matrix decision must remain exactly equivalent to the embedded base proposal.
+Every other matrix entry must remain byte/semantic-equivalent to the embedded base proposal.
 
-## M23 direct-bind gate / M23 직접바인딩 게이트
+Exact compatibility gates:
 
-The M22 bridge must validate as:
+- entity ID
+- financial scope
+- capital currency
+- `as_of`
+- reviewed package validity
+
+The v0.4 policy itself is reconstructed exactly; an attacker cannot weaken `direct_bind_requires`, recompute the outer proposal SHA, and pass validation.
+
+## Scenario target gate / 시나리오 대상 게이트
+
+A WACC package contains explicit `scenario_names`.
+
+When `scenario.wacc` is approved through M17, that set must equal the complete scenario set in the target Draft. Partial scenario binding is prohibited in v0.1.
+
+Applied diff form:
 
 ```text
-schema = diluted-share-bridge-v0.1
-class = DERIVED_FACT
-coverage = COMPLETE_REVIEWED_DILUTION_COVERAGE
-binding_eligibility.eligible_for_future_direct_bind = true
-candidate_fully_diluted_shares > 0
+before = {scenario_name: old_wacc, ...}
+after  = {scenario_name: reviewed_wacc, ...}
 ```
 
-Additional exact compatibility requirements:
-
-- entity ID match
-- financial-scope match
-- bridge `as_of` == base proposal `as_of`
-- full nested M22 validation remains valid
-
-The following fail closed before proposal creation:
+and preserves:
 
 ```text
-BASE_ONLY
-PARTIAL_DILUTION_COVERAGE
-CONFLICT_BLOCKED
-candidate authority
-stale/ineligible bridge
-entity/scope mismatch
-as_of mismatch
+source_package_sha256
+review_assertion_sha256
+scenario_names
 ```
 
-## v0.3 lineage / v0.3 lineage
-
-The full base proposal and full M22 bridge are embedded. The projected `baseline_context.fully_diluted_shares` and the `equity.diluted_shares` DIRECT_BIND decision preserve:
-
-```text
-source_bridge_sha256
-base_context_sha256
-coverage_assertion_sha256
-```
-
-The v0.3 validator independently validates the embedded base proposal and M22 bridge, reconstructs the baseline projection and share decision, verifies that all non-share matrix decisions remain unchanged, recomputes completeness, and verifies the final proposal SHA.
-
-## M17 apply extension / M17 적용 확장
-
-`binding-approval-v0.1` remains the approval contract.
-
-M17 can now apply:
-
-```text
-equity.cash
-equity.debt
-equity.diluted_shares
-```
-
-only when each approved field is DIRECT_BIND in the supplied proposal.
-
-For `equity.diluted_shares`, the applied diff preserves:
-
-```text
-source_bridge_sha256
-base_context_sha256
-coverage_assertion_sha256
-```
-
-The original Draft object remains unchanged. The result remains `canonical=false` and must continue through existing Draft governance before any canonical state can exist.
+The source Draft object remains unchanged and the result remains noncanonical.
 
 ## Interfaces / 인터페이스
+
+M24 CLI is additive. The new wrapper intercepts only M24 commands plus v0.4-aware `binding-validate` and `web`; every older command delegates to the M23 dispatcher.
 
 CLI:
 
 ```text
-binding-build-with-diluted-shares <base_proposal.json> <share_bridge.json>
-binding-validate <proposal.json>
+wacc-source-build
+wacc-source-validate
+wacc-candidate-build
+wacc-candidate-validate
+wacc-review-build
+wacc-review-validate
+wacc-finalize
+wacc-validate
+binding-build-with-wacc
+binding-validate
 ```
-
-`binding-validate` now follows the v0.1 → v0.2 → v0.3 governed validator chain.
 
 Web:
 
 ```text
-/share-binding
-/api/share-binding/build
-/api/share-binding/validate
+/wacc
+/api/wacc/candidate-build
+/api/wacc/candidate-validate
+/api/wacc/review-build
+/api/wacc/review-validate
+/api/wacc/finalize
+/api/wacc/validate
+/api/wacc/binding-build
+/api/wacc/binding-validate
 ```
 
-M23 Web is proposal calculate/validate only. There is no M23 approval/apply, Draft-file write, promotion, admission, or canonical-write route.
+The M24 Web layer has no Draft-apply, file-write, promotion, admission, or canonical-write endpoint.
 
-## M23 files / M23 파일
+## M24 files / M24 파일
 
-- `src/valuation_hub/share_draft_binding.py`
+- `src/valuation_hub/wacc_assumption.py`
+- `src/valuation_hub/wacc_draft_binding.py`
 - `src/valuation_hub/binding_apply.py`
-- `src/valuation_hub/web_share_binding.py`
-- `src/valuation_hub/cli_entry.py`
-- `schemas/draft_binding_proposal_v03.schema.json`
-- `tests/test_m23_binding.py`
-- `tests/test_m23_interfaces.py`
-- `docs/SHARE_DRAFT_BINDING.md`
-- `docs/M23_ACCEPTANCE.md`
-- `docs/M23_IMPLEMENTATION_SUMMARY.md`
+- `src/valuation_hub/cli_entry_m24.py`
+- `src/valuation_hub/web_wacc.py`
+- `schemas/wacc_source_input.schema.json`
+- `schemas/wacc_assumption_candidate.schema.json`
+- `schemas/wacc_review_assertion.schema.json`
+- `schemas/reviewed_wacc_assumption.schema.json`
+- `schemas/draft_binding_proposal_v04.schema.json`
+- `tests/test_m24_wacc_binding.py`
+- `tests/test_m24_hardening.py`
+- `tests/test_m24_interfaces.py`
+- `docs/WACC_ASSUMPTION_BINDING.md`
+- `docs/M24_ACCEPTANCE.md`
+- `docs/M24_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. M22 bridge SHA → v0.3 proposal SHA → M17 approval SHA → bound Draft result SHA
+3. source-input SHA → candidate SHA → review assertion SHA → reviewed package SHA → v0.4 proposal SHA → M17 approval/result SHA
 4. current chat
 5. AI recollection
 
 ## Exact resume point / 정확한 재개점
 
-Run a fresh full Python 3.11/3.12 CI on the exact final PR #51 head after this handoff update.
+Run a fresh full Python 3.11/3.12 CI on the exact current PR #53 head after this handoff update.
 
 Merge only if all remain green:
 
-- v0.1/v0.2 base proposal validation
-- complete reviewed fresh M22 bridge gate
-- BASE_ONLY/PARTIAL/CONFLICT/candidate/stale fail-closed behavior
-- exact entity/scope/as-of compatibility
-- only `equity.diluted_shares` replacement in v0.3
-- full nested M22 bridge revalidation
-- share bridge/base-context/coverage-assertion lineage preservation
-- M17 human approval lock for diluted shares
-- original Draft immutability
-- existing cash/debt apply regression compatibility
-- CLI/Web no-write boundaries
-- all M1-M23 regressions
+- source provenance/integrity validation
+- metric-specific freshness recomputation
+- stale/Tier-D review blocking
+- CAPM/debt-cost/weight/WACC arithmetic recomputation
+- re-signing hardening
+- candidate/reviewed-assumption authority separation
+- human review lineage lock
+- v0.4 exact policy reconstruction
+- only `scenario.wacc` replacement
+- entity/scope/currency/as-of compatibility
+- exact full-Draft scenario target set at M17 approval/apply
+- WACC scenario-by-scenario diff reconstruction
+- source Draft immutability
+- existing cash/debt/diluted-share apply regression compatibility
+- additive CLI delegation
+- Web no-write boundary
+- all M1-M24 regressions
 
-After final-head CI passes, update PR #51 body with exact tested SHA and CI run, merge with `expected_head_sha`, confirm Issue #50 closes as completed, then verify post-merge `main` Python 3.11/3.12 CI before declaring M23 canonical.
+After final-head CI passes, update PR #53 with exact tested SHA/run, merge with `expected_head_sha`, confirm Issue #52 closes as completed, and verify post-merge `main` Python 3.11/3.12 CI before declaring M24 canonical.
 
-If M23 closes cleanly, the next mission should be selected from the remaining valuation-completeness gaps rather than adding another parallel share layer. Reassess the equity-FCFF Draft material-field matrix and choose the highest-value unresolved governed input or the first non-equity valuation adapter.
+If M24 closes cleanly, re-evaluate the remaining `MATERIAL_FIELDS`. The likely next high-value assumption is `scenario.terminal_growth`, but select it only after the canonical matrix is re-grounded after M24 merge.

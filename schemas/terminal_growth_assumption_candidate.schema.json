@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/terminal_growth_assumption_candidate.schema.json",
+  "title": "Terminal Growth Assumption Candidate v0.1 / 영구성장률 가정 Candidate v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "class", "methodology_version", "entity", "capital_currency", "as_of", "scenario_names", "wacc_package", "source_wacc_package_sha256", "anchors", "freshness", "calculation", "scenario_assumptions", "review_readiness", "candidate_sha256"],
+  "properties": {
+    "schema_version": {"const": "terminal-growth-assumption-candidate-v0.1"},
+    "status": {"const": "TERMINAL_GROWTH_ASSUMPTION_CANDIDATE"},
+    "canonical": {"const": false},
+    "class": {"const": "ASSUMPTION_CANDIDATE"},
+    "methodology_version": {"const": "terminal-growth-macro-anchor-v0.1"},
+    "entity": {"type": "object", "required": ["id", "financial_scope"]},
+    "capital_currency": {"type": "string", "minLength": 3, "maxLength": 8},
+    "as_of": {"type": "string", "format": "date"},
+    "scenario_names": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "wacc_package": {"type": "object"},
+    "source_wacc_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "anchors": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "object"}},
+    "freshness": {"type": "object"},
+    "calculation": {
+      "type": "object",
+      "required": ["nominal_growth_anchor", "reviewed_wacc"],
+      "properties": {
+        "nominal_growth_anchor": {"type": "number"},
+        "reviewed_wacc": {"type": "number", "exclusiveMinimum": 0, "maximum": 0.99}
+      },
+      "additionalProperties": false
+    },
+    "scenario_assumptions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["scenario_name", "terminal_growth", "rationale"],
+        "properties": {
+          "scenario_name": {"type": "string", "minLength": 1},
+          "terminal_growth": {"type": "number", "exclusiveMinimum": -1},
+          "rationale": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "review_readiness": {
+      "type": "object",
+      "required": ["all_required_anchors_present", "all_anchors_fresh", "all_source_tiers_reviewable", "all_scenario_constraints_satisfied", "eligible_for_human_review"]
+    },
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

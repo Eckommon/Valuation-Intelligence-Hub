@@ -1,0 +1,21 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/dilution_coverage_assertion.schema.json",
+  "title":"Dilution Coverage Assertion v0.1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","status","canonical","decision","reviewer","approved_at","base_context_sha256","adjustment_sha256","reviewed_categories","coverage_basis","assertion_sha256"],
+  "properties":{
+    "schema_version":{"const":"dilution-coverage-assertion-v0.1"},
+    "status":{"const":"DILUTION_COVERAGE_ASSERTED"},
+    "canonical":{"const":false},
+    "decision":{"const":"COMPLETE_REVIEWED_DILUTION_COVERAGE"},
+    "reviewer":{"type":"string","minLength":1,"maxLength":160},
+    "approved_at":{"type":"string","minLength":1},
+    "base_context_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "adjustment_sha256":{"type":"array","items":{"type":"string","pattern":"^[0-9a-f]{64}$"},"uniqueItems":true},
+    "reviewed_categories":{"type":"array","items":{"enum":["options_treasury_stock_method","rsu_restricted_stock","warrants","convertibles_if_converted","contingent_shares","other_explicit"]},"minItems":6,"maxItems":6,"uniqueItems":true},
+    "coverage_basis":{"type":"string","minLength":1,"maxLength":2000},
+    "assertion_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

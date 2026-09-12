@@ -19,8 +19,9 @@
 | M16 Governed evidence → Draft binding proposal | `fbaf90bab04a877ba6afaaa035a4e99e9ef085a0` | #34 |
 | M17 Human-approved noncanonical Draft binding apply | `ef68c2549bef842ef417d401140b49c88af209b5` | #38 |
 | M18 Governed derived financial evidence + historical margins | `fb33cfbf401ab9c2e36ccd831bd059c8951214ba` | #40 |
+| M19 Governed interest-bearing debt components + aggregation | `5b2ab53b0c83632abae187f12e1a682ecc254b77` | #42 |
 
-M18 final PR CI `34672464437` and post-merge `main` CI `34672504185` completed `success` on Python 3.11/3.12.
+M19 final PR CI `34673236672` and post-merge `main` CI `34673285798` completed `success` on Python 3.11/3.12.
 
 Earlier M1–M11 milestones remain completed and regression-locked in repository history.
 
@@ -35,6 +36,8 @@ EVIDENCE CANDIDATE / NOT CANONICAL
   ↓
 NORMALIZED / DERIVED EVIDENCE / NOT CANONICAL
   ↓
+GOVERNED BINDING CONTEXT / NOT CANONICAL
+  ↓
 BINDING PROPOSAL / NOT CANONICAL
   ↓
 HUMAN APPROVAL LOCK / NOT CANONICAL
@@ -46,152 +49,153 @@ DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
 CANONICAL
 ```
 
-Source acquisition, normalization, derivation, aggregation, and Draft application never upgrade evidence authority by themselves.
+Source acquisition, normalization, derivation, date assertion, binding preparation, and Draft application never upgrade evidence authority by themselves.
 
 ## Active mission / 활성 미션
 
-- Issue: `#42 [M19] Governed interest-bearing debt components + aggregation`
-- PR: `#43 M19 Governed interest-bearing debt components + aggregation`
-- Branch: `mission/m19-interest-bearing-debt-v01`
+- Issue: `#44 [M20] Reviewed debt → equity.debt binding + date assertion`
+- PR: `#45 M20 Reviewed debt → equity.debt binding + date assertion`
+- Branch: `mission/m20-debt-draft-binding-v01`
+- Base main: `5b2ab53b0c83632abae187f12e1a682ecc254b77`
 - Status: `ACTIVE_FINALIZATION`
 
-### CI history / CI 이력
+### M20 diagnostic CI history / M20 진단 CI 이력
 
-- Initial checkpoint head `8eab1c9db148c94e2a58868696b88e18fe79b4cc`
-- Initial checkpoint CI `34672809483`: **failure**
-  - cause 1: import-time mutation of M13/M14 source registries violated their explicit registry regression contracts
-  - cause 2: equal reviewed+candidate duplicate authority validation considered only selected rows rather than all input evidence
-- Corrected isolated-pipeline head `c2e469367944ee3bc81f9fc6ce35973bd95c480c`
-- Corrected core CI `34673035190`: Python 3.11/3.12 `success`
+Checkpoint run `34688393668` failed with **261 passed / 1 failed**. The single failure was the M19 Web regression contract `LIABILITIES ≠ DEBT · CALCULATE ONLY`, which M20 had replaced while extending the UI. Core debt/date/binding logic was not the failing contract. M20 restored the exact M19 phrase and appended the new human-date/no-write semantics.
 
-The failed checkpoint is preserved as diagnostic evidence; it is not a merge gate.
+The failed checkpoint is retained as diagnostic evidence and is not a merge gate. Only a fresh final-head Python 3.11/3.12 success can authorize merge.
 
-## M19 core semantic rule / M19 핵심 의미규칙
+## M20 objective / M20 목표
 
-```text
-liabilities ≠ interest_bearing_debt
-missing ≠ zero
-```
+Connect only complete, reviewed M19 interest-bearing debt to the existing equity-FCFF Draft path as `equity.debt`, while preserving M16 v0.1 and M17 cash behavior.
 
-M19 uses an isolated source/normalization pipeline and does not mutate M13/M14/M15 registries.
+## Date assertion / 날짜승인
 
-## Core components / 핵심 구성요소
+For source debt with:
 
 ```text
-short_term_borrowings
-current_portion_long_term_borrowings
-long_term_borrowings
-current_portion_bonds
-bonds_noncurrent
+date_precision = EXACT
 ```
 
-Lease liabilities are excluded pending an explicit future policy.
+M20 uses the exact source period end and forbids assertion-based override.
 
-## Source mapping / 원천 매핑
-
-### SEC
-
-v0.1 only supports exact:
+For:
 
 ```text
-us-gaap:ShortTermBorrowings
+date_precision = REPORT_STAGE_ONLY
+end = null
 ```
 
-Broad `LongTermDebtCurrent` / `LongTermDebtNoncurrent` concepts are intentionally not relabeled as narrow components because that can mix instrument classes or double count.
+M20 requires noncanonical `debt-date-assertion-v0.1` locking:
 
-### OpenDART
+- reviewer
+- timezone-aware approval timestamp
+- exact M19 `debt_sha256`
+- target entity + financial scope
+- complete original period identity
+- asserted exact period-end date
+- human review basis
+- assertion SHA-256
 
-All five components use exact IFRS account IDs with exact Korean account-name fallback. No fuzzy matching.
+The system does not infer or synthesize the exact date.
 
-## Isolated normalization / 분리 정규화
+## Binding context / 바인딩 context
 
-Source candidates normalize into:
-
-```text
-debt-component-observation-v0.1
-```
-
-Each observation is:
-
-- `INSTANT`
-- noncanonical
-- authority-preserving
-- source concept/account lineage preserving
-- SHA-256 locked
-
-## Aggregation / 집계
-
-Output:
-
-```text
-interest-bearing-debt-evidence-v0.1
-```
-
-Compatibility requires exact same entity, financial scope, unit, and full period identity.
-
-Coverage:
+`debt-binding-context-v0.1` accepts only M19 debt that is:
 
 ```text
 COMPLETE_CORE_COMPONENTS
-PARTIAL_COMPONENTS
-CONFLICT_BLOCKED
++ DERIVED_FACT
++ eligible_for_draft_direct_bind=true
 ```
 
-Rules:
+It resolves the exact period end, calculates age versus `as_of`, and records `FRESH` or `STALE_BLOCKED`.
 
-- Complete reviewed five-component coverage → final debt value + future binding eligibility.
-- Partial coverage → `known_component_sum` only; final debt value is `null`.
-- Conflict → known sum and final debt value are both `null`.
-- Equal duplicate values select a reviewed representation if available, but any candidate input keeps aggregate authority candidate.
-- Total liabilities are never used.
-- Missing components are never imputed as zero.
+Partial, conflict-blocked, and candidate debt cannot enter this context.
+
+## Binding proposal v0.2 / 바인딩 제안 v0.2
+
+The original M16 `build_binding_proposal()` remains unchanged and continues to produce `draft-binding-proposal-v0.1`.
+
+M20 adds `draft-binding-proposal-v0.2`, which:
+
+- embeds the complete base v0.1 proposal
+- embeds the complete M20 debt-binding context
+- requires entity/scope/unit compatibility
+- replaces **only** the `equity.debt` decision
+- makes fresh eligible debt `DIRECT_BIND`
+- makes stale debt `STALE_BLOCKED`
+- preserves all non-debt v0.1 decisions exactly
+- SHA-locks the full proposal
+
+## M17 integration / M17 통합
+
+Existing `binding-approval-v0.1` is reused. M20 extends the application implementation to support `equity.debt` when and only when v0.2 marks it `DIRECT_BIND`.
+
+Debt applied-diff lineage records:
+
+```text
+source_context_sha256
+source_debt_sha256
+date_assertion_sha256  # null for source EXACT debt
+```
+
+The input Draft remains unchanged and the bound result remains `canonical=false`.
 
 ## Interfaces / 인터페이스
 
-CLI:
+CLI additions:
 
 ```text
-debt-sec-extract
-debt-dart-extract
-debt-normalize
-debt-component-validate
-debt-aggregate
-debt-validate
+debt-date-assertion-build
+debt-date-assertion-validate
+debt-binding-context-build
+debt-binding-context-validate
+binding-build-with-debt
 ```
 
-Web:
+Existing approval/apply commands are reused.
+
+Web calculate/validate preparation endpoints:
 
 ```text
-/debt
-POST /api/debt/aggregate
-POST /api/debt/validate
+POST /api/debt/date-assertion-build
+POST /api/debt/date-assertion-validate
+POST /api/debt/binding-context-build
+POST /api/debt/binding-context-validate
+POST /api/debt/binding-proposal-build
+POST /api/debt/binding-proposal-validate
 ```
 
-Interfaces do not write Draft or canonical state.
+No Draft-file write, promotion, admission, or canonical-write M20 endpoint exists.
 
-## Files / 파일
+## M20 files / M20 파일
 
-- `src/valuation_hub/debt_components.py`
+- `src/valuation_hub/debt_binding.py`
+- `src/valuation_hub/debt_draft_binding.py`
+- `src/valuation_hub/binding_apply.py`
+- `src/valuation_hub/cli_entry.py`
 - `src/valuation_hub/web_debt.py`
-- `schemas/debt_component_observation.schema.json`
-- `schemas/interest_bearing_debt_evidence.schema.json`
-- `tests/test_debt_components.py`
-- `tests/test_m19_source_mapping.py`
-- `tests/test_m19_interfaces.py`
-- `docs/INTEREST_BEARING_DEBT.md`
-- `docs/M19_ACCEPTANCE.md`
-- `docs/M19_IMPLEMENTATION_SUMMARY.md`
+- `schemas/debt_date_assertion.schema.json`
+- `schemas/debt_binding_context.schema.json`
+- `schemas/draft_binding_proposal_v02.schema.json`
+- `tests/test_debt_binding.py`
+- `tests/test_m20_binding.py`
+- `tests/test_m20_interfaces.py`
+- `docs/DEBT_DRAFT_BINDING.md`
+- `docs/M20_ACCEPTANCE.md`
+- `docs/M20_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. source snapshot → isolated debt candidate → debt observation → aggregate SHA lineage
+3. M19 debt SHA → M20 date assertion/context SHA → proposal SHA → approval SHA → bound-result SHA lineage
 4. current chat
 5. AI recollection
 
 ## Exact resume point / 정확한 재개점
 
-Run a fresh full Python 3.11/3.12 CI on the final PR #43 head after all M19 interfaces/docs are committed. Merge only if M13/M14 registry non-mutation, exact debt source mappings, isolated component normalization, complete/partial/conflict arithmetic, candidate-authority propagation, liabilities/missing/lease semantic guards, SHA integrity, CLI/Web no-write boundaries, and all M1–M19 regressions pass. Then verify post-merge `main` CI and Issue #42 closure.
+Run fresh Python 3.11/3.12 CI on the final PR #45 head. Merge only if M16 v0.1 cash compatibility, M19 Web contract compatibility, date assertion locking, complete/reviewed/fresh debt eligibility, stale/partial/conflict/candidate blocking, entity/scope/unit guards, debt-aware v0.2 proposal integrity, M17 debt approval/apply lineage, no-write CLI/Web boundaries, and all M1–M20 regressions pass.
 
-If M19 closes cleanly, the next mission should integrate **only complete reviewed M19 debt evidence** into M16/M17 as `equity.debt`. Partial, conflict-blocked, or candidate debt must remain non-bindable and must not alter a Draft.
+After merge, verify Issue #44 closure and post-merge `main` CI before declaring M20 canonical. The next likely priority after a clean M20 close is governed diluted-share evidence/derivation because `shares_outstanding ≠ diluted_shares` remains unresolved.

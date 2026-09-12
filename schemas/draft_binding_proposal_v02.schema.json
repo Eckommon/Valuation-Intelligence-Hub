@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/draft_binding_proposal_v02.schema.json",
+  "title": "Debt-Aware Draft Binding Proposal v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","status","canonical","target","policy","identity","baseline_context","conflicts","draft_input_matrix","completeness","source_observation_sha256","source_debt_context_sha256","debt_binding_context","base_v01_proposal","warning_en","warning_ko","proposal_sha256"],
+  "properties": {
+    "schema_version": {"const": "draft-binding-proposal-v0.2"},
+    "status": {"const": "DRAFT_BINDING_PROPOSED"},
+    "canonical": {"const": false},
+    "target": {"type": "object"},
+    "policy": {"type": "object"},
+    "identity": {"type": "object"},
+    "baseline_context": {"type": "object"},
+    "conflicts": {"type": "object"},
+    "draft_input_matrix": {"type": "array", "minItems": 13},
+    "completeness": {"type": "object"},
+    "source_observation_sha256": {"type": "array", "items": {"type":"string","pattern":"^[0-9a-f]{64}$"}},
+    "source_debt_context_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "debt_binding_context": {"type": "object"},
+    "base_v01_proposal": {"type": "object"},
+    "warning_en": {"type": "string"},
+    "warning_ko": {"type": "string"},
+    "proposal_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

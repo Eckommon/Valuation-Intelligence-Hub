@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/debt_binding_context.schema.json",
+  "title": "Debt Binding Context v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","source_period","resolved_period_end","date_resolution","policy","freshness","binding_eligibility","source_debt_sha256","context_sha256"],
+  "properties": {
+    "schema_version": {"const": "debt-binding-context-v0.1"},
+    "status": {"const": "DEBT_BINDING_CONTEXT_EVALUATED"},
+    "canonical": {"const": false},
+    "class": {"const": "DERIVED_FACT"},
+    "metric": {"const": "interest_bearing_debt"},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"type": "string", "minLength": 1},
+    "entity": {"type": "object"},
+    "source_period": {"type": "object"},
+    "resolved_period_end": {"type": "string", "format": "date"},
+    "date_resolution": {
+      "type": "object",
+      "required": ["method","date_assertion_sha256"],
+      "properties": {
+        "method": {"enum": ["SOURCE_EXACT","HUMAN_DATE_ASSERTION"]},
+        "date_assertion_sha256": {"type": ["string","null"]}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["version","as_of","max_age_days"],
+      "properties": {
+        "version": {"const": "DEBT_BINDING_CONTEXT_V01"},
+        "as_of": {"type": "string", "format": "date"},
+        "max_age_days": {"type": "integer", "minimum": 0, "maximum": 3650}
+      },
+      "additionalProperties": false
+    },
+    "freshness": {
+      "type": "object",
+      "required": ["status","age_days","max_age_days"],
+      "properties": {
+        "status": {"enum": ["FRESH","STALE_BLOCKED"]},
+        "age_days": {"type": "integer", "minimum": 0},
+        "max_age_days": {"type": "integer", "minimum": 0, "maximum": 3650}
+      },
+      "additionalProperties": false
+    },
+    "binding_eligibility": {
+      "type": "object",
+      "required": ["eligible","reason"],
+      "properties": {"eligible":{"type":"boolean"},"reason":{"enum":["COMPLETE_REVIEWED_FRESH","STALE_DEBT"]}},
+      "additionalProperties": false
+    },
+    "source_debt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "context_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

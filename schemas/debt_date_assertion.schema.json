@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/debt_date_assertion.schema.json",
+  "title": "Debt Date Assertion v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","status","canonical","reviewer","approved_at","source_debt_sha256","target_identity","source_period_identity","asserted_period_end","review_basis","assertion_sha256"],
+  "properties": {
+    "schema_version": {"const": "debt-date-assertion-v0.1"},
+    "status": {"const": "DEBT_DATE_ASSERTED"},
+    "canonical": {"const": false},
+    "reviewer": {"type": "string", "minLength": 1, "maxLength": 160},
+    "approved_at": {"type": "string"},
+    "source_debt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "target_identity": {
+      "type": "object",
+      "required": ["id","financial_scope"],
+      "properties": {"id":{"type":"string","minLength":1},"financial_scope":{"type":"string","minLength":1}},
+      "additionalProperties": false
+    },
+    "source_period_identity": {"type": "object"},
+    "asserted_period_end": {"type": "string", "format": "date"},
+    "review_basis": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

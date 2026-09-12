@@ -11,6 +11,7 @@ from valuation_hub import cli as legacy_cli
 from valuation_hub.binding_apply import build_binding_approval, validate_binding_approval, apply_binding_approval, validate_bound_draft_result
 from valuation_hub.case_service import CaseServiceError
 from valuation_hub.dart_live import DART_METRIC_SPECS, capture_dart_snapshot, extract_dart_evidence_candidate, load_dart_snapshot, materialize_dart_snapshot, validate_dart_snapshot
+from valuation_hub.debt_binding import build_debt_binding_context, build_debt_date_assertion, validate_debt_binding_context, validate_debt_date_assertion
 from valuation_hub.debt_components import (
     CORE_COMPONENTS,
     SEC_COMPONENT_SUPPORT,
@@ -21,17 +22,21 @@ from valuation_hub.debt_components import (
     validate_debt_component_observation,
     validate_interest_bearing_debt_evidence,
 )
+from valuation_hub.debt_draft_binding import build_binding_proposal_with_debt, validate_binding_proposal_any
 from valuation_hub.derived_financial import derive_historical_net_income_margin, derive_historical_operating_margin, validate_derived_financial_evidence
-from valuation_hub.draft_binding import build_binding_proposal, validate_binding_proposal
+from valuation_hub.draft_binding import build_binding_proposal
 from valuation_hub.financial_normalization import DURATION_ANNUAL, DURATION_QUARTER, DURATION_YTD, normalize_dart_candidate, normalize_sec_candidate, reconcile_same_period, ttm_annual_bridge, ttm_four_quarters, validate_financial_observation, validate_ttm_result
 from valuation_hub.web_debt import serve as serve_web
 
 DART_COMMANDS = {"dart-fetch", "dart-snapshot-validate", "dart-extract"}
 NORMALIZATION_COMMANDS = {"normalize-sec", "normalize-dart", "normalize-validate", "ttm-four-quarters", "ttm-annual-bridge", "ttm-validate", "normalize-reconcile"}
-BINDING_COMMANDS = {"binding-build", "binding-validate"}
+BINDING_COMMANDS = {"binding-build", "binding-build-with-debt", "binding-validate"}
 BINDING_APPLY_COMMANDS = {"binding-approval-build", "binding-approval-validate", "binding-apply", "bound-draft-validate"}
 DERIVED_COMMANDS = {"derive-operating-margin", "derive-net-margin", "derived-validate"}
-DEBT_COMMANDS = {"debt-sec-extract", "debt-dart-extract", "debt-normalize", "debt-component-validate", "debt-aggregate", "debt-validate"}
+DEBT_COMMANDS = {
+    "debt-sec-extract", "debt-dart-extract", "debt-normalize", "debt-component-validate", "debt-aggregate", "debt-validate",
+    "debt-date-assertion-build", "debt-date-assertion-validate", "debt-binding-context-build", "debt-binding-context-validate",
+}
 
 
 def _dump(payload: Any) -> None:
@@ -79,6 +84,7 @@ def _normalization_parser() -> argparse.ArgumentParser:
 def _binding_parser() -> argparse.ArgumentParser:
     p=argparse.ArgumentParser(prog="vih"); p.add_argument("--root",type=Path,default=None); p.add_argument("--json",action="store_true",dest="as_json"); s=p.add_subparsers(dest="command",required=True)
     b=s.add_parser("binding-build"); b.add_argument("observations",type=Path); b.add_argument("--as-of",required=True); b.add_argument("--max-age-days",type=int,default=550)
+    b=s.add_parser("binding-build-with-debt"); b.add_argument("observations",type=Path); b.add_argument("debt_context",type=Path); b.add_argument("--as-of",required=True); b.add_argument("--max-age-days",type=int,default=550)
     s.add_parser("binding-validate").add_argument("file",type=Path); return p
 
 
@@ -104,7 +110,12 @@ def _debt_parser() -> argparse.ArgumentParser:
     s.add_parser("debt-normalize",help="Normalize debt component candidate / debt 구성요소 정규화").add_argument("candidate",type=Path)
     s.add_parser("debt-component-validate",help="Validate normalized debt component / 정규화 debt 구성요소 검증").add_argument("file",type=Path)
     s.add_parser("debt-aggregate",help="Aggregate explicit debt components / 명시적 이자부채 구성요소 집계").add_argument("observations",type=Path)
-    s.add_parser("debt-validate",help="Validate interest-bearing debt evidence / 이자부채 근거 검증").add_argument("file",type=Path); return p
+    s.add_parser("debt-validate",help="Validate interest-bearing debt evidence / 이자부채 근거 검증").add_argument("file",type=Path)
+    x=s.add_parser("debt-date-assertion-build",help="Human-assert exact period end for REPORT_STAGE_ONLY debt / debt 기간말 인간승인"); x.add_argument("debt",type=Path); x.add_argument("--reviewer",required=True); x.add_argument("--approved-at",required=True); x.add_argument("--asserted-period-end",required=True); x.add_argument("--review-basis",required=True)
+    x=s.add_parser("debt-date-assertion-validate"); x.add_argument("assertion",type=Path); x.add_argument("debt",type=Path)
+    x=s.add_parser("debt-binding-context-build"); x.add_argument("debt",type=Path); x.add_argument("--as-of",required=True); x.add_argument("--max-age-days",type=int,default=550); x.add_argument("--date-assertion",type=Path,default=None)
+    s.add_parser("debt-binding-context-validate").add_argument("file",type=Path)
+    return p
 
 
 def _web_parser() -> argparse.ArgumentParser:
@@ -143,7 +154,8 @@ def _run_binding(argv:list[str])->int:
     a=_binding_parser().parse_args(argv)
     try:
         if a.command=="binding-build": _dump(build_binding_proposal(_load_object_list(a.observations,"normalized observations"),as_of=a.as_of,max_age_days=a.max_age_days)); return 0
-        if a.command=="binding-validate": _dump(validate_binding_proposal(_load_object(a.file,"binding proposal"))); return 0
+        if a.command=="binding-build-with-debt": _dump(build_binding_proposal_with_debt(_load_object_list(a.observations,"normalized observations"),_load_object(a.debt_context,"debt binding context"),as_of=a.as_of,max_age_days=a.max_age_days)); return 0
+        if a.command=="binding-validate": _dump(validate_binding_proposal_any(_load_object(a.file,"binding proposal"))); return 0
         raise CaseServiceError("unsupported binding command / 미지원 바인딩 명령")
     except (CaseServiceError,ValueError,OSError) as exc: return _error(a,exc)
 
@@ -178,6 +190,12 @@ def _run_debt(argv:list[str])->int:
         if a.command=="debt-component-validate": _dump(validate_debt_component_observation(_load_object(a.file,"debt component observation"))); return 0
         if a.command=="debt-aggregate": _dump(aggregate_interest_bearing_debt(_load_object_list(a.observations,"debt component observations"))); return 0
         if a.command=="debt-validate": _dump(validate_interest_bearing_debt_evidence(_load_object(a.file,"interest-bearing debt evidence"))); return 0
+        if a.command=="debt-date-assertion-build": _dump(build_debt_date_assertion(_load_object(a.debt,"interest-bearing debt evidence"),reviewer=a.reviewer,approved_at=a.approved_at,asserted_period_end=a.asserted_period_end,review_basis=a.review_basis)); return 0
+        if a.command=="debt-date-assertion-validate": _dump(validate_debt_date_assertion(_load_object(a.assertion,"debt date assertion"),_load_object(a.debt,"interest-bearing debt evidence"))); return 0
+        if a.command=="debt-binding-context-build":
+            assertion=_load_object(a.date_assertion,"debt date assertion") if a.date_assertion else None
+            _dump(build_debt_binding_context(_load_object(a.debt,"interest-bearing debt evidence"),as_of=a.as_of,max_age_days=a.max_age_days,date_assertion=assertion)); return 0
+        if a.command=="debt-binding-context-validate": _dump(validate_debt_binding_context(_load_object(a.file,"debt binding context"))); return 0
         raise CaseServiceError("unsupported debt command / 미지원 이자부채 명령")
     except (CaseServiceError,ValueError,OSError) as exc: return _error(a,exc)
 

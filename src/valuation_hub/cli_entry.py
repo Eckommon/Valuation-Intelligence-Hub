@@ -11,7 +11,16 @@ from valuation_hub import cli as legacy_cli
 from valuation_hub.binding_apply import build_binding_approval, validate_binding_approval, apply_binding_approval, validate_bound_draft_result
 from valuation_hub.case_service import CaseServiceError
 from valuation_hub.dart_live import DART_METRIC_SPECS, capture_dart_snapshot, extract_dart_evidence_candidate, load_dart_snapshot, materialize_dart_snapshot, validate_dart_snapshot
-from valuation_hub.debt_components import aggregate_interest_bearing_debt, validate_interest_bearing_debt_evidence
+from valuation_hub.debt_components import (
+    CORE_COMPONENTS,
+    SEC_COMPONENT_SUPPORT,
+    aggregate_interest_bearing_debt,
+    extract_dart_debt_component_candidate,
+    extract_sec_debt_component_candidate,
+    normalize_debt_component_candidate,
+    validate_debt_component_observation,
+    validate_interest_bearing_debt_evidence,
+)
 from valuation_hub.derived_financial import derive_historical_net_income_margin, derive_historical_operating_margin, validate_derived_financial_evidence
 from valuation_hub.draft_binding import build_binding_proposal, validate_binding_proposal
 from valuation_hub.financial_normalization import DURATION_ANNUAL, DURATION_QUARTER, DURATION_YTD, normalize_dart_candidate, normalize_sec_candidate, reconcile_same_period, ttm_annual_bridge, ttm_four_quarters, validate_financial_observation, validate_ttm_result
@@ -22,7 +31,7 @@ NORMALIZATION_COMMANDS = {"normalize-sec", "normalize-dart", "normalize-validate
 BINDING_COMMANDS = {"binding-build", "binding-validate"}
 BINDING_APPLY_COMMANDS = {"binding-approval-build", "binding-approval-validate", "binding-apply", "bound-draft-validate"}
 DERIVED_COMMANDS = {"derive-operating-margin", "derive-net-margin", "derived-validate"}
-DEBT_COMMANDS = {"debt-aggregate", "debt-validate"}
+DEBT_COMMANDS = {"debt-sec-extract", "debt-dart-extract", "debt-normalize", "debt-component-validate", "debt-aggregate", "debt-validate"}
 
 
 def _dump(payload: Any) -> None:
@@ -90,6 +99,10 @@ def _derived_parser() -> argparse.ArgumentParser:
 
 def _debt_parser() -> argparse.ArgumentParser:
     p=argparse.ArgumentParser(prog="vih"); p.add_argument("--root",type=Path,default=None); p.add_argument("--json",action="store_true",dest="as_json"); s=p.add_subparsers(dest="command",required=True)
+    x=s.add_parser("debt-sec-extract",help="Extract exact SEC debt component / SEC debt 구성요소 추출"); x.add_argument("snapshot",type=Path); x.add_argument("metric",choices=tuple(sorted(SEC_COMPONENT_SUPPORT))); x.add_argument("--form",default=None); x.add_argument("--period-end",default=None)
+    x=s.add_parser("debt-dart-extract",help="Extract exact OpenDART debt component / OpenDART debt 구성요소 추출"); x.add_argument("snapshot",type=Path); x.add_argument("metric",choices=CORE_COMPONENTS)
+    s.add_parser("debt-normalize",help="Normalize debt component candidate / debt 구성요소 정규화").add_argument("candidate",type=Path)
+    s.add_parser("debt-component-validate",help="Validate normalized debt component / 정규화 debt 구성요소 검증").add_argument("file",type=Path)
     s.add_parser("debt-aggregate",help="Aggregate explicit debt components / 명시적 이자부채 구성요소 집계").add_argument("observations",type=Path)
     s.add_parser("debt-validate",help="Validate interest-bearing debt evidence / 이자부채 근거 검증").add_argument("file",type=Path); return p
 
@@ -159,6 +172,10 @@ def _run_derived(argv:list[str])->int:
 def _run_debt(argv:list[str])->int:
     a=_debt_parser().parse_args(argv)
     try:
+        if a.command=="debt-sec-extract": _dump(extract_sec_debt_component_candidate(_load_object(a.snapshot,"SEC source snapshot"),a.metric,form=a.form,period_end=a.period_end)); return 0
+        if a.command=="debt-dart-extract": _dump(extract_dart_debt_component_candidate(_load_object(a.snapshot,"OpenDART source snapshot"),a.metric)); return 0
+        if a.command=="debt-normalize": _dump(normalize_debt_component_candidate(_load_object(a.candidate,"debt component candidate"))); return 0
+        if a.command=="debt-component-validate": _dump(validate_debt_component_observation(_load_object(a.file,"debt component observation"))); return 0
         if a.command=="debt-aggregate": _dump(aggregate_interest_bearing_debt(_load_object_list(a.observations,"debt component observations"))); return 0
         if a.command=="debt-validate": _dump(validate_interest_bearing_debt_evidence(_load_object(a.file,"interest-bearing debt evidence"))); return 0
         raise CaseServiceError("unsupported debt command / 미지원 이자부채 명령")

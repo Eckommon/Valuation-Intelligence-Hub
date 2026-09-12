@@ -1,0 +1,24 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/valuation_share_base_context.schema.json",
+  "title":"Valuation Share Base Context v0.1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","status","canonical","class","metric","value","unit","entity","source_period","policy","freshness","semantic_boundary","source_observation_sha256","context_sha256"],
+  "properties":{
+    "schema_version":{"const":"valuation-share-base-context-v0.1"},
+    "status":{"const":"VALUATION_SHARE_BASE_CONTEXT_EVALUATED"},
+    "canonical":{"const":false},
+    "class":{"const":"NORMALIZED_FACT"},
+    "metric":{"const":"current_common_shares"},
+    "value":{"type":"number","exclusiveMinimum":0},
+    "unit":{"const":"shares"},
+    "entity":{"type":"object"},
+    "source_period":{"type":"object"},
+    "policy":{"type":"object","required":["version","as_of","max_age_days"],"properties":{"version":{"const":"VALUATION_SHARE_BASE_V01"},"as_of":{"type":"string","format":"date"},"max_age_days":{"type":"integer","minimum":0,"maximum":3650}},"additionalProperties":false},
+    "freshness":{"type":"object","required":["status","age_days","max_age_days"],"properties":{"status":{"enum":["FRESH","STALE_BLOCKED"]},"age_days":{"type":"integer","minimum":0},"max_age_days":{"type":"integer","minimum":0,"maximum":3650}},"additionalProperties":false},
+    "semantic_boundary":{"type":"object","required":["current_common_shares_base","fully_diluted_shares","direct_bind_to_diluted_shares"],"properties":{"current_common_shares_base":{"const":true},"fully_diluted_shares":{"const":false},"direct_bind_to_diluted_shares":{"const":false}},"additionalProperties":false},
+    "source_observation_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "context_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

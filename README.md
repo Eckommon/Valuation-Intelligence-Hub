@@ -3,7 +3,7 @@
 > **Separate price from economic value, make assumptions explicit, and make valuation reproducible.**  
 > **가격과 경제적 가치를 분리하고, 가정을 명시하며, 가치평가를 재현 가능하게 만든다.**
 
-Valuation-Intelligence-Hub is a reproducible, evidence-grounded cross-asset valuation intelligence system connecting source evidence, normalization, governed derivation, Draft preparation, human review, and repository-controlled canonicalization.
+Valuation-Intelligence-Hub is a reproducible, evidence-grounded cross-asset valuation intelligence system connecting source evidence, normalization, governed derivation, explicit valuation assumptions, Draft preparation, human review, and repository-controlled canonicalization.
 
 ## Core authority flow / 핵심 권위 흐름
 
@@ -12,11 +12,11 @@ OFFICIAL / USER SOURCE
         ↓
 IMMUTABLE SNAPSHOT / NOT CANONICAL
         ↓
-EVIDENCE CANDIDATE / NOT CANONICAL
+EVIDENCE / SOURCE INPUT / NOT CANONICAL
         ↓
-NORMALIZED / DERIVED EVIDENCE / NOT CANONICAL
+NORMALIZED / DERIVED EVIDENCE or ASSUMPTION_CANDIDATE
         ↓
-GOVERNED CONTEXT / NOT CANONICAL
+HUMAN-REVIEWED GOVERNED CONTEXT / ASSUMPTION
         ↓
 DRAFT BINDING PROPOSAL / NOT CANONICAL
         ↓
@@ -29,7 +29,7 @@ DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
 CANONICAL
 ```
 
-Calculations never upgrade evidence authority by themselves.
+Deterministic calculation does not automatically upgrade authority. Facts, assumptions, review decisions, Draft binding, and canonical repository state remain distinct.
 
 ## Valuation kernel / 가치평가 커널
 
@@ -37,7 +37,7 @@ Calculations never upgrade evidence authority by themselves.
 FCFF = EBIT(1-T) + D\&A - CAPEX - \Delta NWC
 \]
 
-The Hub also supports reverse valuation and probability-weighted venture valuation. Company cases are versioned methodology references, not live investment recommendations.
+The Hub also supports reverse valuation and probability-weighted venture valuation. Company cases are methodology references, not live investment recommendations.
 
 ## Install / 설치
 
@@ -51,137 +51,142 @@ python -m pip install -e ".[dev]"
 - M13: immutable SEC CompanyFacts acquisition
 - M14: immutable OpenDART financial-statement acquisition
 - M15: period semantics, normalization, reconciliation, TTM
-- M16: normalized-evidence → equity-FCFF Draft binding proposal v0.1
+- M16: normalized evidence → equity-FCFF Draft binding proposal v0.1
 - M17: SHA-locked human approval + noncanonical Draft binding application
 - M18: governed historical operating/net margin derivation
 - M19: explicit interest-bearing-debt components and aggregation
-- M20: reviewed complete debt → `equity.debt` binding with human date assertion where needed
-- M21: governed historical share-dilution reference evidence
-- M22: valuation-date current-common-share base + explicit diluted-share bridge foundation
-- M23: complete reviewed fresh M22 bridge → `equity.diluted_shares` binding proposal + existing M17 human-approved apply
+- M20: reviewed complete debt → `equity.debt` binding
+- M21: governed historical dilution-reference evidence
+- M22: valuation-date common-share base + explicit diluted-share bridge
+- M23: complete reviewed fresh share bridge → `equity.diluted_shares` binding
+- M24: sourced WACC components → reviewed valuation `ASSUMPTION` → `scenario.wacc` binding
 
-## M20 — Reviewed debt binding
-
-```text
-liabilities ≠ interest_bearing_debt
-REPORT_STAGE_ONLY ≠ invented exact date
-complete reviewed fresh debt → eligible for DIRECT_BIND
-```
-
-M20 preserves M16 v0.1 cash semantics and adds a debt-aware v0.2 proposal. OpenDART report-stage-only dates require a separate human SHA lock. See [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md).
-
-## M21 — Historical dilution reference / 역사적 희석도 참조근거
+## M21–M23 share semantics / 주식수 의미계약
 
 ```text
-shares_outstanding != weighted_average_basic_shares
-weighted_average_diluted_shares != valuation_date_fully_diluted_shares
-historical_dilution_factor != valuation denominator
-```
-
-M21 accepts exact SEC weighted-average basic/diluted EPS denominator concepts with exact start/end periods. Its result is historical reference only:
-
-```text
-historical_only = true
-valuation_date_direct_bind = false
-forecast_direct_bind = false
-shares_outstanding_substitution = false
-```
-
-See [`docs/SHARE_DILUTION_REFERENCE.md`](docs/SHARE_DILUTION_REFERENCE.md).
-
-## M22 — Valuation-date share base + diluted-share bridge / 가치평가일 주식기준 + 희석주식 Bridge
-
-M22 separates the point-in-time common-share base from explicit dilution adjustments and from the final valuation denominator.
-
-```text
+shares_outstanding != diluted_shares
 current_common_shares != fully_diluted_shares
-weighted_average_diluted_shares != current_common_shares
+weighted_average_diluted_shares != valuation_date_fully_diluted_shares
 historical_dilution_factor != automatic current dilution adjustment
 missing dilution category != zero
+candidate bridge total != binding authority
 ```
 
-M22 v0.1 uses exact SEC `dei:EntityCommonStockSharesOutstanding` for the current common-share base. Only reviewed exact-date evidence can enter the valuation share-base context.
+M21 keeps historical EPS denominators reference-only. M22 builds the valuation-date common-share base and explicit dilution adjustments. M23 allows only a complete, reviewed, fresh M22 bridge to replace `equity.diluted_shares` in a v0.3 proposal while preserving all prior cash/debt decisions.
 
-Supported explicit dilution categories are:
+See:
+- [`docs/SHARE_DILUTION_REFERENCE.md`](docs/SHARE_DILUTION_REFERENCE.md)
+- [`docs/VALUATION_SHARE_BRIDGE.md`](docs/VALUATION_SHARE_BRIDGE.md)
+- [`docs/SHARE_DRAFT_BINDING.md`](docs/SHARE_DRAFT_BINDING.md)
 
-```text
-options_treasury_stock_method
-rsu_restricted_stock
-warrants
-convertibles_if_converted
-contingent_shares
-other_explicit
-```
+## M24 — Governed WACC assumption / 거버넌스 WACC 가정
 
-Coverage is always explicit:
+WACC is deliberately modeled as a **valuation assumption**, not a historical fact.
 
 ```text
-BASE_ONLY
-PARTIAL_DILUTION_COVERAGE
-COMPLETE_REVIEWED_DILUTION_COVERAGE
-CONFLICT_BLOCKED
-```
-
-Only complete + reviewed + fresh + human coverage assertion can be future-direct-bind eligible. Missing categories are never zero-imputed, conflicting adjustment IDs fail closed, and M21 historical dilution never creates a current adjustment automatically.
-
-See [`docs/VALUATION_SHARE_BRIDGE.md`](docs/VALUATION_SHARE_BRIDGE.md).
-
-## M23 — Complete reviewed bridge → `equity.diluted_shares`
-
-M23 turns M22's future-binding eligibility into the governed Draft-binding path without rebuilding prior proposal decisions.
-
-```text
-validated M16 v0.1 proposal
-or validated M20 v0.2 proposal
-        +
-complete reviewed fresh M22 share bridge
+source facts / sourced assumptions
         ↓
-draft-binding-proposal-v0.3
+ASSUMPTION_CANDIDATE
+        ↓
+SHA-locked human WACC review
+        ↓
+ASSUMPTION
+        ↓
+draft-binding-proposal-v0.4
+        ↓
+scenario.wacc DIRECT_BIND
 ```
 
-M23 may replace only:
+### Required WACC inputs / 필수 입력
+
+Canonical v0.1 uses exactly seven sourced components:
 
 ```text
-equity.diluted_shares
+risk_free_rate
+equity_risk_premium
+levered_beta
+pre_tax_cost_of_debt
+equity_market_value
+debt_market_value
+tax_rate
 ```
 
-Every cash, debt, conflict, and other base decision must remain identical to the embedded v0.1/v0.2 proposal.
+Each record carries claim class, value/unit, observation date, publisher, source type/tier, locator, source SHA, and its own integrity SHA.
 
-The bridge must be:
+### WACC method / WACC 방법론
 
 ```text
-class = DERIVED_FACT
-coverage = COMPLETE_REVIEWED_DILUTION_COVERAGE
-eligible_for_future_direct_bind = true
-candidate_fully_diluted_shares > 0
-entity/scope/as_of = exact base-proposal match
+cost_of_equity = rf + beta × ERP
+after_tax_cost_of_debt = Rd × (1 - T)
+weight_equity = E / (D + E)
+weight_debt = D / (D + E)
+WACC = weight_equity × cost_of_equity
+     + weight_debt × after_tax_cost_of_debt
 ```
 
-The v0.3 proposal preserves:
+Validators independently recompute every calculated field. Missing/nonfinite arithmetic cannot be legitimized by recomputing only the outer SHA.
+
+### Freshness / 최신성
 
 ```text
-source_bridge_sha256
-base_context_sha256
-coverage_assertion_sha256
+risk-free rate       30 days
+ERP                  90 days
+levered beta        180 days
+pre-tax debt cost   180 days
+equity market value  30 days
+debt market value   550 days
+tax rate             550 days
 ```
 
-M17's existing `binding-approval-v0.1` is reused. A human must explicitly approve `equity.diluted_shares`; apply remains in memory, keeps the source Draft unchanged, and produces a noncanonical result.
+Stale required inputs block review. Tier D is exploratory and cannot become a reviewed WACC package in v0.1.
 
-See [`docs/SHARE_DRAFT_BINDING.md`](docs/SHARE_DRAFT_BINDING.md).
+### Human review / 인간검토
+
+A separate `wacc-review-assertion-v0.1` locks the exact candidate SHA, methodology, valuation `as_of`, scenario targets, reviewer, approval timestamp, and review basis. Approval cannot predate valuation `as_of`.
+
+Only the resulting `reviewed-wacc-assumption-v0.1` has:
+
+```text
+class = ASSUMPTION
+binding_eligibility.eligible = true
+```
+
+### v0.4 binding / v0.4 바인딩
+
+M24 wraps a validated v0.1, v0.2, or v0.3 proposal and may replace **only**:
+
+```text
+scenario.wacc
+```
+
+Every other cash/debt/diluted-share and unresolved decision must remain identical to the embedded base proposal.
+
+At M17 approval time, the WACC package's `scenario_names` must exactly equal the Draft's full scenario set. Partial scenario overwrite is prohibited in v0.1.
+
+Applied WACC diffs preserve:
+
+```text
+source_package_sha256
+review_assertion_sha256
+scenario_names
+```
+
+The source Draft remains unchanged; the bound result remains noncanonical.
+
+See [`docs/WACC_ASSUMPTION_BINDING.md`](docs/WACC_ASSUMPTION_BINDING.md).
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
 ```text
 liabilities                         ≠ debt
-shares_outstanding                  ≠ diluted_shares
-current_common_shares               ≠ fully_diluted_shares
-weighted_average_diluted_shares     ≠ current_common_shares
-historical_dilution_factor          ≠ current dilution adjustment
-missing dilution category           ≠ zero
-candidate bridge total              ≠ binding authority
-historical revenue                  ≠ forecast revenue
-historical margin                   ≠ forecast margin
 REPORT_STAGE_ONLY                   ≠ exact date
+historical margin                   ≠ forecast margin
+historical revenue                  ≠ forecast revenue
+calculated WACC                     ≠ reviewed WACC assumption
+reviewed WACC assumption            ≠ historical fact
+ASSUMPTION_CANDIDATE                ≠ ASSUMPTION
+stale/Tier-D WACC input             ≠ review eligible
+partial scenario targeting          ≠ scenario.wacc DIRECT_BIND
 ```
 
 ## Web product / Web 제품
@@ -199,22 +204,33 @@ Default: `http://127.0.0.1:8765`
 /binding        — evidence → Draft binding proposal
 /binding-apply  — human approval + in-memory Draft binding
 /derived        — governed historical derived evidence
-/debt           — governed debt aggregation + M20 binding preparation
-/dilution       — governed historical dilution reference evidence
+/debt           — governed debt aggregation + binding preparation
+/dilution       — historical dilution reference
 /shares         — valuation-date common-share base + diluted-share bridge
-/share-binding  — complete reviewed bridge → noncanonical v0.3 proposal
+/share-binding  — complete share bridge → v0.3 proposal
+/wacc           — governed WACC candidate/review/v0.4 preparation
 ```
 
-`/shares` and `/share-binding` are calculate/validate preparation surfaces. M23 exposes no Web Draft-apply, file-write, promotion, admission, or canonical-write endpoint.
+`/wacc` is calculate/validate only. It exposes no M24 Draft apply, file write, promotion, admission, or canonical-write endpoint.
 
-## M23 CLI
+## M24 CLI
+
+M24 uses an additive wrapper: old M1–M23 commands delegate unchanged to the previous dispatcher.
 
 ```text
-binding-build-with-diluted-shares <base_proposal.json> <share_bridge.json>
-binding-validate <proposal.json>
+wacc-source-build
+wacc-source-validate
+wacc-candidate-build
+wacc-candidate-validate
+wacc-review-build
+wacc-review-validate
+wacc-finalize
+wacc-validate
+binding-build-with-wacc
+binding-validate
 ```
 
-The existing M17 approval/apply commands then operate on a validated v0.3 proposal under the same human SHA lock.
+Existing M17 `binding-approval-*`, `binding-apply`, and `bound-draft-validate` commands continue to provide the human approval/apply stage.
 
 ## Milestones / 마일스톤
 
@@ -226,10 +242,12 @@ The existing M17 approval/apply commands then operate on a validated v0.3 propos
 - [x] M17 human-approved noncanonical Draft binding application
 - [x] M18 governed derived financial evidence + historical margins
 - [x] M19 governed interest-bearing debt components + aggregation
-- [x] M20 reviewed debt → `equity.debt` binding + human date assertion
-- [x] M21 governed historical dilution reference evidence
-- [x] M22 valuation-date common-share base + diluted-share bridge foundation
-- [ ] **M23 complete reviewed bridge → `equity.diluted_shares` binding — active finalization**
+- [x] M20 reviewed debt → `equity.debt` binding
+- [x] M21 governed historical dilution reference
+- [x] M22 valuation-date common-share base + diluted-share bridge
+- [x] M23 complete reviewed bridge → `equity.diluted_shares` binding
+- [ ] **M24 governed WACC assumption → `scenario.wacc` binding — active finalization**
+- [ ] remaining equity-FCFF material assumptions/inputs
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
@@ -244,15 +262,14 @@ The existing M17 approval/apply commands then operate on a validated v0.3 propos
 - [`docs/FINANCIAL_NORMALIZATION.md`](docs/FINANCIAL_NORMALIZATION.md)
 - [`docs/DRAFT_BINDING.md`](docs/DRAFT_BINDING.md)
 - [`docs/BINDING_APPLICATION.md`](docs/BINDING_APPLICATION.md)
-- [`docs/DERIVED_FINANCIAL_EVIDENCE.md`](docs/DERIVED_FINANCIAL_EVIDENCE.md)
 - [`docs/INTEREST_BEARING_DEBT.md`](docs/INTEREST_BEARING_DEBT.md)
 - [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md)
 - [`docs/SHARE_DILUTION_REFERENCE.md`](docs/SHARE_DILUTION_REFERENCE.md)
 - [`docs/VALUATION_SHARE_BRIDGE.md`](docs/VALUATION_SHARE_BRIDGE.md)
 - [`docs/SHARE_DRAFT_BINDING.md`](docs/SHARE_DRAFT_BINDING.md)
-- [`docs/M21_ACCEPTANCE.md`](docs/M21_ACCEPTANCE.md)
-- [`docs/M22_ACCEPTANCE.md`](docs/M22_ACCEPTANCE.md)
-- [`docs/M22_IMPLEMENTATION_SUMMARY.md`](docs/M22_IMPLEMENTATION_SUMMARY.md)
+- [`docs/WACC_ASSUMPTION_BINDING.md`](docs/WACC_ASSUMPTION_BINDING.md)
 - [`docs/M23_ACCEPTANCE.md`](docs/M23_ACCEPTANCE.md)
 - [`docs/M23_IMPLEMENTATION_SUMMARY.md`](docs/M23_IMPLEMENTATION_SUMMARY.md)
+- [`docs/M24_ACCEPTANCE.md`](docs/M24_ACCEPTANCE.md)
+- [`docs/M24_IMPLEMENTATION_SUMMARY.md`](docs/M24_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

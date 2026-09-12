@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/wacc_assumption_candidate.schema.json",
+  "title": "WACC Assumption Candidate v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","methodology_version","entity","capital_currency","as_of","scenario_names","inputs","freshness","calculation","review_readiness","candidate_sha256"],
+  "properties": {
+    "schema_version": {"const": "wacc-assumption-candidate-v0.1"},
+    "status": {"const": "WACC_ASSUMPTION_CANDIDATE"},
+    "canonical": {"const": false},
+    "class": {"const": "ASSUMPTION_CANDIDATE"},
+    "methodology_version": {"const": "wacc-capm-market-weights-v0.1"},
+    "entity": {"type": "object", "required": ["id","financial_scope"], "properties": {"id": {"type":"string","minLength":1}, "financial_scope": {"type":"string","minLength":1}}, "additionalProperties": false},
+    "capital_currency": {"type": "string", "minLength": 3, "maxLength": 8},
+    "as_of": {"type": "string", "format": "date"},
+    "scenario_names": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type":"string","minLength":1,"maxLength":80}},
+    "inputs": {"type": "array", "minItems": 7, "maxItems": 7, "items": {"$ref": "wacc_source_input.schema.json"}},
+    "freshness": {"type": "object", "minProperties": 7, "maxProperties": 7},
+    "calculation": {
+      "type": "object",
+      "required": ["cost_of_equity","after_tax_cost_of_debt","weight_equity","weight_debt","wacc"],
+      "properties": {
+        "cost_of_equity": {"type":"number"},
+        "after_tax_cost_of_debt": {"type":"number"},
+        "weight_equity": {"type":"number","minimum":0,"maximum":1},
+        "weight_debt": {"type":"number","minimum":0,"maximum":1},
+        "wacc": {"type":"number","exclusiveMinimum":0,"maximum":0.99}
+      },
+      "additionalProperties": false
+    },
+    "review_readiness": {
+      "type": "object",
+      "required": ["all_required_inputs_present","all_inputs_fresh","all_source_tiers_reviewable","eligible_for_human_review"],
+      "properties": {
+        "all_required_inputs_present": {"const": true},
+        "all_inputs_fresh": {"type":"boolean"},
+        "all_source_tiers_reviewable": {"type":"boolean"},
+        "eligible_for_human_review": {"type":"boolean"}
+      },
+      "additionalProperties": false
+    },
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

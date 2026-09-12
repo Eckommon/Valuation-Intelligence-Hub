@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/reviewed_wacc_assumption.schema.json",
+  "title": "Reviewed WACC Assumption v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","methodology_version","entity","capital_currency","as_of","scenario_names","wacc","candidate","review_assertion","binding_eligibility","package_sha256"],
+  "properties": {
+    "schema_version": {"const": "reviewed-wacc-assumption-v0.1"},
+    "status": {"const": "WACC_ASSUMPTION_REVIEWED"},
+    "canonical": {"const": false},
+    "class": {"const": "ASSUMPTION"},
+    "methodology_version": {"const": "wacc-capm-market-weights-v0.1"},
+    "entity": {"type":"object","required":["id","financial_scope"]},
+    "capital_currency": {"type":"string","minLength":3,"maxLength":8},
+    "as_of": {"type":"string","format":"date"},
+    "scenario_names": {"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","minLength":1}},
+    "wacc": {"type":"number","exclusiveMinimum":0,"maximum":0.99},
+    "candidate": {"$ref":"wacc_assumption_candidate.schema.json"},
+    "review_assertion": {"$ref":"wacc_review_assertion.schema.json"},
+    "binding_eligibility": {
+      "type":"object",
+      "required":["eligible","reason"],
+      "properties":{"eligible":{"const":true},"reason":{"const":"REVIEWED_WACC_ASSUMPTION"}},
+      "additionalProperties":false
+    },
+    "package_sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"}
+  }
+}

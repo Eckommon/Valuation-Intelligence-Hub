@@ -58,6 +58,7 @@ python -m pip install -e ".[dev]"
 - M20: reviewed complete debt → `equity.debt` binding with human date assertion where needed
 - M21: governed historical share-dilution reference evidence
 - M22: valuation-date current-common-share base + explicit diluted-share bridge foundation
+- M23: complete reviewed fresh M22 bridge → `equity.diluted_shares` binding proposal + existing M17 human-approved apply
 
 ## M20 — Reviewed debt binding
 
@@ -99,19 +100,9 @@ historical_dilution_factor != automatic current dilution adjustment
 missing dilution category != zero
 ```
 
-### Current common-share base
+M22 v0.1 uses exact SEC `dei:EntityCommonStockSharesOutstanding` for the current common-share base. Only reviewed exact-date evidence can enter the valuation share-base context.
 
-M22 v0.1 uses only exact SEC:
-
-```text
-dei:EntityCommonStockSharesOutstanding
-```
-
-The normalized observation is exact-date `INSTANT` evidence. Only reviewed evidence can enter `valuation-share-base-context-v0.1`, whose freshness is independently recomputed from source date and `as_of`.
-
-### Explicit adjustment ledger
-
-Supported structural categories:
+Supported explicit dilution categories are:
 
 ```text
 options_treasury_stock_method
@@ -122,9 +113,7 @@ contingent_shares
 other_explicit
 ```
 
-Each adjustment has an explicit source SHA, typed category, share amount, authority class, and its own integrity hash. Calculation never upgrades a candidate adjustment to reviewed authority.
-
-### Coverage gate
+Coverage is always explicit:
 
 ```text
 BASE_ONLY
@@ -133,13 +122,52 @@ COMPLETE_REVIEWED_DILUTION_COVERAGE
 CONFLICT_BLOCKED
 ```
 
-A candidate total may be calculated from the base plus selected explicit adjustments, but only **complete + reviewed + fresh + human coverage assertion** can be marked eligible for a future `equity.diluted_shares` binding integration.
-
-Missing categories are never zero-imputed. Conflicting adjustment IDs hide the candidate total. M21 historical dilution may be attached as reference only and can never generate a current adjustment automatically.
-
-M22 does **not** itself mutate a Draft or bind `equity.diluted_shares`; that remains a later governed integration step.
+Only complete + reviewed + fresh + human coverage assertion can be future-direct-bind eligible. Missing categories are never zero-imputed, conflicting adjustment IDs fail closed, and M21 historical dilution never creates a current adjustment automatically.
 
 See [`docs/VALUATION_SHARE_BRIDGE.md`](docs/VALUATION_SHARE_BRIDGE.md).
+
+## M23 — Complete reviewed bridge → `equity.diluted_shares`
+
+M23 turns M22's future-binding eligibility into the governed Draft-binding path without rebuilding prior proposal decisions.
+
+```text
+validated M16 v0.1 proposal
+or validated M20 v0.2 proposal
+        +
+complete reviewed fresh M22 share bridge
+        ↓
+draft-binding-proposal-v0.3
+```
+
+M23 may replace only:
+
+```text
+equity.diluted_shares
+```
+
+Every cash, debt, conflict, and other base decision must remain identical to the embedded v0.1/v0.2 proposal.
+
+The bridge must be:
+
+```text
+class = DERIVED_FACT
+coverage = COMPLETE_REVIEWED_DILUTION_COVERAGE
+eligible_for_future_direct_bind = true
+candidate_fully_diluted_shares > 0
+entity/scope/as_of = exact base-proposal match
+```
+
+The v0.3 proposal preserves:
+
+```text
+source_bridge_sha256
+base_context_sha256
+coverage_assertion_sha256
+```
+
+M17's existing `binding-approval-v0.1` is reused. A human must explicitly approve `equity.diluted_shares`; apply remains in memory, keeps the source Draft unchanged, and produces a noncanonical result.
+
+See [`docs/SHARE_DRAFT_BINDING.md`](docs/SHARE_DRAFT_BINDING.md).
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -150,6 +178,7 @@ current_common_shares               ≠ fully_diluted_shares
 weighted_average_diluted_shares     ≠ current_common_shares
 historical_dilution_factor          ≠ current dilution adjustment
 missing dilution category           ≠ zero
+candidate bridge total              ≠ binding authority
 historical revenue                  ≠ forecast revenue
 historical margin                   ≠ forecast margin
 REPORT_STAGE_ONLY                   ≠ exact date
@@ -164,18 +193,28 @@ vih web
 Default: `http://127.0.0.1:8765`
 
 ```text
-/source        — SEC source inspection
-/dart-source   — OpenDART source inspection
-/normalize     — financial normalization + TTM
-/binding       — evidence → Draft binding proposal
-/binding-apply — human approval + in-memory Draft binding
-/derived       — governed historical derived evidence
-/debt          — governed debt aggregation + M20 binding preparation
-/dilution      — governed historical dilution reference evidence
-/shares        — valuation-date common-share base + diluted-share bridge
+/source         — SEC source inspection
+/dart-source    — OpenDART source inspection
+/normalize      — financial normalization + TTM
+/binding        — evidence → Draft binding proposal
+/binding-apply  — human approval + in-memory Draft binding
+/derived        — governed historical derived evidence
+/debt           — governed debt aggregation + M20 binding preparation
+/dilution       — governed historical dilution reference evidence
+/shares         — valuation-date common-share base + diluted-share bridge
+/share-binding  — complete reviewed bridge → noncanonical v0.3 proposal
 ```
 
-M22 `/shares` and `/api/shares/*` are calculate/validate only; no Draft or canonical write path exists.
+`/shares` and `/share-binding` are calculate/validate preparation surfaces. M23 exposes no Web Draft-apply, file-write, promotion, admission, or canonical-write endpoint.
+
+## M23 CLI
+
+```text
+binding-build-with-diluted-shares <base_proposal.json> <share_bridge.json>
+binding-validate <proposal.json>
+```
+
+The existing M17 approval/apply commands then operate on a validated v0.3 proposal under the same human SHA lock.
 
 ## Milestones / 마일스톤
 
@@ -189,8 +228,8 @@ M22 `/shares` and `/api/shares/*` are calculate/validate only; no Draft or canon
 - [x] M19 governed interest-bearing debt components + aggregation
 - [x] M20 reviewed debt → `equity.debt` binding + human date assertion
 - [x] M21 governed historical dilution reference evidence
-- [ ] **M22 valuation-date common-share base + diluted-share bridge foundation — active finalization**
-- [ ] complete reviewed M22 bridge → `equity.diluted_shares` binding integration
+- [x] M22 valuation-date common-share base + diluted-share bridge foundation
+- [ ] **M23 complete reviewed bridge → `equity.diluted_shares` binding — active finalization**
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
@@ -210,8 +249,10 @@ M22 `/shares` and `/api/shares/*` are calculate/validate only; no Draft or canon
 - [`docs/DEBT_DRAFT_BINDING.md`](docs/DEBT_DRAFT_BINDING.md)
 - [`docs/SHARE_DILUTION_REFERENCE.md`](docs/SHARE_DILUTION_REFERENCE.md)
 - [`docs/VALUATION_SHARE_BRIDGE.md`](docs/VALUATION_SHARE_BRIDGE.md)
-- [`docs/M20_ACCEPTANCE.md`](docs/M20_ACCEPTANCE.md)
+- [`docs/SHARE_DRAFT_BINDING.md`](docs/SHARE_DRAFT_BINDING.md)
 - [`docs/M21_ACCEPTANCE.md`](docs/M21_ACCEPTANCE.md)
 - [`docs/M22_ACCEPTANCE.md`](docs/M22_ACCEPTANCE.md)
 - [`docs/M22_IMPLEMENTATION_SUMMARY.md`](docs/M22_IMPLEMENTATION_SUMMARY.md)
+- [`docs/M23_ACCEPTANCE.md`](docs/M23_ACCEPTANCE.md)
+- [`docs/M23_IMPLEMENTATION_SUMMARY.md`](docs/M23_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

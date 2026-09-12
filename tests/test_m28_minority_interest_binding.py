@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -18,9 +19,16 @@ from valuation_hub.minority_interest import (
     extract_sec_minority_interest_candidate,
     finalize_reviewed_minority_interest,
     normalize_minority_interest_candidate,
+    validate_minority_interest_candidate,
     validate_reviewed_minority_interest,
 )
 from valuation_hub.minority_interest_draft_binding import build_binding_proposal_with_minority_interest, validate_binding_proposal_v8
+
+
+def _rehash(value: dict, field: str) -> str:
+    copied = copy.deepcopy(value)
+    copied.pop(field, None)
+    return hashlib.sha256(json.dumps(copied, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
 
 
 def _m27_fixtures():
@@ -62,7 +70,7 @@ def _dart_snapshot(amount: str = "50,000,000", *, include: bool = True, fs_div: 
 def _sec_snapshot(*, include: bool = True) -> dict:
     facts = {}
     if include:
-        facts = {"us-gaap": {"NoncontrollingInterestInConsolidatedEntity": {"units": {"USD": [{
+        facts = {"us-gaap": {"NonredeemableNoncontrollingInterest": {"units": {"USD": [{
             "end": "2026-06-30", "val": 125000000, "accn": "0001234567-26-000001", "form": "10-Q", "filed": "2026-08-01", "fy": 2026, "fp": "Q2"
         }]}}}}
     body = json.dumps({"cik": 1234567, "facts": facts}).encode()
@@ -94,14 +102,19 @@ def _decision(proposal: dict, field: str) -> dict:
     return next(item for item in proposal["draft_input_matrix"] if item["field"] == field)
 
 
-def test_sec_exact_minority_interest_extracts_and_reviews_without_date_assertion() -> None:
+def test_sec_exact_minority_interest_extracts_nonredeemable_nci_and_reviews_without_date_assertion() -> None:
     candidate = extract_sec_minority_interest_candidate(_sec_snapshot())
-    assert candidate["source_identity"]["concept"] == "NoncontrollingInterestInConsolidatedEntity"
+    assert candidate["source_identity"]["concept"] == "NonredeemableNoncontrollingInterest"
     assert candidate["period"]["date_precision"] == "EXACT"
+    assert candidate["semantic_boundary"] == {
+        "missing_is_zero": False,
+        "redeemable_noncontrolling_interest_included": False,
+        "derived_from_equity_difference": False,
+    }
     observation = normalize_minority_interest_candidate(candidate)
     assertion = build_minority_interest_review_assertion(
         observation, as_of="2026-09-12", reviewer="human", approved_at="2026-09-12T12:00:00+00:00",
-        review_basis="Reviewed exact SEC noncontrolling-interest fact.", max_age_days=550,
+        review_basis="Reviewed exact SEC nonredeemable noncontrolling-interest fact.", max_age_days=550,
     )
     package = finalize_reviewed_minority_interest(observation, assertion)
     assert package["class"] == "NORMALIZED_FACT"
@@ -111,6 +124,7 @@ def test_sec_exact_minority_interest_extracts_and_reviews_without_date_assertion
 
 def test_opendart_report_stage_requires_human_exact_date_assertion() -> None:
     candidate = extract_dart_minority_interest_candidate(_dart_snapshot())
+    assert candidate["source_identity"]["account_id"] == "ifrs-full_NoncontrollingInterests"
     assert candidate["period"]["date_precision"] == "REPORT_STAGE_ONLY"
     observation = normalize_minority_interest_candidate(candidate)
     with pytest.raises(CaseServiceError, match="requires human date assertion|인간 날짜승인"):
@@ -131,6 +145,22 @@ def test_missing_is_not_zero_but_explicit_zero_is_preserved() -> None:
     package = _minority_package("0")
     assert package["value"] == 0
     assert package["binding_eligibility"]["eligible"] is True
+
+
+def test_resigned_candidate_cannot_change_exact_sec_or_dart_mapping() -> None:
+    sec_candidate = extract_sec_minority_interest_candidate(_sec_snapshot())
+    forged_sec = copy.deepcopy(sec_candidate)
+    forged_sec["source_identity"]["concept"] = "RedeemableNoncontrollingInterestEquityCarryingAmount"
+    forged_sec["candidate_sha256"] = _rehash(forged_sec, "candidate_sha256")
+    with pytest.raises(CaseServiceError, match="exact concept identity|exact concept 식별"):
+        validate_minority_interest_candidate(forged_sec)
+
+    dart_candidate = extract_dart_minority_interest_candidate(_dart_snapshot())
+    forged_dart = copy.deepcopy(dart_candidate)
+    forged_dart["source_identity"]["account_id"] = "ifrs-full_Equity"
+    forged_dart["candidate_sha256"] = _rehash(forged_dart, "candidate_sha256")
+    with pytest.raises(CaseServiceError, match="exact account identity|exact account 식별"):
+        validate_minority_interest_candidate(forged_dart)
 
 
 def test_v08_replaces_only_minority_interest_and_requires_v07() -> None:

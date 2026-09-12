@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/reviewed_forecast_scenario_assumption.schema.json",
+  "title": "Reviewed Integrated Forecast Scenario Assumption v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "class", "methodology_version", "entity", "capital_currency", "as_of", "scenario_names", "forecast_years", "scenarios", "forecast_block_sha256", "candidate", "review_assertion", "binding_eligibility", "package_sha256"],
+  "properties": {
+    "schema_version": {"const": "reviewed-forecast-scenario-assumption-v0.1"},
+    "status": {"const": "FORECAST_SCENARIO_ASSUMPTION_REVIEWED"},
+    "canonical": {"const": false},
+    "class": {"const": "ASSUMPTION"},
+    "methodology_version": {"const": "integrated-fcff-forecast-v0.1"},
+    "entity": {"type": "object", "required": ["id", "financial_scope"]},
+    "capital_currency": {"type": "string", "minLength": 3, "maxLength": 8},
+    "as_of": {"type": "string", "format": "date"},
+    "scenario_names": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "forecast_years": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer"}},
+    "scenarios": {"type": "array", "minItems": 1},
+    "forecast_block_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {"type": "object"},
+    "review_assertion": {"type": "object"},
+    "binding_eligibility": {
+      "type": "object",
+      "required": ["eligible", "reason"],
+      "properties": {
+        "eligible": {"const": true},
+        "reason": {"const": "REVIEWED_INTEGRATED_FORECAST_ASSUMPTION"}
+      },
+      "additionalProperties": false
+    },
+    "package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

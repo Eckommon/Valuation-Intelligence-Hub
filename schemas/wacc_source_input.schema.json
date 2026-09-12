@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/wacc_source_input.schema.json",
+  "title": "WACC Source Input v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","claim_class","metric","value","unit","observed_on","source","input_sha256"],
+  "properties": {
+    "schema_version": {"const": "wacc-source-input-v0.1"},
+    "status": {"const": "WACC_SOURCE_INPUT"},
+    "canonical": {"const": false},
+    "claim_class": {"enum": ["FACT","NORMALIZED_FACT","ASSUMPTION"]},
+    "metric": {"enum": ["risk_free_rate","equity_risk_premium","levered_beta","pre_tax_cost_of_debt","equity_market_value","debt_market_value","tax_rate"]},
+    "value": {"type": "number"},
+    "unit": {"type": "string", "minLength": 1},
+    "observed_on": {"type": "string", "format": "date"},
+    "source": {
+      "type": "object",
+      "required": ["publisher","type","tier","locator","source_sha256"],
+      "properties": {
+        "publisher": {"type": "string", "minLength": 1},
+        "type": {"type": "string", "minLength": 1},
+        "tier": {"enum": ["A","B","C","D"]},
+        "locator": {"type": "string", "minLength": 1},
+        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "input_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

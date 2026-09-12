@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "interest-bearing-debt-evidence-v0.1",
+  "title": "Interest-Bearing Debt Evidence v0.1",
+  "type": "object",
+  "required": ["schema_version", "status", "canonical", "class", "metric", "unit", "entity", "period", "coverage", "components", "conflicts", "known_component_sum", "interest_bearing_debt_value", "semantic_boundary", "policy", "debt_sha256"],
+  "properties": {
+    "schema_version": {"const": "interest-bearing-debt-evidence-v0.1"},
+    "status": {"const": "INTEREST_BEARING_DEBT_EVIDENCE"},
+    "canonical": {"const": false},
+    "class": {"enum": ["DERIVED_FACT", "DERIVED_FACT_CANDIDATE"]},
+    "metric": {"const": "interest_bearing_debt"},
+    "unit": {"type": "string", "minLength": 1},
+    "entity": {"type": "object", "required": ["id", "financial_scope"]},
+    "period": {"type": "object"},
+    "coverage": {
+      "type": "object",
+      "required": ["status", "expected_components", "present_components", "missing_components", "conflict_components"],
+      "properties": {
+        "status": {"enum": ["COMPLETE_CORE_COMPONENTS", "PARTIAL_COMPONENTS", "CONFLICT_BLOCKED"]},
+        "expected_components": {"type": "array", "minItems": 5, "maxItems": 5},
+        "present_components": {"type": "array"},
+        "missing_components": {"type": "array"},
+        "conflict_components": {"type": "array"}
+      }
+    },
+    "components": {"type": "array"},
+    "conflicts": {"type": "array"},
+    "known_component_sum": {"type": ["number", "null"]},
+    "interest_bearing_debt_value": {"type": ["number", "null"]},
+    "semantic_boundary": {
+      "type": "object",
+      "required": ["total_liabilities_used", "lease_liabilities_included", "missing_as_zero", "eligible_for_draft_direct_bind"],
+      "properties": {
+        "total_liabilities_used": {"const": false},
+        "lease_liabilities_included": {"const": false},
+        "missing_as_zero": {"const": false},
+        "eligible_for_draft_direct_bind": {"type": "boolean"}
+      }
+    },
+    "policy": {
+      "type": "object",
+      "required": ["version", "lease_policy"],
+      "properties": {
+        "version": {"const": "CORE_INTEREST_BEARING_DEBT_V01"},
+        "lease_policy": {"const": "EXCLUDED_PENDING_EXPLICIT_POLICY"}
+      }
+    },
+    "debt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": true
+}

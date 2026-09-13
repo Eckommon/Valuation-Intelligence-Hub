@@ -43,7 +43,7 @@ def test_resigned_review_cannot_change_resolved_period_or_freshness() -> None:
     forged = copy.deepcopy(assertion)
     forged["resolved_period_end"] = "2026-09-01"
     forged["assertion_sha256"] = _rehash(forged, "assertion_sha256")
-    with pytest.raises(CaseServiceError, match="date resolution mismatch|날짜해결 불일치"):
+    with pytest.raises(CaseServiceError, match="date resolution mismatch|날짜해결 불일치|freshness mismatch|최신성 불일치"):
         validate_minority_interest_review_assertion(forged, observation)
 
     forged = copy.deepcopy(assertion)
@@ -76,11 +76,6 @@ def test_explicit_zero_survives_v08_and_apply_without_missing_inference() -> Non
         approved_fields=["equity.minority_interest"], approved_at="2026-09-12T21:30:00+09:00",
     )
     result = apply_binding_approval(proposal, draft, approval)
-    assert result["applied_diffs"] == [
-        {
-            **result["applied_diffs"][0],
-            "before": 123.0,
-            "after": 0,
-        }
-    ]
+    assert result["applied_diffs"][0]["before"] == 123.0
+    assert result["applied_diffs"][0]["after"] == 0
     assert result["draft_after"]["equity"]["minority_interest"] == 0

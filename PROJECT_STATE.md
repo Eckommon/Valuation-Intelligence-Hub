@@ -19,17 +19,16 @@
 | M24 Governed WACC → `scenario.wacc` | `ca85f04c1bd84c5189f78c81e2653cc4f65bccca` | #52 |
 | M25 Governed terminal growth → `scenario.terminal_growth` | `0c0a7591a59f163fa34aba54fdeb6001fb9b7dc0` | #54 |
 | M26 Integrated forecast → six-field atomic binding | `130363475139fe6ea30d00d615f387b440a23c71` | #56 |
+| M27 Governed market price → `market_price` | `3a5f2742acd11756a78579e8fd8ba8709a267327` | #58 |
 
 Earlier M1–M19 milestones remain completed and regression-locked in repository history.
 
 ### Recent canonical CI / 최근 정식 CI
 
-- M24 final PR CI `34693544084` → Python 3.11/3.12 success
-- M24 post-merge main CI `34693990230` → Python 3.11/3.12 success
-- M25 final PR CI `34694777238` → Python 3.11/3.12 success
-- M25 post-merge main CI `34694840768` → Python 3.11/3.12 success
-- M26 final PR CI `34708790304` → Python 3.11/3.12 success
-- M26 post-merge main CI `34708847816` → Python 3.11/3.12 success
+- M24 final/post-merge: `34693544084` / `34693990230` → Python 3.11/3.12 success
+- M25 final/post-merge: `34694777238` / `34694840768` → Python 3.11/3.12 success
+- M26 final/post-merge: `34708790304` / `34708847816` → Python 3.11/3.12 success
+- M27 final/post-merge: `34721632879` / `34721689531` → Python 3.11/3.12 success
 
 ## Authority model / 권위모델
 
@@ -53,261 +52,218 @@ DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
 CANONICAL
 ```
 
-Calculation never silently upgrades candidate authority. A reviewed FACT or ASSUMPTION is still noncanonical until repository governance completes.
-
-계산은 candidate 권위를 자동 승격하지 않는다. 검토완료 FACT/ASSUMPTION도 저장소 거버넌스 완료 전에는 비정식이다.
+Calculation never silently upgrades candidate authority. Reviewed FACT/ASSUMPTION remains noncanonical until repository governance completes.
 
 ## Active mission / 활성 미션
 
-- Issue: `#58 [M27] Governed market-price fact + Draft binding`
-- PR: `#59 M27 Governed market-price FACT + Draft binding`
-- Branch: `mission/m27-market-price-binding-v01`
-- Base main: `130363475139fe6ea30d00d615f387b440a23c71`
+- Issue: `#60 [M28] Governed minority-interest FACT + Draft binding`
+- PR: `#61 M28 Governed minority-interest FACT + Draft binding`
+- Branch: `mission/m28-minority-interest-binding-v01`
+- Base main: `3a5f2742acd11756a78579e8fd8ba8709a267327`
 - Status: `ACTIVE_FINALIZATION`
 
-## M27 mission / M27 미션
+## M28 mission / M28 미션
 
-Govern a valuation-date as-traded market quote as a source-backed, freshness-controlled market `FACT`, then bind only a human-reviewed eligible package into top-level Draft `market_price`.
-
-가치평가일 as-traded 시장가격을 출처·최신성이 통제된 시장 `FACT`로 거버넌스하고 인간 검토완료 적격 패키지만 Draft 최상위 `market_price`로 연결한다.
-
-## M27 authority boundary / M27 권위경계
+Close the final remaining equity-FCFF material-field gap by governing valuation-date noncontrolling/minority interest as source-backed balance-sheet evidence and binding only reviewed, fresh, eligible `NORMALIZED_FACT` into:
 
 ```text
-quoted number without provenance != governed market-price FACT
-historical adjusted price != valuation-date market price
-FACT_CANDIDATE != FACT
-reviewed FACT != canonical state
+equity.minority_interest
 ```
 
-Market price is a market observation, not a valuation assumption.
+가치평가일 비지배지분을 출처기반 재무상태표 근거로 거버넌스하고 검토완료·최신·적격 `NORMALIZED_FACT`만 Draft에 연결한다.
 
-## Market-price candidate / 시장가격 Candidate
-
-`market-price-fact-candidate-v0.1` requires:
-
-- positive price per share
-- uppercase quote currency
-- exact entity ID + financial scope
-- instrument ID + symbol + venue
-- security type `COMMON_EQUITY`
-- explicit quote type: `OFFICIAL_CLOSE` or `LAST_TRADE`
-- price basis `AS_TRADED_PER_SHARE`
-- exact trading date
-- timezone-aware quote observation timestamp
-- valuation `as_of`
-- source publisher/type/tier/locator
-- source snapshot SHA-256
-- explicit max-age freshness policy
-
-Review eligibility requires:
+## M28 semantic boundary / M28 의미경계
 
 ```text
-source tier ∈ {A, B}
-AND
-freshness = FRESH
+total equity != minority interest
+parent-attributable equity != minority interest
+liabilities != minority interest
+missing minority-interest evidence != zero
+redeemable NCI != M28 v0.1 SEC field
+minority-interest FACT != analyst assumption
 ```
 
-Trading date after valuation `as_of` fails closed. Historical-price substitution and silent split adjustment are forbidden.
+Explicit source-reported zero is valid evidence. Missing evidence fails closed.
 
-## Human review / 인간검토
+## Exact source architecture / 정확한 출처구조
 
-`market-price-review-assertion-v0.1` locks:
+M28 does not mutate M13/M14 historical registries. It uses isolated adapters over validated immutable source snapshots.
 
-- exact candidate SHA
-- source snapshot SHA
-- exact price / currency / instrument / venue / quote type
-- trading date / quote timestamp / valuation `as_of`
-- freshness policy/status
-- reviewer
-- timezone-aware approval timestamp
-- review basis
-
-Chronology is independently enforced:
+SEC v0.1 exact concept:
 
 ```text
-approved_at >= observed_at
-approved_at.date >= valuation as_of
+us-gaap:NonredeemableNoncontrollingInterest
 ```
 
-The first core checkpoint passed before this additional chronology hardening. A dedicated regression test now proves that re-signing the outer assertion cannot legitimize pre-observation approval.
-
-Finalization yields:
+OpenDART v0.1 exact account:
 
 ```text
-reviewed-market-price-fact-v0.1
-class = FACT
-canonical = false
-binding_eligibility = REVIEWED_FRESH_MARKET_PRICE_FACT
+CFS + BS + ifrs-full_NoncontrollingInterests
 ```
 
-## v0.7 binding / v0.7 바인딩
+No equity-difference derivation or label-only fallback is allowed.
+
+## Evidence lifecycle / 근거 수명주기
 
 ```text
-validated draft-binding-proposal-v0.6
-        +
-reviewed fresh market-price FACT
+immutable SEC/OpenDART snapshot
         ↓
-draft-binding-proposal-v0.7
+minority-interest-candidate-v0.1 / FACT_CANDIDATE
+        ↓
+minority-interest-observation-v0.1 / NORMALIZED_FACT_CANDIDATE
+        ↓
+minority-interest-review-assertion-v0.1
+        ↓
+reviewed-minority-interest-fact-v0.1 / NORMALIZED_FACT / canonical=false
+        ↓
+draft-binding-proposal-v0.8
+        ↓
+M17-family human binding approval/apply
+        ↓
+noncanonical bound Draft result
 ```
 
-M27 accepts only validated v0.6 as its base.
+Nested candidate/observation/review/package hashes and source snapshot lineage are independently revalidated.
 
-Required exact compatibility:
+## Date and freshness / 날짜·최신성
 
-- entity ID
-- financial scope
-- quote currency == base monetary unit / Draft currency
-- market-price `as_of` == base proposal `as_of`
+- SEC instant facts: exact source period end, `SOURCE_EXACT`; human override forbidden.
+- OpenDART: `REPORT_STAGE_ONLY`; separate SHA-locked human exact-date assertion required.
+- resolved period end after valuation `as_of` fails closed.
+- freshness is independently recomputed.
+- stale reviewed package remains visible but cannot DIRECT_BIND.
 
-v0.7 replaces exactly:
+## v0.8 binding / v0.8 바인딩
+
+M28 accepts only validated M27 `draft-binding-proposal-v0.7`.
+
+v0.8 may replace only:
 
 ```text
-market_price
+equity.minority_interest
 ```
 
-Every other base decision remains unchanged, including cash, debt, diluted shares, WACC, terminal growth, and all six forecast fields.
+Every other material-field decision from v0.7 must remain identical. Exact compatibility is required for entity ID, consolidated scope, currency, and valuation `as_of`.
 
-## Apply semantics / 적용 의미론
-
-M27 extends the existing human binding-approval/apply path additively.
-
-Applying `market_price` changes only the top-level Draft field and records:
+The proposal and applied diff preserve:
 
 ```text
-before
-after
-source_market_price_package_sha256
-source_snapshot_sha256
-review_assertion_sha256
-trading_date
-observed_at
-venue
-quote_type
+minority-interest package SHA
+normalized observation SHA
+source snapshot SHA
+review assertion SHA
+resolved period end
+date-resolution method
 ```
 
-The input Draft remains unchanged and the result remains noncanonical.
+## Apply / 적용
 
-M26 result-integrity hardening remains enforced:
-
-```text
-all applied diff fields are unique
-AND
-set(applied_diff.field) == set(approved_fields)
-```
-
-## M27 CI history / M27 CI 이력
-
-- Initial core head `c26790fa8e81e37b0fdffd9c772a978809202c6f`
-  - CI `34709265076`: Python 3.11/3.12 success
-- Quote-review chronology hardened head `6329f48f9f0233134d70dcd564f3c6362b050717`
-  - CI `34721348673`: Python 3.11/3.12 success
-- Interface/schema checkpoint follows the active branch after CLI entrypoint/schema changes.
-
-A fresh final-head Python 3.11/3.12 CI is required after README/docs/PROJECT_STATE changes. Only that exact final tested head may authorize merge.
+Human binding approval remains mandatory. Apply changes only the in-memory result's `draft["equity"]["minority_interest"]`; the input Draft remains unchanged and the result remains noncanonical. M26 unique-diff-field result-integrity protection remains active.
 
 ## Interfaces / 인터페이스
 
 Installed CLI entrypoint:
 
 ```text
-vih = valuation_hub.cli_entry_m27:main
+vih = valuation_hub.cli_entry_m28:main
 ```
 
-M27 commands:
+M28 commands:
 
 ```text
-market-price-candidate-build
-market-price-candidate-validate
-market-price-review-build
-market-price-review-validate
-market-price-finalize
-market-price-validate
-binding-build-with-market-price
+minority-sec-extract
+minority-dart-extract
+minority-candidate-validate
+minority-normalize
+minority-observation-validate
+minority-review-build
+minority-review-validate
+minority-finalize
+minority-validate
+binding-build-with-minority-interest
 binding-validate
 ```
 
-All M1–M26 commands delegate unchanged to the M26 dispatcher.
+All older commands delegate through `cli_entry_m27` and predecessor wrappers.
 
 Web:
 
 ```text
-/market-price
-/api/market-price/candidate-build
-/api/market-price/candidate-validate
-/api/market-price/review-build
-/api/market-price/review-validate
-/api/market-price/finalize
-/api/market-price/validate
-/api/market-price/binding-build
-/api/market-price/binding-validate
+/minority-interest
+/api/minority-interest/*
 ```
 
-M27 Web is preparation/validation only. It has no direct Draft-apply, file-write, promotion, admission, or canonical-write endpoint.
+M28 Web is preparation/validation only: no direct Draft apply, file write, promotion, admission, or canonical write.
 
-## M27 files / M27 파일
+## M28 CI history / M28 CI 이력
 
-- `src/valuation_hub/market_price.py`
-- `src/valuation_hub/market_price_draft_binding.py`
-- `src/valuation_hub/binding_apply_m27.py`
-- `src/valuation_hub/cli_entry_m27.py`
-- `src/valuation_hub/web_market_price.py`
-- `schemas/market_price_fact_candidate.schema.json`
-- `schemas/market_price_review_assertion.schema.json`
-- `schemas/reviewed_market_price_fact.schema.json`
-- `schemas/draft_binding_proposal_v07.schema.json`
-- `tests/test_m27_market_price_binding.py`
-- `tests/test_m27_review_chronology_hardening.py`
-- `tests/test_m27_interfaces.py`
-- `docs/MARKET_PRICE_FACT_BINDING.md`
-- `docs/M27_ACCEPTANCE.md`
-- `docs/M27_IMPLEMENTATION_SUMMARY.md`
+- Initial branch head `ddb5c7f7f74a30624a80072daacacc7500a2b899`
+  - CI `34722357783`: corrective failure, 361 passed / 2 stale predecessor entrypoint tests failed.
+- First successor-compatible correction `220069fa8db6cb7fee8a03b0eb1a9e317108b0d8`
+  - CI `34748635300`: corrective failure, 362 passed / 1 remaining stale M27 entrypoint test failed.
+- Full successor-compatible correction `b94de627313f1ff42bbe192b8294a75ee27df9bb`
+  - CI `34748676308`: Python 3.11/3.12 success.
+- Additional M28 integrity/interface/schema/docs hardening follows on the active branch.
+
+A fresh exact final-head Python 3.11/3.12 CI is required after this handoff update. Only that exact tested head may authorize merge.
+
+## M28 files / M28 파일
+
+Core:
+- `src/valuation_hub/minority_interest.py`
+- `src/valuation_hub/minority_interest_draft_binding.py`
+- `src/valuation_hub/binding_apply_m28.py`
+- `src/valuation_hub/cli_entry_m28.py`
+- `src/valuation_hub/web_minority_interest.py`
+
+Schemas:
+- `schemas/minority_interest_candidate.schema.json`
+- `schemas/minority_interest_observation.schema.json`
+- `schemas/minority_interest_review_assertion.schema.json`
+- `schemas/reviewed_minority_interest_fact.schema.json`
+- `schemas/draft_binding_proposal_v08.schema.json`
+
+Tests/docs:
+- `tests/test_m28_minority_interest_binding.py`
+- `tests/test_m28_hardening.py`
+- `tests/test_m28_interfaces.py`
+- `docs/MINORITY_INTEREST_FACT_BINDING.md`
+- `docs/M28_ACCEPTANCE.md`
+- `docs/M28_IMPLEMENTATION_SUMMARY.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and completed Issue/PR decisions
 2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. v0.6 proposal SHA → market-price candidate/source SHA → review assertion SHA → reviewed FACT package SHA → v0.7 proposal SHA → binding approval/result SHA
+3. v0.7 proposal SHA → minority candidate/source snapshot → observation SHA → review assertion SHA → reviewed package SHA → v0.8 proposal SHA → binding approval/result SHA
 4. current chat
 5. AI recollection
 
-## Remaining material gap after M27 / M27 이후 잔여 중요입력
-
-Once M27 is canonical, the M16 equity-FCFF material-field matrix will have governed paths for every material field except likely:
-
-```text
-equity.minority_interest
-```
-
-Do not start M28 until M27 is merged and latest `main` is re-grounded.
-
-M27 병합 및 최신 main 재근거화 전에는 M28을 시작하지 않는다.
-
 ## Exact resume point / 정확한 재개점
 
-1. Verify the interface/schema checkpoint CI on the current branch.
-2. Run fresh full Python 3.11/3.12 CI on the exact final PR #59 head after this handoff update.
-3. Update PR #59 with exact tested head + CI run.
+1. Verify fresh full CI on the exact current PR #61 head after README/docs/PROJECT_STATE updates.
+2. Fix only real failures; do not weaken semantic/fail-closed contracts.
+3. Update PR #61 body with the correct SEC concept and exact final tested SHA + CI run.
 4. Merge using `expected_head_sha` only.
-5. Confirm Issue #58 closes as completed.
+5. Confirm Issue #60 closes as completed.
 6. Verify post-merge `main` Python 3.11/3.12 CI.
-7. Re-ground latest `main` before selecting M28.
+7. Re-ground latest main before selecting the next mission.
 
 Merge only if all remain green:
 
-- FACT candidate/reviewed FACT authority separation
-- exact quote identity and as-traded boundary
-- Tier A/B + freshness review gate
-- trading-date/as-of chronology
-- approval-at/quote-observation chronology
-- nested candidate/assertion tamper blocking
-- v0.6-only base requirement
+- exact SEC/OpenDART mapping and isolated adapters
+- missing ≠ zero; explicit zero preserved
+- candidate/reviewed authority separation
+- SEC exact date / OpenDART human date-resolution boundary
+- freshness and stale non-bindability
+- nested source/review/package tamper blocking
+- v0.7-only base requirement
 - exact entity/scope/currency/as-of compatibility
-- only `market_price` decision replaced
-- source/package/review/quote lineage
-- top-level Draft market-price-only mutation
-- source Draft immutability
+- only minority-interest decision replaced
+- Draft immutability + exact diff lineage
 - M26 unique-diff-field integrity guard
-- additive CLI delegation
+- additive CLI successor chain
 - Web no-write boundary
-- all M1–M26 regressions
+- all M1–M27 regressions
+
+After M28 canonical closure, the equity-FCFF material-field matrix should have governed paths for all material fields. Do not automatically add M29; reassess end-to-end case completion, product UX/reporting, and the first non-equity adapter against the product vision.

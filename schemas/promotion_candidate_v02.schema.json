@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/promotion_candidate_v02.schema.json",
+  "title": "Promotion Candidate v0.2 — Complete Governed Equity Handoff",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "status",
+    "canonical",
+    "draft",
+    "input_governance",
+    "evidence",
+    "source_bound_result",
+    "source_bound_result_sha256",
+    "review"
+  ],
+  "properties": {
+    "schema_version": {"const": "promotion-candidate-v0.2"},
+    "status": {"const": "CANDIDATE_REVIEW"},
+    "canonical": {"const": false},
+    "draft": {
+      "type": "object",
+      "required": ["schema_version", "status", "model", "name", "currency", "market_price", "equity"],
+      "properties": {
+        "schema_version": {"const": "draft-case-v0.1"},
+        "status": {"const": "DRAFT_USER_SUPPLIED"},
+        "model": {"const": "equity_fcff"}
+      }
+    },
+    "input_governance": {
+      "type": "array",
+      "minItems": 13,
+      "items": {
+        "type": "object",
+        "required": ["path", "binding_field", "class", "claim_ids", "rationale", "lineage"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "binding_field": {"type": "string", "minLength": 1},
+          "class": {"enum": ["FACT", "NORMALIZED_FACT", "DERIVED", "ASSUMPTION"]},
+          "claim_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "rationale": {"type": "string", "minLength": 1},
+          "lineage": {
+            "type": "object",
+            "required": ["proposal_sha256", "proposal_decision", "applied_diff"],
+            "properties": {
+              "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "proposal_decision": {"type": "object"},
+              "applied_diff": {"type": "object"}
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["binding_field", "claim_id", "class", "metric", "value", "status", "as_of", "source", "lineage"],
+        "properties": {
+          "binding_field": {
+            "enum": ["market_price", "equity.cash", "equity.minority_interest", "equity.debt", "equity.diluted_shares"]
+          },
+          "claim_id": {"type": "string", "minLength": 1},
+          "class": {"enum": ["FACT", "NORMALIZED_FACT", "DERIVED"]},
+          "metric": {"type": "string", "minLength": 1},
+          "value": {"type": "number"},
+          "status": {"const": "CURRENT"},
+          "as_of": {"type": "string", "format": "date"},
+          "source": {
+            "type": "object",
+            "required": ["publisher", "locator", "tier"],
+            "properties": {
+              "publisher": {"type": "string", "minLength": 1},
+              "locator": {"type": "string", "minLength": 1},
+              "tier": {"enum": ["A", "B", "C"]},
+              "type": {"type": "string"},
+              "date": {"type": "string"}
+            }
+          },
+          "lineage": {
+            "type": "object",
+            "required": ["proposal_sha256", "proposal_decision", "applied_diff"]
+          }
+        }
+      }
+    },
+    "source_bound_result": {
+      "type": "object",
+      "required": ["schema_version", "status", "canonical", "binding_proposal", "approval", "draft_after", "applied_diffs", "unresolved_binding_matrix", "result_sha256"],
+      "properties": {
+        "schema_version": {"const": "bound-draft-result-v0.1"},
+        "canonical": {"const": false},
+        "result_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "source_bound_result_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review": {
+      "type": "object",
+      "required": ["decision", "reviewer", "reviewed_at", "rationale", "scope_sha256"],
+      "properties": {
+        "decision": {"enum": ["PENDING", "APPROVE", "REJECT"]},
+        "reviewer": {"type": ["string", "null"]},
+        "reviewed_at": {"type": ["string", "null"]},
+        "rationale": {"type": ["string", "null"]},
+        "scope_sha256": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    }
+  }
+}

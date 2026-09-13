@@ -73,6 +73,7 @@ python -m pip install -e ".[dev]"
 - M25: reviewed WACC + long-run macro anchors → reviewed terminal-growth `ASSUMPTION` → `scenario.terminal_growth` binding
 - M26: six FCFF forecast inputs → one reviewed integrated scenario `ASSUMPTION` → atomic forecast binding
 - M27: exact as-traded market quote → reviewed market `FACT` → top-level `market_price` binding
+- M28: exact consolidated noncontrolling-interest evidence → reviewed `NORMALIZED_FACT` → `equity.minority_interest` binding
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -80,15 +81,16 @@ python -m pip install -e ".[dev]"
 liabilities                         ≠ debt
 shares_outstanding                  ≠ diluted_shares
 current_common_shares               ≠ fully_diluted_shares
-weighted_average_diluted_shares     ≠ valuation-date fully diluted shares
 historical dilution factor          ≠ automatic current dilution
 historical revenue                  ≠ forecast revenue
 historical margin                   ≠ forecast margin
 calculated WACC                     ≠ reviewed WACC assumption
 macro growth anchor                 ≠ terminal-growth fact
-calculated EBIT/NOPAT/FCFF          ≠ forecast authority
+calculated forecast                 ≠ forecast authority
 quoted number without provenance    ≠ governed market-price fact
 historical adjusted price           ≠ valuation-date market price
+total equity                        ≠ minority interest
+missing minority-interest evidence  ≠ zero minority interest
 FACT_CANDIDATE                      ≠ FACT
 ASSUMPTION_CANDIDATE                ≠ ASSUMPTION
 reviewed FACT / ASSUMPTION          ≠ canonical state
@@ -97,90 +99,60 @@ reviewed FACT / ASSUMPTION          ≠ canonical state
 ## M24–M26 governed valuation assumptions / M24–M26 가치평가 가정 거버넌스
 
 ### WACC
-
-Seven explicit sourced components are combined under a fixed methodology, independently recomputed, and then human-reviewed. WACC remains an `ASSUMPTION`, never a historical fact.
-
-See [`docs/WACC_ASSUMPTION_BINDING.md`](docs/WACC_ASSUMPTION_BINDING.md).
+Seven explicit sourced components are combined under a fixed methodology, independently recomputed, and human-reviewed. WACC remains an `ASSUMPTION`, never a historical fact. See [`docs/WACC_ASSUMPTION_BINDING.md`](docs/WACC_ASSUMPTION_BINDING.md).
 
 ### Terminal growth
-
-Terminal growth is reviewed against the exact WACC lineage and explicit long-run inflation/real-growth anchors.
-
-```text
-g > -1
-g < reviewed WACC
-g <= nominal macro anchor
-```
-
-See [`docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md`](docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md).
+Terminal growth is reviewed against exact WACC lineage and explicit long-run macro anchors. `g < WACC` remains a hard invariant. See [`docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md`](docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md).
 
 ### Integrated forecast
-
-M26 governs these six fields as one atomic assumption block:
-
-```text
-scenario.years.revenue
-scenario.years.ebit_margin
-scenario.years.tax_rate
-scenario.years.depreciation_amortization
-scenario.years.capex
-scenario.years.delta_nwc
-```
-
-Partial approval is forbidden. Bound-result validation also requires unique diff fields exactly equal to approved fields.
-
-See [`docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md`](docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md).
+M26 governs revenue, EBIT margin, tax rate, D&A, CAPEX, and ΔNWC as one atomic scenario assumption block. Partial approval is forbidden. See [`docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md`](docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md).
 
 ## M27 — Governed valuation-date market price / 거버넌스 가치평가일 시장가격
 
-Market price is an observed market `FACT`, not a valuation assumption.
-
-```text
-source-backed exact as-traded quote
-        ↓
-FACT_CANDIDATE
-        ↓
-SHA-locked human review
-        ↓
-reviewed noncanonical FACT
-        ↓
-draft-binding-proposal-v0.7
-        ↓
-market_price DIRECT_BIND
-```
-
-v0.1 requires explicit:
-
-- positive price per share
-- quote currency
-- exact trading date
-- timezone-aware quote timestamp
-- instrument ID + symbol
-- venue
-- `OFFICIAL_CLOSE` or `LAST_TRADE`
-- `AS_TRADED_PER_SHARE` price basis
-- valuation `as_of`
-- Tier A/B source provenance and source snapshot SHA for review eligibility
-
-Freshness is recomputed from trading date. A trading date after `as_of`, stale quote, unsupported quote type, lower source tier, currency mismatch, identity mismatch, or as-of mismatch fails closed.
-
-Human review must occur **after the quote observation**:
-
-```text
-approved_at >= observed_at
-```
-
-Historical price substitution and silent split adjustment are forbidden in M27 v0.1.
-
-M27 accepts only a validated v0.6 proposal and may replace only the top-level:
-
-```text
-market_price
-```
-
-All cash, debt, diluted-share, WACC, terminal-growth, and forecast decisions remain unchanged.
+Market price is an observed market `FACT`, not a valuation assumption. M27 requires a source-backed as-traded quote, freshness control, exact instrument/venue/quote identity, SHA-locked human review, and exact entity/scope/currency/as-of compatibility. It accepts only v0.6 and replaces only `market_price` in v0.7.
 
 See [`docs/MARKET_PRICE_FACT_BINDING.md`](docs/MARKET_PRICE_FACT_BINDING.md).
+
+## M28 — Governed minority interest / 거버넌스 비지배지분
+
+M28 closes the final equity-FCFF material-field gap.
+
+```text
+immutable exact source
+  ↓
+FACT_CANDIDATE
+  ↓
+NORMALIZED_FACT_CANDIDATE
+  ↓
+SHA-locked human review / date resolution
+  ↓
+reviewed NORMALIZED_FACT
+  ↓
+draft-binding-proposal-v0.8
+  ↓
+equity.minority_interest DIRECT_BIND
+```
+
+Exact v0.1 source boundaries:
+
+```text
+SEC:      us-gaap:NonredeemableNoncontrollingInterest
+OpenDART: CFS + BS + ifrs-full_NoncontrollingInterests
+```
+
+M28 never derives minority interest from total equity or liabilities. Redeemable NCI is outside the SEC v0.1 field boundary. Missing source evidence fails closed; explicit reported zero remains valid evidence.
+
+SEC exact instant dates use `SOURCE_EXACT`. OpenDART `REPORT_STAGE_ONLY` evidence requires a separate human exact-date assertion. Freshness is independently recomputed, and stale reviewed evidence cannot bind.
+
+v0.8 accepts only validated v0.7 and may replace only:
+
+```text
+equity.minority_interest
+```
+
+All earlier material-field decisions remain unchanged. Human approval is still required and the source Draft remains immutable.
+
+See [`docs/MINORITY_INTEREST_FACT_BINDING.md`](docs/MINORITY_INTEREST_FACT_BINDING.md).
 
 ## Web product / Web 제품
 
@@ -191,40 +163,42 @@ vih web
 Default: `http://127.0.0.1:8765`
 
 ```text
-/source           — SEC source inspection
-/dart-source      — OpenDART source inspection
-/normalize        — financial normalization + TTM
-/binding          — evidence → Draft binding proposal
-/binding-apply    — human approval + in-memory Draft binding
-/derived          — governed historical derived evidence
-/debt             — governed debt aggregation + binding preparation
-/dilution         — historical dilution reference
-/shares           — valuation-date common-share base + diluted-share bridge
-/share-binding    — complete share bridge → v0.3 proposal
-/wacc             — governed WACC candidate/review/v0.4 preparation
-/terminal-growth  — governed terminal-growth candidate/review/v0.5 preparation
-/forecast         — integrated forecast candidate/review/v0.6 preparation
-/market-price     — market FACT candidate/review/v0.7 preparation
+/source             — SEC source inspection
+/dart-source        — OpenDART source inspection
+/normalize          — financial normalization + TTM
+/binding            — evidence → Draft binding proposal
+/binding-apply      — human approval + in-memory Draft binding
+/derived            — governed historical derived evidence
+/debt               — governed debt aggregation + binding preparation
+/dilution           — historical dilution reference
+/shares             — valuation-date common-share base + diluted-share bridge
+/share-binding      — complete share bridge → v0.3 proposal
+/wacc               — governed WACC candidate/review/v0.4 preparation
+/terminal-growth    — terminal-growth candidate/review/v0.5 preparation
+/forecast           — integrated forecast candidate/review/v0.6 preparation
+/market-price       — market FACT candidate/review/v0.7 preparation
+/minority-interest  — minority-interest FACT candidate/review/v0.8 preparation
 ```
 
-M27 `/market-price` and `/api/market-price/*` are preparation/validation surfaces only. No direct Draft apply, file write, promotion, admission, or canonical-write endpoint is exposed there.
+Preparation Labs expose no direct Draft-file write, promotion, admission, or canonical-write route.
 
-## M27 CLI / M27 CLI
+## M28 CLI / M28 CLI
 
-`vih` now enters through the additive M27 dispatcher. All M1–M26 commands delegate unchanged.
+`vih` enters through additive `cli_entry_m28`; all M1–M27 commands delegate through the predecessor chain.
 
 ```text
-market-price-candidate-build
-market-price-candidate-validate
-market-price-review-build
-market-price-review-validate
-market-price-finalize
-market-price-validate
-binding-build-with-market-price
+minority-sec-extract
+minority-dart-extract
+minority-candidate-validate
+minority-normalize
+minority-observation-validate
+minority-review-build
+minority-review-validate
+minority-finalize
+minority-validate
+binding-build-with-minority-interest
 binding-validate
 ```
-
-Existing human approval/apply commands remain the only Draft application stage.
 
 ## Milestones / 마일스톤
 
@@ -232,8 +206,9 @@ Existing human approval/apply commands remain the only Draft application stage.
 - [x] M24 governed WACC assumption → `scenario.wacc`
 - [x] M25 governed terminal growth → `scenario.terminal_growth`
 - [x] M26 integrated six-field forecast assumption → atomic Draft binding
-- [ ] **M27 governed market-price FACT → `market_price` binding — active finalization**
-- [ ] `equity.minority_interest` remaining material-field governance
+- [x] M27 governed market-price FACT → `market_price`
+- [ ] **M28 governed minority-interest FACT → `equity.minority_interest` — active finalization**
+- [ ] end-to-end governed equity-FCFF case completion workflow
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
@@ -253,8 +228,9 @@ Material-input governance:
 - [`docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md`](docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md)
 - [`docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md`](docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md)
 - [`docs/MARKET_PRICE_FACT_BINDING.md`](docs/MARKET_PRICE_FACT_BINDING.md)
+- [`docs/MINORITY_INTEREST_FACT_BINDING.md`](docs/MINORITY_INTEREST_FACT_BINDING.md)
 
 Current milestone:
-- [`docs/M27_ACCEPTANCE.md`](docs/M27_ACCEPTANCE.md)
-- [`docs/M27_IMPLEMENTATION_SUMMARY.md`](docs/M27_IMPLEMENTATION_SUMMARY.md)
+- [`docs/M28_ACCEPTANCE.md`](docs/M28_ACCEPTANCE.md)
+- [`docs/M28_IMPLEMENTATION_SUMMARY.md`](docs/M28_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

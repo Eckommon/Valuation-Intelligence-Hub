@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from valuation_hub import cli_entry_m26, cli_entry_m27
+from valuation_hub import cli_entry_m26, cli_entry_m27, cli_entry_m28
 from valuation_hub.web_forecast import render_forecast_lab
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -73,5 +73,6 @@ def test_forecast_web_lab_is_preparation_only() -> None:
 
 def test_m26_wrapper_remains_in_successor_delegation_chain() -> None:
     assert cli_entry_m27.prior_cli is cli_entry_m26
+    assert cli_entry_m28.prior_cli is cli_entry_m27
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert 'vih = "valuation_hub.cli_entry_m27:main"' in pyproject
+    assert 'vih = "valuation_hub.cli_entry_m28:main"' in pyproject

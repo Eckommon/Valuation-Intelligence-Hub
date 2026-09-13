@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/minority_interest_review_assertion.schema.json",
+  "title": "Minority Interest Review Assertion v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","decision","source_observation_sha256","source_snapshot_sha256","entity","value","unit","source_period","resolved_period_end","date_resolution","as_of","freshness","reviewer","approved_at","review_basis","assertion_sha256"],
+  "properties": {
+    "schema_version": {"const": "minority-interest-review-assertion-v0.1"},
+    "status": {"const": "MINORITY_INTEREST_REVIEW_APPROVED"},
+    "canonical": {"const": false},
+    "decision": {"const": "APPROVE_MINORITY_INTEREST_FACT"},
+    "source_observation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "entity": {"type": "object"},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"type": "string"},
+    "source_period": {"type": "object"},
+    "resolved_period_end": {"type": "string", "format": "date"},
+    "date_resolution": {"enum": ["SOURCE_EXACT","HUMAN_DATE_ASSERTION"]},
+    "as_of": {"type": "string", "format": "date"},
+    "freshness": {"type": "object", "required": ["status","age_days","max_age_days"]},
+    "reviewer": {"type": "string", "minLength": 1},
+    "approved_at": {"type": "string", "format": "date-time"},
+    "review_basis": {"type": "string", "minLength": 1},
+    "assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

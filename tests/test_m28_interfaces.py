@@ -3,14 +3,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from valuation_hub import cli_entry_m27, cli_entry_m28
+from valuation_hub import cli_entry_m27, cli_entry_m28, cli_entry_m29
 from valuation_hub.web_minority_interest import render_minority_interest_lab
 
 
-def test_console_entrypoint_targets_m28_and_preserves_m27_delegation() -> None:
+def test_console_entrypoint_targets_latest_successor_and_preserves_m28_chain() -> None:
     pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
-    assert 'vih = "valuation_hub.cli_entry_m28:main"' in pyproject
+    assert 'vih = "valuation_hub.cli_entry_m29:main"' in pyproject
     assert cli_entry_m28.prior_cli is cli_entry_m27
+    assert cli_entry_m29.prior_cli is cli_entry_m28
 
 
 def test_m28_cli_intercepts_only_successor_surface() -> None:

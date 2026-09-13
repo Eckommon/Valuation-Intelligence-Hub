@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/reviewed_minority_interest_fact.schema.json",
+  "title": "Reviewed Minority Interest Fact v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","as_of","resolved_period_end","date_resolution","freshness","source","semantic_boundary","observation","review_assertion","binding_eligibility","package_sha256"],
+  "properties": {
+    "schema_version": {"const": "reviewed-minority-interest-fact-v0.1"},
+    "status": {"const": "MINORITY_INTEREST_FACT_REVIEWED"},
+    "canonical": {"const": false},
+    "class": {"const": "NORMALIZED_FACT"},
+    "metric": {"const": "minority_interest"},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"type": "string", "minLength": 1},
+    "entity": {"type": "object"},
+    "as_of": {"type": "string", "format": "date"},
+    "resolved_period_end": {"type": "string", "format": "date"},
+    "date_resolution": {"enum": ["SOURCE_EXACT","HUMAN_DATE_ASSERTION"]},
+    "freshness": {"type": "object"},
+    "source": {"type": "object"},
+    "semantic_boundary": {"type": "object"},
+    "observation": {"type": "object"},
+    "review_assertion": {"type": "object"},
+    "binding_eligibility": {"type": "object", "required": ["eligible","reason"]},
+    "package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

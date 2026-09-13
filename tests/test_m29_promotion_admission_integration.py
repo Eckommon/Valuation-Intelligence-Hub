@@ -4,11 +4,12 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-from valuation_hub.admission import build_admission_bundle, validate_admission_bundle
-from valuation_hub.admission_apply import build_repository_change_plan, validate_repository_change_plan
+from valuation_hub.admission_apply_m29 import build_repository_change_plan, validate_repository_change_plan
+from valuation_hub.admission_m29 import build_admission_bundle, validate_admission_bundle
 from valuation_hub.binding_apply_m28 import apply_binding_approval, build_binding_approval
 from valuation_hub.debt_draft_binding import build_binding_proposal_with_debt
 from valuation_hub.draft_binding import MATERIAL_FIELDS
+from valuation_hub.draft_service import validate_draft
 from valuation_hub.forecast_draft_binding import build_binding_proposal_with_forecast
 from valuation_hub.market_price_draft_binding import build_binding_proposal_with_market_price
 from valuation_hub.minority_interest_draft_binding import build_binding_proposal_with_minority_interest
@@ -98,13 +99,17 @@ def test_v02_candidate_stages_through_existing_m10_package_contract() -> None:
 
 def test_v02_package_builds_and_validates_existing_m11_admission_bundle() -> None:
     package = _package()
+    source_candidate = package["artifacts"]["reviewed_candidate.json"]
     bundle = build_admission_bundle(package, ROOT)
     checked = validate_admission_bundle(bundle, ROOT)
     assert checked["valid"] is True
     assert checked["case_id"] == CASE_ID
     assert bundle["target_path"] == f"analyses/equities/{CASE_ID}"
     assert bundle["artifacts"]["SOURCE_PACKAGE.json"] == package
-    assert bundle["artifacts"]["evidence_reviewed.json"]["evidence"] == package["artifacts"]["reviewed_candidate.json"]["evidence"]
+    assert bundle["artifacts"]["SOURCE_PACKAGE.json"]["artifacts"]["reviewed_candidate.json"]["draft"] == source_candidate["draft"]
+    assert bundle["artifacts"]["case_inputs.json"]["reviewed_draft"] == validate_draft(source_candidate["draft"])
+    assert bundle["artifacts"]["evidence_reviewed.json"]["claims"] == source_candidate["evidence"]
+    assert bundle["artifacts"]["evidence_reviewed.json"]["input_governance"] == source_candidate["input_governance"]
 
 
 def test_v02_admission_bundle_reaches_existing_m12_deterministic_change_plan() -> None:

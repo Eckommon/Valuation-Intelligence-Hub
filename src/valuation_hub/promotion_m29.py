@@ -34,7 +34,6 @@ OBSERVED_FIELD_CLASSES: dict[str, str] = {
     "equity.debt": "DERIVED",
     "equity.diluted_shares": "DERIVED",
 }
-OBSERVED_PATH_TO_FIELD = {field: field for field in OBSERVED_FIELD_CLASSES}
 ALLOWED_V2_CLASSES = {"FACT", "NORMALIZED_FACT", "DERIVED", "ASSUMPTION"}
 REVIEWABLE_SOURCE_TIERS = {"A", "B", "C"}
 FORECAST_PATH_RE = re.compile(
@@ -82,8 +81,8 @@ def _complete_bound_result(result: dict[str, Any]) -> tuple[dict[str, Any], dict
     if not isinstance(approval, dict) or not isinstance(draft_after, dict):
         raise CaseServiceError("complete approval/draft_after required / 완전한 승인·draft_after 필요")
     normalized = validate_draft(draft_after)
-    if normalized.get("model") != "equity_fcff" or normalized != draft_after:
-        raise CaseServiceError("M29 requires normalized equity_fcff draft_after / M29는 정규화 equity_fcff draft_after 필요")
+    if normalized.get("model") != "equity_fcff":
+        raise CaseServiceError("M29 requires valid equity_fcff draft_after / M29는 유효한 equity_fcff draft_after 필요")
 
     decisions = _decision_by_field(proposal)
     if any(item.get("state") != DIRECT_BIND for item in decisions.values()):
@@ -111,7 +110,15 @@ def _complete_bound_result(result: dict[str, Any]) -> tuple[dict[str, Any], dict
         raise CaseServiceError("complete bound result must have no unresolved matrix / 완전 bound result는 미해결 matrix가 없어야 함")
     if result.get("result_sha256") != checked.get("result_sha256"):
         raise CaseServiceError("bound-result SHA mismatch / bound-result SHA 불일치")
-    return proposal, approval, normalized, decisions, diff_by
+    return proposal, approval, copy.deepcopy(draft_after), decisions, diff_by
+
+
+def _normalized_numeric_map(draft: dict[str, Any]) -> dict[str, float]:
+    return legacy._material_numeric_map(validate_draft(draft))
+
+
+def _normalized_numeric_paths(draft: dict[str, Any]) -> list[str]:
+    return legacy._material_numeric_paths(validate_draft(draft))
 
 
 def _expected_lineage(proposal: dict[str, Any], decision: dict[str, Any], diff: dict[str, Any]) -> dict[str, Any]:
@@ -138,7 +145,7 @@ def build_evidence_catalog_claim(
     proposal, _, draft, decisions, diff_by = _complete_bound_result(bound_result)
     if field not in OBSERVED_FIELD_CLASSES:
         raise CaseServiceError("catalog supports only five observed fields / catalog은 5개 관측필드만 지원")
-    values = legacy._material_numeric_map(draft)
+    values = _normalized_numeric_map(draft)
     if field not in values:
         raise CaseServiceError("observed field missing from Draft / Draft 관측필드 누락")
     for name, value, limit in (
@@ -178,7 +185,7 @@ def _catalog_index(
 ) -> dict[str, dict[str, Any]]:
     if not isinstance(catalog, list) or len(catalog) != len(OBSERVED_FIELD_CLASSES):
         raise CaseServiceError("evidence catalog must contain exactly five claims / 근거 catalog는 정확히 5개 claim 필요")
-    values = legacy._material_numeric_map(draft)
+    values = _normalized_numeric_map(draft)
     indexed: dict[str, dict[str, Any]] = {}
     claim_ids: set[str] = set()
     records: list[EvidenceRecord] = []
@@ -207,8 +214,7 @@ def _catalog_index(
         tier = str(source.get("tier", ""))
         if tier not in REVIEWABLE_SOURCE_TIERS:
             raise CaseServiceError("Tier D/invalid source cannot support M29 observed field / Tier D·잘못된 출처는 M29 관측필드 지원 불가")
-        expected_lineage = _expected_lineage(proposal, decisions[field], diff_by[field])
-        if item.get("lineage") != expected_lineage:
+        if item.get("lineage") != _expected_lineage(proposal, decisions[field], diff_by[field]):
             raise CaseServiceError("catalog lineage mismatch / catalog lineage 불일치")
         try:
             record = EvidenceRecord(
@@ -231,8 +237,8 @@ def _catalog_index(
 
 
 def _aggregate_field_for_path(path: str) -> str:
-    if path in OBSERVED_PATH_TO_FIELD:
-        return OBSERVED_PATH_TO_FIELD[path]
+    if path in OBSERVED_FIELD_CLASSES:
+        return path
     if WACC_PATH_RE.fullmatch(path):
         return "scenario.wacc"
     if TERMINAL_GROWTH_PATH_RE.fullmatch(path):
@@ -251,7 +257,7 @@ def _governance_projection(
     diff_by: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     bindings: list[dict[str, Any]] = []
-    for path in legacy._material_numeric_paths(draft):
+    for path in _normalized_numeric_paths(draft):
         aggregate = _aggregate_field_for_path(path)
         decision = decisions[aggregate]
         lineage = _expected_lineage(proposal, decision, diff_by[aggregate])
@@ -325,8 +331,6 @@ def _validate_governance_rows(candidate: dict[str, Any], expected: list[dict[str
         raise CaseServiceError("v0.2 input governance projection mismatch / v0.2 입력거버넌스 투영 불일치")
     if any(row.get("class") not in ALLOWED_V2_CLASSES for row in rows):
         raise CaseServiceError("v0.2 input class invalid / v0.2 입력 class 오류")
-    if any(row.get("class") == "UNKNOWN" for row in rows):
-        raise CaseServiceError("v0.2 cannot contain UNKNOWN material input / v0.2 중요입력 UNKNOWN 금지")
     paths = [row.get("path") for row in rows]
     if len(paths) != len(set(paths)):
         raise CaseServiceError("v0.2 governance path duplicate / v0.2 거버넌스 path 중복")
@@ -349,10 +353,13 @@ def validate_candidate_v2(candidate: dict[str, Any]) -> dict[str, Any]:
     catalog_by = _catalog_index(evidence, proposal, draft, decisions, diff_by)
     expected_governance = _governance_projection(draft, catalog_by, proposal, decisions, diff_by)
     _validate_governance_rows(candidate, expected_governance)
-    expected_paths = set(legacy._material_numeric_paths(draft))
+    expected_paths = set(_normalized_numeric_paths(draft))
     actual_paths = {row["path"] for row in expected_governance}
     if actual_paths != expected_paths:
         raise CaseServiceError("v0.2 material path coverage mismatch / v0.2 중요 path coverage 불일치")
+    review = candidate.get("review")
+    if not isinstance(review, dict):
+        raise CaseServiceError("review object required / review 객체 필요")
     return {
         "status": CANDIDATE_STATUS,
         "canonical": False,

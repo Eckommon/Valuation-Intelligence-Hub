@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/minority_interest_candidate.schema.json",
+  "title": "Minority Interest Candidate v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","period","source_adapter","source_identity","source","selection","semantic_boundary","candidate_sha256"],
+  "properties": {
+    "schema_version": {"const": "minority-interest-candidate-v0.1"},
+    "status": {"const": "MINORITY_INTEREST_EVIDENCE_CANDIDATE"},
+    "canonical": {"const": false},
+    "class": {"const": "FACT_CANDIDATE"},
+    "metric": {"const": "minority_interest"},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"type": "string", "minLength": 1},
+    "entity": {"type": "object", "required": ["id","financial_scope"], "properties": {"id":{"type":"string"},"financial_scope":{"const":"CFS"}}},
+    "period": {"type": "object", "required": ["end","date_precision","report_stage","report_stage_ordinal"]},
+    "source_adapter": {"enum": ["SEC_COMPANYFACTS_EXACT_NONREDEEMABLE_NCI","OPENDART_EXACT_ACCOUNT_NCI"]},
+    "source_identity": {"type": "object"},
+    "source": {"type": "object", "required": ["publisher","source_type","tier","locator","snapshot_sha256","body_sha256"]},
+    "selection": {"type": "object"},
+    "semantic_boundary": {"type": "object", "required": ["missing_is_zero","redeemable_noncontrolling_interest_included","derived_from_equity_difference"], "properties": {"missing_is_zero":{"const":false},"redeemable_noncontrolling_interest_included":{"const":false},"derived_from_equity_difference":{"const":false}}},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

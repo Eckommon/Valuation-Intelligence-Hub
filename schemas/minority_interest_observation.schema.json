@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/minority_interest_observation.schema.json",
+  "title": "Minority Interest Observation v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","period","source","source_adapter","source_identity","semantic_boundary","source_candidate_sha256","candidate","observation_sha256"],
+  "properties": {
+    "schema_version": {"const": "minority-interest-observation-v0.1"},
+    "status": {"const": "MINORITY_INTEREST_NORMALIZED"},
+    "canonical": {"const": false},
+    "class": {"const": "NORMALIZED_FACT_CANDIDATE"},
+    "metric": {"const": "minority_interest"},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"type": "string", "minLength": 1},
+    "entity": {"type": "object"},
+    "period": {"type": "object"},
+    "source": {"type": "object"},
+    "source_adapter": {"type": "string"},
+    "source_identity": {"type": "object"},
+    "semantic_boundary": {"type": "object"},
+    "source_candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {"type": "object"},
+    "observation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

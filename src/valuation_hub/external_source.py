@@ -17,9 +17,12 @@ from typing import Any
 from urllib.parse import urlparse
 
 from valuation_hub.case_service import CaseServiceError, find_repo_root
-from valuation_hub.market_price import build_market_price_candidate
-from valuation_hub.terminal_growth_assumption import build_terminal_growth_anchor_input
-from valuation_hub.wacc_assumption import build_wacc_source_input
+from valuation_hub.market_price import build_market_price_candidate, validate_market_price_candidate
+from valuation_hub.terminal_growth_assumption import (
+    build_terminal_growth_anchor_input,
+    validate_terminal_growth_anchor_input,
+)
+from valuation_hub.wacc_assumption import build_wacc_source_input, validate_wacc_source_input
 
 SCHEMA_VERSION = "external-source-snapshot-v0.1"
 STATUS = "EXTERNAL_SOURCE_SNAPSHOT_CAPTURED"
@@ -65,7 +68,11 @@ def _locator(value: Any) -> str:
     parsed = urlparse(locator)
     if parsed.scheme != "https" or not parsed.hostname:
         raise CaseServiceError("external source locator must be absolute HTTPS / 외부 원문 locator는 절대 HTTPS URL이어야 함")
-    if parsed.username or parsed.password or parsed.port not in (None, 443):
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise CaseServiceError("external source locator port invalid / 외부 원문 locator port 오류") from exc
+    if parsed.username or parsed.password or port not in (None, 443):
         raise CaseServiceError("external source locator authority unsafe / 외부 원문 locator authority 오류")
     return locator
 
@@ -107,10 +114,7 @@ def build_external_source_snapshot(
             "network_fetch_performed": False,
             "credentials_persisted": False,
         },
-        "body": {
-            "bytes": len(raw),
-            "sha256": _sha(raw),
-        },
+        "body": {"bytes": len(raw), "sha256": _sha(raw)},
         "raw_text": raw_text,
         "snapshot_sha256": "",
     }
@@ -222,12 +226,55 @@ def _provenance(snapshot: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def _market_source(snapshot: dict[str, Any]) -> dict[str, str]:
+    source = _provenance(snapshot)
+    return {
+        "publisher": source["publisher"],
+        "source_type": source["source_type"],
+        "tier": source["tier"],
+        "locator": source["locator"],
+        "snapshot_sha256": source["snapshot_sha256"],
+    }
+
+
+def _assumption_source(snapshot: dict[str, Any]) -> dict[str, str]:
+    source = _provenance(snapshot)
+    return {
+        "publisher": source["publisher"],
+        "type": source["source_type"],
+        "tier": source["tier"],
+        "locator": source["locator"],
+        "source_sha256": source["snapshot_sha256"],
+    }
+
+
+def validate_market_price_candidate_against_snapshot(candidate: dict[str, Any], snapshot: dict[str, Any]) -> dict[str, Any]:
+    checked = validate_market_price_candidate(candidate)
+    if candidate.get("source") != _market_source(snapshot):
+        raise CaseServiceError("market-price candidate/snapshot provenance mismatch / 시장가격 candidate·snapshot provenance 불일치")
+    return {**checked, "snapshot_sha256": snapshot["snapshot_sha256"]}
+
+
+def validate_wacc_source_input_against_snapshot(value: dict[str, Any], snapshot: dict[str, Any]) -> dict[str, Any]:
+    checked = validate_wacc_source_input(value)
+    if value.get("source") != _assumption_source(snapshot):
+        raise CaseServiceError("WACC input/snapshot provenance mismatch / WACC 입력·snapshot provenance 불일치")
+    return {**checked, "snapshot_sha256": snapshot["snapshot_sha256"]}
+
+
+def validate_terminal_growth_anchor_against_snapshot(value: dict[str, Any], snapshot: dict[str, Any]) -> dict[str, Any]:
+    checked = validate_terminal_growth_anchor_input(value)
+    if value.get("source") != _assumption_source(snapshot):
+        raise CaseServiceError("terminal-growth anchor/snapshot provenance mismatch / 영구성장률 anchor·snapshot provenance 불일치")
+    return {**checked, "snapshot_sha256": snapshot["snapshot_sha256"]}
+
+
 def build_market_price_candidate_from_snapshot(snapshot: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     source = _provenance(snapshot)
     forbidden = {"source_publisher", "source_type", "source_tier", "source_locator", "source_snapshot_sha256"} & set(kwargs)
     if forbidden:
         raise CaseServiceError("source provenance must come only from snapshot / source provenance는 snapshot에서만 파생되어야 함")
-    return build_market_price_candidate(
+    candidate = build_market_price_candidate(
         **kwargs,
         source_publisher=source["publisher"],
         source_type=source["source_type"],
@@ -235,6 +282,8 @@ def build_market_price_candidate_from_snapshot(snapshot: dict[str, Any], **kwarg
         source_locator=source["locator"],
         source_snapshot_sha256=source["snapshot_sha256"],
     )
+    validate_market_price_candidate_against_snapshot(candidate, snapshot)
+    return candidate
 
 
 def build_wacc_source_input_from_snapshot(snapshot: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
@@ -242,7 +291,7 @@ def build_wacc_source_input_from_snapshot(snapshot: dict[str, Any], **kwargs: An
     forbidden = {"source_publisher", "source_type", "source_tier", "source_locator", "source_sha256"} & set(kwargs)
     if forbidden:
         raise CaseServiceError("WACC source provenance must come only from snapshot / WACC provenance는 snapshot에서만 파생되어야 함")
-    return build_wacc_source_input(
+    value = build_wacc_source_input(
         **kwargs,
         source_publisher=source["publisher"],
         source_type=source["source_type"],
@@ -250,6 +299,8 @@ def build_wacc_source_input_from_snapshot(snapshot: dict[str, Any], **kwargs: An
         source_locator=source["locator"],
         source_sha256=source["snapshot_sha256"],
     )
+    validate_wacc_source_input_against_snapshot(value, snapshot)
+    return value
 
 
 def build_terminal_growth_anchor_from_snapshot(snapshot: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
@@ -257,7 +308,7 @@ def build_terminal_growth_anchor_from_snapshot(snapshot: dict[str, Any], **kwarg
     forbidden = {"source_publisher", "source_type", "source_tier", "source_locator", "source_sha256"} & set(kwargs)
     if forbidden:
         raise CaseServiceError("terminal-growth provenance must come only from snapshot / 영구성장률 provenance는 snapshot에서만 파생되어야 함")
-    return build_terminal_growth_anchor_input(
+    value = build_terminal_growth_anchor_input(
         **kwargs,
         source_publisher=source["publisher"],
         source_type=source["source_type"],
@@ -265,3 +316,5 @@ def build_terminal_growth_anchor_from_snapshot(snapshot: dict[str, Any], **kwarg
         source_locator=source["locator"],
         source_sha256=source["snapshot_sha256"],
     )
+    validate_terminal_growth_anchor_against_snapshot(value, snapshot)
+    return value

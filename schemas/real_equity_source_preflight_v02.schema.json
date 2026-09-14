@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/real_equity_source_preflight_v02.schema.json",
+  "title": "Real Equity Source Preflight v0.2",
+  "type": "object",
+  "required": ["schema_version","status","canonical","target","checks","blockers","resolved_prerequisites","human_review_boundary","next_action","base_v01_preflight","base_v01_preflight_sha256","preflight_sha256"],
+  "properties": {
+    "schema_version": {"const": "real-equity-source-preflight-v0.2"},
+    "status": {"enum": ["PASS_REAL_EQUITY_SOURCE_PREFLIGHT","HOLD_REAL_CASE_PREREQUISITE"]},
+    "canonical": {"const": false},
+    "target": {"type": "object"},
+    "checks": {"type": "object", "required": ["registry_non_collision","sec_snapshot","cash_candidate","shares_candidate","minority_interest_candidate","us_sec_debt_profile","sec_aggregate_debt_candidate"]},
+    "blockers": {"type": "array"},
+    "resolved_prerequisites": {"type": "array", "minItems": 1},
+    "human_review_boundary": {"type": "object", "required": ["automatic_approval_forbidden","reviewer_must_be_explicit","runtime_sec_user_agent_must_not_be_committed","canonical_write","debt_semantic_review_required","debt_semantic_review_may_be_inferred"]},
+    "next_action": {"enum": ["RESOLVE_BLOCKERS_THEN_CONTINUE_M20_M29","CONTINUE_TO_HUMAN_DEBT_SEMANTIC_REVIEW"]},
+    "base_v01_preflight": {"type": "object"},
+    "base_v01_preflight_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "preflight_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

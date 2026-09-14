@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "real_equity_source_preflight_v01.schema.json",
+  "title": "M30 Real Equity Source Preflight v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "canonical",
+    "target",
+    "checks",
+    "blockers",
+    "human_review_boundary",
+    "next_action",
+    "preflight_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "real-equity-source-preflight-v0.1"},
+    "status": {"enum": ["PASS_REAL_EQUITY_SOURCE_PREFLIGHT", "HOLD_REAL_CASE_PREREQUISITE"]},
+    "canonical": {"const": false},
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "legal_name", "ticker", "exchange", "cik", "entity_id", "financial_scope", "financial_period_end", "valuation_as_of", "form"],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "legal_name": {"type": "string", "minLength": 1},
+        "ticker": {"type": "string", "minLength": 1},
+        "exchange": {"type": "string", "minLength": 1},
+        "cik": {"type": "string", "pattern": "^[0-9]{10}$"},
+        "entity_id": {"type": "string", "pattern": "^SEC_CIK:[0-9]{10}$"},
+        "financial_scope": {"const": "CFS"},
+        "financial_period_end": {"type": "string", "format": "date"},
+        "valuation_as_of": {"type": "string", "format": "date"},
+        "form": {"type": "string", "minLength": 1}
+      }
+    },
+    "checks": {"type": "object"},
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "detail"],
+        "properties": {
+          "code": {"type": "string", "minLength": 1},
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "human_review_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["automatic_approval_forbidden", "reviewer_must_be_explicit", "runtime_sec_user_agent_must_not_be_committed", "canonical_write"],
+      "properties": {
+        "automatic_approval_forbidden": {"const": true},
+        "reviewer_must_be_explicit": {"const": true},
+        "runtime_sec_user_agent_must_not_be_committed": {"const": true},
+        "canonical_write": {"const": false}
+      }
+    },
+    "next_action": {"enum": ["RESOLVE_BLOCKERS_THEN_CONTINUE_M20_M29", "CONTINUE_REAL_SOURCE_GOVERNANCE"]},
+    "preflight_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

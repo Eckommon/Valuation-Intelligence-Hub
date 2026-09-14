@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/sec_aggregate_debt_review_assertion.schema.json",
+  "title": "SEC Aggregate Debt Review Assertion v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","decision","reviewer","reviewed_at","review_basis","source_basis_locator","semantic_scope_decision","scope_sha256","source_observation_sha256","source_filing_accession","assertion_sha256"],
+  "properties": {
+    "schema_version": {"const": "sec-aggregate-debt-review-assertion-v0.1"},
+    "status": {"const": "SEC_AGGREGATE_DEBT_REVIEW_APPROVED"},
+    "canonical": {"const": false},
+    "decision": {"const": "APPROVE"},
+    "reviewer": {"type": "string", "minLength": 1, "maxLength": 160},
+    "reviewed_at": {"type": "string", "format": "date-time"},
+    "review_basis": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "source_basis_locator": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "semantic_scope_decision": {"const": "EXPLICIT_FILING_RECONCILIATION_EXCLUDES_LEASE_LIABILITIES"},
+    "scope_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_observation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_filing_accession": {"type": "string", "minLength": 1},
+    "assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

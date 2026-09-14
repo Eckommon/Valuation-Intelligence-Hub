@@ -5,7 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 
-from valuation_hub import cli_entry_m28, cli_entry_m29
+from valuation_hub import cli_entry_m28, cli_entry_m29, cli_entry_m30
 from valuation_hub.web_complete_equity_handoff import render_complete_handoff_lab
 
 
@@ -18,9 +18,10 @@ def _fixtures():
     return module
 
 
-def test_console_entrypoint_targets_m29_and_preserves_m28_delegation() -> None:
+def test_console_entrypoint_targets_latest_m30_and_preserves_m29_delegation() -> None:
     pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
-    assert 'vih = "valuation_hub.cli_entry_m29:main"' in pyproject
+    assert 'vih = "valuation_hub.cli_entry_m30:main"' in pyproject
+    assert cli_entry_m30.prior_cli is cli_entry_m29
     assert cli_entry_m29.prior_cli is cli_entry_m28
 
 

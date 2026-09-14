@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/draft_binding_proposal_v02_sec_aggregate.schema.json",
+  "title": "Draft Binding Proposal v0.2 SEC Aggregate Debt",
+  "type": "object",
+  "required": ["schema_version","status","canonical","target","policy","identity","baseline_context","conflicts","draft_input_matrix","completeness","source_observation_sha256","source_debt_context_sha256","debt_binding_context","base_v01_proposal","proposal_sha256"],
+  "properties": {
+    "schema_version": {"const": "draft-binding-proposal-v0.2-sec-aggregate-debt"},
+    "status": {"const": "DRAFT_BINDING_PROPOSAL"},
+    "canonical": {"const": false},
+    "target": {"type": "object"},
+    "policy": {"type": "object", "required": ["version","as_of","max_age_days","direct_bind_requires"], "properties": {"version": {"const": "evidence-draft-binding-v0.2-sec-aggregate-debt"}}},
+    "identity": {"type": "object"},
+    "baseline_context": {"type": "object", "required": ["interest_bearing_debt"]},
+    "conflicts": {"type": "array"},
+    "draft_input_matrix": {"type": "array", "minItems": 13, "maxItems": 13},
+    "completeness": {"type": "object", "required": ["material_field_count","classified_field_count","state_counts","direct_bind_count","unresolved_count"]},
+    "source_observation_sha256": {"type": "array"},
+    "source_debt_context_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "debt_binding_context": {"type": "object"},
+    "base_v01_proposal": {"type": "object"},
+    "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

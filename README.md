@@ -3,16 +3,16 @@
 > **Separate price from economic value, make assumptions explicit, and make valuation reproducible.**  
 > **가격과 경제적 가치를 분리하고, 가정을 명시하며, 가치평가를 재현 가능하게 만든다.**
 
-Valuation-Intelligence-Hub is a reproducible, evidence-grounded cross-asset valuation intelligence system connecting source evidence, normalization, governed facts and assumptions, Draft preparation, human review, valuation execution, and repository-controlled canonicalization.
+Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intelligence system connecting source evidence, normalization, governed facts and assumptions, Draft preparation, human review, valuation execution, promotion/admission, and repository-controlled canonicalization.
 
-Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·Draft·인간검토·가치평가 실행·저장소 정식화를 하나의 재현 가능한 범자산 가치분석 흐름으로 연결한다.
+Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·Draft·인간검토·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다.
 
 ## Core authority flow / 핵심 권위 흐름
 
 ```text
-OFFICIAL / USER SOURCE
+OFFICIAL / USER / EXTERNAL SOURCE
         ↓
-IMMUTABLE / SOURCE-LOCKED INPUT / NOT CANONICAL
+IMMUTABLE OR SOURCE-LOCKED INPUT / NOT CANONICAL
         ↓
 FACT_CANDIDATE / NORMALIZED FACT / ASSUMPTION_CANDIDATE
         ↓
@@ -26,30 +26,12 @@ BOUND DRAFT RESULT / NOT CANONICAL
         ↓
 COMPLETE GOVERNED HANDOFF
         ↓
-PROMOTION → ADMISSION → guarded apply → PR/CI merge
+PROMOTION → ADMISSION → GUARDED APPLY → PR/CI MERGE
         ↓
 CANONICAL
 ```
 
 Deterministic calculation never upgrades authority by itself. `FACT`, `NORMALIZED_FACT`, `DERIVED`, `ASSUMPTION`, human review, Draft binding, promotion, admission, and canonical repository state remain distinct.
-
-결정론적 계산만으로 권위가 승격되지 않는다. `FACT`, `NORMALIZED_FACT`, `DERIVED`, `ASSUMPTION`, 인간검토, Draft 바인딩, 승격·수용, canonical 저장소 상태는 분리된다.
-
-## Valuation kernel / 가치평가 커널
-
-\[
-FCFF = EBIT(1-T) + D\&A - CAPEX - \Delta NWC
-\]
-
-\[
-WACC = \frac{E}{D+E}R_e + \frac{D}{D+E}R_d(1-T)
-\]
-
-\[
-TV = \frac{FCFF_{n+1}}{WACC-g}, \qquad g < WACC
-\]
-
-The Hub also supports reverse valuation and probability-weighted venture valuation. Company cases are methodology references, not live investment recommendations.
 
 ## Install / 설치
 
@@ -57,26 +39,26 @@ The Hub also supports reverse valuation and probability-weighted venture valuati
 python -m pip install -e ".[dev]"
 ```
 
-## Governed capabilities / 거버넌스 기능
+## Governed capability map / 거버넌스 기능 지도
 
 - M1–M12: valuation kernels, evidence governance, Draft/Candidate review, promotion/admission, guarded repository apply
 - M13: immutable SEC CompanyFacts acquisition
-- M14: immutable OpenDART financial-statement acquisition
+- M14: immutable OpenDART acquisition
 - M15: period semantics, normalization, reconciliation, TTM
-- M16: normalized evidence → equity-FCFF Draft binding proposal v0.1
-- M17: SHA-locked human approval + noncanonical Draft binding application
+- M16–M17: normalized evidence → Draft proposal → SHA-locked human approval/application
 - M18: governed historical operating/net margin derivation
-- M19: explicit interest-bearing-debt components and aggregation
-- M20: reviewed complete debt → `equity.debt` binding
-- M21: governed historical dilution-reference evidence
-- M22: valuation-date common-share base + explicit diluted-share bridge
-- M23: complete reviewed fresh share bridge → `equity.diluted_shares` binding
-- M24: sourced WACC components → reviewed valuation `ASSUMPTION` → `scenario.wacc` binding
-- M25: reviewed WACC + long-run macro anchors → reviewed terminal-growth `ASSUMPTION` → `scenario.terminal_growth` binding
-- M26: six FCFF forecast inputs → one reviewed integrated scenario `ASSUMPTION` → atomic forecast binding
-- M27: exact as-traded market quote → reviewed market `FACT` → top-level `market_price` binding
-- M28: exact consolidated noncontrolling-interest evidence → reviewed `NORMALIZED_FACT` → `equity.minority_interest` binding
-- M29: complete human-approved 13/13 M28 bound Draft → authority-preserving `promotion-candidate-v0.2` → existing promotion/admission/guarded-plan pipeline
+- M19–M20: debt components, aggregation, reviewed debt → `equity.debt`
+- M21–M23: dilution evidence, valuation-date share bridge, reviewed `equity.diluted_shares`
+- M24: seven sourced WACC components → reviewed `ASSUMPTION` → `scenario.wacc`
+- M25: reviewed WACC + macro anchors → reviewed terminal-growth `ASSUMPTION`
+- M26: six FCFF forecast inputs → one atomic reviewed forecast block
+- M27: source-backed valuation-date market quote → reviewed `FACT` → `market_price`
+- M28: exact noncontrolling-interest evidence → reviewed `NORMALIZED_FACT` → `equity.minority_interest`
+- M29: complete 13/13 M28 bound Draft → `promotion-candidate-v0.2` → promotion/admission/guarded plan
+- M30-A/B: first-real-case source preflight and exact aggregate-debt successor path
+- M30-C: runtime-safe SEC capture interface with runtime-only `SEC_USER_AGENT`
+- M30-D: deterministic 13-field readiness manifest + prerequisite DAG
+- M30-E: immutable non-SEC source intake + snapshot-bound M27/M24/M25 provenance builders
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -95,67 +77,16 @@ historical adjusted price           ≠ valuation-date market price
 total equity                        ≠ minority interest
 missing minority-interest evidence  ≠ zero minority interest
 DERIVED                             ≠ FACT
+source snapshot                     ≠ reviewed fact
 complete bound Draft                ≠ canonical case
 FACT_CANDIDATE                      ≠ FACT
 ASSUMPTION_CANDIDATE                ≠ ASSUMPTION
 reviewed FACT / ASSUMPTION          ≠ canonical state
 ```
 
-## M24–M26 governed valuation assumptions / M24–M26 가치평가 가정 거버넌스
+## M29 complete governed handoff / 완전 거버넌스 Equity 인계
 
-### WACC
-Seven explicit sourced components are combined under a fixed methodology, independently recomputed, and human-reviewed. WACC remains an `ASSUMPTION`, never a historical fact. See [`docs/WACC_ASSUMPTION_BINDING.md`](docs/WACC_ASSUMPTION_BINDING.md).
-
-### Terminal growth
-Terminal growth is reviewed against exact WACC lineage and explicit long-run macro anchors. `g < WACC` remains a hard invariant. See [`docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md`](docs/TERMINAL_GROWTH_ASSUMPTION_BINDING.md).
-
-### Integrated forecast
-M26 governs revenue, EBIT margin, tax rate, D&A, CAPEX, and ΔNWC as one atomic scenario assumption block. Partial approval is forbidden. See [`docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md`](docs/FORECAST_SCENARIO_ASSUMPTION_BINDING.md).
-
-## M27 — Governed valuation-date market price / 거버넌스 가치평가일 시장가격
-
-Market price is an observed market `FACT`, not a valuation assumption. M27 requires a source-backed as-traded quote, freshness control, exact instrument/venue/quote identity, SHA-locked human review, and exact entity/scope/currency/as-of compatibility. It accepts only v0.6 and replaces only `market_price` in v0.7.
-
-See [`docs/MARKET_PRICE_FACT_BINDING.md`](docs/MARKET_PRICE_FACT_BINDING.md).
-
-## M28 — Governed minority interest / 거버넌스 비지배지분
-
-M28 closes the final equity-FCFF material-field gap.
-
-```text
-immutable exact source
-  ↓
-FACT_CANDIDATE
-  ↓
-NORMALIZED_FACT_CANDIDATE
-  ↓
-SHA-locked human review / date resolution
-  ↓
-reviewed NORMALIZED_FACT
-  ↓
-draft-binding-proposal-v0.8
-  ↓
-equity.minority_interest DIRECT_BIND
-```
-
-Exact v0.1 source boundaries:
-
-```text
-SEC:      us-gaap:NonredeemableNoncontrollingInterest
-OpenDART: CFS + BS + ifrs-full_NoncontrollingInterests
-```
-
-M28 never derives minority interest from total equity or liabilities. Redeemable NCI is outside the SEC v0.1 field boundary. Missing source evidence fails closed; explicit reported zero remains valid evidence.
-
-SEC exact instant dates use `SOURCE_EXACT`. OpenDART `REPORT_STAGE_ONLY` evidence requires a separate human exact-date assertion. Freshness is independently recomputed, and stale reviewed evidence cannot bind.
-
-v0.8 accepts only validated v0.7 and may replace only `equity.minority_interest`. All earlier material-field decisions remain unchanged. Human approval is still required and the source Draft remains immutable.
-
-See [`docs/MINORITY_INTEREST_FACT_BINDING.md`](docs/MINORITY_INTEREST_FACT_BINDING.md).
-
-## M29 — Complete governed equity handoff / 완전 거버넌스 Equity 인계
-
-M29 removes the largest remaining manual duplication between a fully governed Draft and the historical promotion/admission pipeline.
+M29 defines the complete equity-FCFF bridge:
 
 ```text
 complete M28 bound Draft result
@@ -166,16 +97,20 @@ complete M28 bound Draft result
         ↓
 promotion-candidate-v0.2
         ↓
-human promotion review + review_scope_sha256
+explicit human promotion review + review_scope_sha256
         ↓
 promotion-package-v0.1
         ↓
 M29 admission dispatcher
         ↓
 M29 guarded repository-plan dispatcher
+        ↓
+separate admission/* PR + CI + human review + merge
+        ↓
+CANONICAL CASE
 ```
 
-Authority is inherited, not reinvented:
+Authority mapping:
 
 | Input | Class |
 |---|---|
@@ -186,23 +121,90 @@ Authority is inherited, not reinvented:
 | `equity.diluted_shares` | `DERIVED` |
 | WACC / terminal growth / forecast inputs | `ASSUMPTION` |
 
-The five observed fields require an explicit A/B/C-tier evidence catalog whose values, classes, valuation date, and exact proposal/applied-diff lineage must match the embedded M28 result. Tier D is blocked even for `DERIVED` inputs. Every material numeric path is covered exactly once and no `UNKNOWN` may remain.
-
-The v0.2 candidate preserves the exact M28 `draft_after`. For canonical admission, `SOURCE_PACKAGE.json` retains that exact source package while `case_inputs.json` uses only the deterministic normalized view required by the existing equity adapter. The historical `BEAR / BASE / BULL` canonical profile is not weakened.
-
-M29 prepares and validates admission artifacts and the guarded repository plan, but it does not perform canonical writes. Actual canonicalization still requires the separate `admission/*` PR, full CI, human review, and merge.
-
-Canonical closure:
+M29 canonical closure:
 
 ```text
 final tested head: a666d00d45431914fd98deb08f5b336f3c28eeef
-final-head CI:     34791253465 (Python 3.11/3.12 success)
+final-head CI:     34791253465
 merge/main:        97dc84d8e9a09b5bd9c6864137a537037baac4f6
-Issue #62:         completed
-post-merge CI:     34791345455 (Python 3.11/3.12 success)
+post-merge CI:     34791345455
 ```
 
 See [`docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md`](docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md).
+
+## M30 — First real complete-governed equity case / 첫 실기업 완전 거버넌스 사례
+
+The active parent mission is Issue **#66**. Target:
+
+```text
+Ingredion Incorporated
+NYSE: INGR
+SEC CIK: 0001046257
+Target case ID: US_INGR_INGREDION
+```
+
+M30 exists to prove the full M13–M29 lifecycle on real company evidence before expanding valuation breadth.
+
+### Canonical preparation completed
+
+| Slice | Purpose | Canonical main |
+|---|---|---|
+| M30-A | real-case source-contract preflight | `2034075db50bedb4feb9ec69000f3e1f789c4234` |
+| M30-P1 | exact SEC aggregate-debt successor | `11182eeab7e60a90e6ddc140ca05f45e93af7e40` |
+| M30-B | real source preflight v0.2 | `a970d74b85e44e617dd604cc829637caaf65420e` |
+| M30-C | runtime-safe SEC capture | `30609979d0d06040e7eeec276b8233796bfa48af` |
+| M30-D | 13-field readiness manifest + DAG | `fab223354c759e8b961949e8ff85e43d5bbb2ab8` |
+| M30-E | immutable non-SEC source ingress | `e4207f0d9077208881f2a63317861e6f39fa8158` |
+
+### Protected SEC runtime boundary
+
+Real SEC CompanyFacts capture requires an identifying fair-access User-Agent containing a contact email. The value is accepted **only** through the runtime environment variable:
+
+```text
+SEC_USER_AGENT
+```
+
+It must not be invented by AI, inferred from GitHub metadata, committed to the repository, or persisted in a snapshot.
+
+### M30 real execution sequence
+
+```text
+real SEC CompanyFacts capture
+→ immutable M13 snapshot validation
+→ M30-B real source preflight
+→ M30-D 13-field readiness manifest
+→ explicit review of cash / shares / NCI / aggregate debt paths
+→ M30-E immutable non-SEC snapshots for market/macro sources
+→ M24/M25/M26/M27/M28 explicit human-review gates
+→ complete M28 v0.8 13/13 bound result
+→ M29 promotion/admission/guarded plan
+→ admission/* branch
+→ CI + human review + exact-head merge
+→ one real Ingredion canonical case
+```
+
+No synthetic fixture may be inserted into `registry/cases.json` to claim end-to-end success.
+
+## M30 CLI / 현재 top-level CLI
+
+Installed `vih` enters through additive `valuation_hub.cli_entry_m30`. Commands not owned by M30 delegate through M29 and the historical wrapper chain.
+
+M30-specific commands include:
+
+```text
+sec-companyfacts-fetch
+sec-source-snapshot-validate
+real-equity-preflight-v2
+real-equity-readiness-build
+real-equity-readiness-validate
+external-source-snapshot-build
+external-source-snapshot-validate
+market-price-candidate-build-from-snapshot
+wacc-source-build-from-snapshot
+terminal-growth-anchor-build-from-snapshot
+```
+
+Historical M1–M29 commands remain delegated and regression-locked.
 
 ## Web product / Web 제품
 
@@ -212,59 +214,35 @@ vih web
 
 Default: `http://127.0.0.1:8765`
 
+Representative preparation surfaces:
+
 ```text
 /source             — SEC source inspection
 /dart-source        — OpenDART source inspection
 /normalize          — financial normalization + TTM
 /binding            — evidence → Draft binding proposal
-/binding-apply      — human approval + in-memory Draft binding
-/derived            — governed historical derived evidence
-/debt               — governed debt aggregation + binding preparation
-/dilution           — historical dilution reference
-/shares             — valuation-date common-share base + diluted-share bridge
-/share-binding      — complete share bridge → v0.3 proposal
-/wacc               — governed WACC candidate/review/v0.4 preparation
-/terminal-growth    — terminal-growth candidate/review/v0.5 preparation
-/forecast           — integrated forecast candidate/review/v0.6 preparation
-/market-price       — market FACT candidate/review/v0.7 preparation
-/minority-interest  — minority-interest FACT candidate/review/v0.8 preparation
-/equity-handoff     — complete 13/13 governed Draft → promotion-candidate-v0.2 preparation
+/debt               — governed debt aggregation
+/shares             — valuation-date share bridge
+/wacc               — governed WACC preparation
+/terminal-growth    — terminal-growth preparation
+/forecast           — integrated forecast preparation
+/market-price       — market-price FACT preparation
+/minority-interest  — NCI preparation
+/equity-handoff     — complete 13/13 Draft → promotion-candidate preparation
 ```
 
-Preparation Labs expose no automatic approval or canonical write. The M29 handoff surface explicitly exposes **NO AUTO APPROVAL · NO FILE WRITE · NO ADMISSION APPLY · NO CANONICAL WRITE**.
-
-## M29 CLI / M29 CLI
-
-`vih` enters through additive `cli_entry_m29`; all predecessor commands delegate through `cli_entry_m28` and the earlier wrapper chain.
-
-```text
-complete-handoff-catalog-claim
-complete-handoff-build
-complete-handoff-assess
-candidate-validate
-promotion-check
-admission-build
-admission-validate
-admission-plan
-admission-plan-validate
-web
-```
-
-M29's admission commands are successor-aware dispatchers: historical v0.1 behavior remains delegated while v0.2 receives the complete governed handoff path.
+Preparation surfaces do not auto-approve or perform canonical repository writes.
 
 ## Milestones / 마일스톤
 
 - [x] M1–M23 evidence/Draft/share/debt governance foundation
-- [x] M24 governed WACC assumption → `scenario.wacc`
-- [x] M25 governed terminal growth → `scenario.terminal_growth`
-- [x] M26 integrated six-field forecast assumption → atomic Draft binding
-- [x] M27 governed market-price FACT → `market_price`
-- [x] M28 governed minority-interest `NORMALIZED_FACT` → `equity.minority_interest`
-- [x] **M29 complete governed equity handoff → promotion/admission bridge**
-- [ ] first real canonical case admitted through the complete M29 handoff
+- [x] M24–M28 complete material-input governance
+- [x] M29 complete governed equity handoff
+- [x] M30-A~E real-case architecture and source-ingress preparation
+- [ ] **first real Ingredion canonical case through complete M29 handoff**
 - [ ] first non-equity valuation adapter
 
-The next product proof is the first **real, collision-free public-equity case** admitted through the complete M29 path. Synthetic integration fixtures must not be inserted into the canonical registry merely to claim end-to-end success.
+Do not begin the non-equity adapter before M30 real-case proof unless a new repository-grounded architectural blocker requires it.
 
 ## Canonical documentation / 정식 문서
 
@@ -285,8 +263,8 @@ Material-input governance:
 - [`docs/MARKET_PRICE_FACT_BINDING.md`](docs/MARKET_PRICE_FACT_BINDING.md)
 - [`docs/MINORITY_INTEREST_FACT_BINDING.md`](docs/MINORITY_INTEREST_FACT_BINDING.md)
 
-Complete governed handoff:
+Complete handoff and M30:
 - [`docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md`](docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md)
-- [`docs/M29_ACCEPTANCE.md`](docs/M29_ACCEPTANCE.md)
-- [`docs/M29_IMPLEMENTATION_SUMMARY.md`](docs/M29_IMPLEMENTATION_SUMMARY.md)
+- [`docs/M30_D_REAL_CASE_READINESS.md`](docs/M30_D_REAL_CASE_READINESS.md)
+- [`docs/M30_E_EXTERNAL_SOURCE_INTAKE.md`](docs/M30_E_EXTERNAL_SOURCE_INTAKE.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/real_equity_readiness_manifest_v01.schema.json",
+  "title": "Real Equity Readiness Manifest v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status", "canonical", "decision", "target",
+    "source_preflight", "source_preflight_projection", "fields",
+    "prerequisite_dag", "blockers", "human_review_boundary",
+    "next_actions", "manifest_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "real-equity-readiness-manifest-v0.1"},
+    "status": {"const": "REAL_EQUITY_READINESS_EVALUATED"},
+    "canonical": {"const": false},
+    "decision": {"const": "HOLD_AT_GOVERNED_BOUNDARIES"},
+    "target": {
+      "type": "object",
+      "required": ["case_id", "legal_name", "ticker", "exchange", "cik", "financial_period_end", "valuation_as_of", "form"]
+    },
+    "source_preflight": {"type": ["object", "null"]},
+    "source_preflight_projection": {"type": ["object", "null"]},
+    "fields": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {
+        "type": "object",
+        "required": ["field", "required_authority", "prerequisite_node", "state"],
+        "properties": {
+          "state": {"enum": ["READY", "AWAITING_REAL_SOURCE", "AWAITING_HUMAN_REVIEW", "AWAITING_DEPENDENCY", "BLOCKED"]}
+        }
+      }
+    },
+    "prerequisite_dag": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["node_id", "kind", "authority", "state", "dependencies", "requires_real_source", "requires_human_review"]
+      }
+    },
+    "blockers": {"type": "array"},
+    "human_review_boundary": {
+      "type": "object",
+      "required": ["automatic_approval_forbidden", "reviewer_must_be_explicit", "review_timestamp_must_be_explicit", "review_state_may_be_inferred", "draft_mutation", "registry_write", "canonical_write"]
+    },
+    "next_actions": {"type": "array", "items": {"type": "string"}},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

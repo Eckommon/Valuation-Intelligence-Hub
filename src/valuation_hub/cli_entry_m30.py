@@ -16,6 +16,10 @@ from typing import Any
 from valuation_hub import cli_entry_m29 as prior_cli
 from valuation_hub.case_service import CaseServiceError, find_repo_root
 from valuation_hub.real_case_preflight_m30b import build_real_equity_source_preflight_v2
+from valuation_hub.real_case_readiness import (
+    build_real_equity_readiness_manifest,
+    validate_real_equity_readiness_manifest,
+)
 from valuation_hub.sec_live import (
     capture_companyfacts_snapshot,
     load_source_snapshot,
@@ -28,6 +32,8 @@ INTERCEPT = {
     "sec-companyfacts-fetch",
     "sec-source-snapshot-validate",
     "real-equity-preflight-v2",
+    "real-equity-readiness-build",
+    "real-equity-readiness-validate",
 }
 
 
@@ -86,6 +92,28 @@ def _snapshot_input(path: Path, root: Path | None) -> Path:
     return path.resolve() if path.is_absolute() else (repo / path).resolve()
 
 
+def _json_input(path: Path, root: Path | None) -> dict[str, Any]:
+    resolved = _snapshot_input(path, root)
+    try:
+        value = json.loads(resolved.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise CaseServiceError(f"JSON input unreadable: {resolved} / JSON 입력 읽기 실패") from exc
+    if not isinstance(value, dict):
+        raise CaseServiceError("JSON input must be object / JSON 입력은 객체여야 함")
+    return value
+
+
+def _add_target_arguments(command: argparse.ArgumentParser) -> None:
+    command.add_argument("--case-id", required=True)
+    command.add_argument("--legal-name", required=True)
+    command.add_argument("--ticker", required=True)
+    command.add_argument("--exchange", required=True)
+    command.add_argument("--cik", required=True)
+    command.add_argument("--financial-period-end", required=True)
+    command.add_argument("--valuation-as-of", required=True)
+    command.add_argument("--form", default="10-Q")
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="vih")
     parser.add_argument("--root", type=Path, default=None)
@@ -101,15 +129,15 @@ def _parser() -> argparse.ArgumentParser:
 
     command = sub.add_parser("real-equity-preflight-v2")
     command.add_argument("snapshot", type=Path)
-    command.add_argument("--case-id", required=True)
-    command.add_argument("--legal-name", required=True)
-    command.add_argument("--ticker", required=True)
-    command.add_argument("--exchange", required=True)
-    command.add_argument("--cik", required=True)
-    command.add_argument("--financial-period-end", required=True)
-    command.add_argument("--valuation-as-of", required=True)
-    command.add_argument("--form", default="10-Q")
+    _add_target_arguments(command)
     command.add_argument("--shares-period-end", default=None)
+
+    command = sub.add_parser("real-equity-readiness-build")
+    _add_target_arguments(command)
+    command.add_argument("--preflight", type=Path, default=None)
+
+    command = sub.add_parser("real-equity-readiness-validate")
+    command.add_argument("manifest", type=Path)
     return parser
 
 
@@ -158,6 +186,26 @@ def _run(argv: list[str]) -> int:
                 form=args.form,
                 shares_period_end=args.shares_period_end,
             ))
+            return 0
+
+        if args.command == "real-equity-readiness-build":
+            preflight = _json_input(args.preflight, args.root) if args.preflight is not None else None
+            _dump(build_real_equity_readiness_manifest(
+                case_id=args.case_id,
+                legal_name=args.legal_name,
+                ticker=args.ticker,
+                exchange=args.exchange,
+                cik=args.cik,
+                financial_period_end=args.financial_period_end,
+                valuation_as_of=args.valuation_as_of,
+                form=args.form,
+                preflight=preflight,
+            ))
+            return 0
+
+        if args.command == "real-equity-readiness-validate":
+            manifest = _json_input(args.manifest, args.root)
+            _dump(validate_real_equity_readiness_manifest(manifest))
             return 0
 
         raise CaseServiceError("unsupported M30 command / 미지원 M30 명령")

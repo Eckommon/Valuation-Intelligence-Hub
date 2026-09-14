@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/external_source_snapshot_v01.schema.json",
+  "title": "External Source Snapshot v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "canonical", "adapter", "source", "capture", "body", "raw_text", "snapshot_sha256"],
+  "properties": {
+    "schema_version": {"const": "external-source-snapshot-v0.1"},
+    "status": {"const": "EXTERNAL_SOURCE_SNAPSHOT_CAPTURED"},
+    "canonical": {"const": false},
+    "adapter": {"const": "local-utf8-external-source-v0.1"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["publisher", "source_type", "tier", "locator"],
+      "properties": {
+        "publisher": {"type": "string", "minLength": 1},
+        "source_type": {"type": "string", "minLength": 1},
+        "tier": {"enum": ["A", "B", "C", "D"]},
+        "locator": {"type": "string", "pattern": "^https://"}
+      }
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "captured_at", "network_fetch_performed", "credentials_persisted"],
+      "properties": {
+        "method": {"const": "LOCAL_UTF8_INTAKE"},
+        "captured_at": {"type": "string"},
+        "network_fetch_performed": {"const": false},
+        "credentials_persisted": {"const": false}
+      }
+    },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bytes", "sha256"],
+      "properties": {
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "raw_text": {"type": "string", "minLength": 1},
+    "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

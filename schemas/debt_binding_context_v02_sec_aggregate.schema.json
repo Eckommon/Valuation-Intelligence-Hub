@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/debt_binding_context_v02_sec_aggregate.schema.json",
+  "title": "Debt Binding Context v0.2 SEC Aggregate",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","source_period","resolved_period_end","date_resolution","policy","freshness","binding_eligibility","source_debt_sha256","source_debt_profile_sha256","review_assertion_sha256","semantic_boundary","reviewed_profile","context_sha256"],
+  "properties": {
+    "schema_version": {"const": "debt-binding-context-v0.2-sec-aggregate"},
+    "status": {"const": "DEBT_BINDING_CONTEXT_EVALUATED"},
+    "canonical": {"const": false},
+    "class": {"const": "DERIVED_FACT"},
+    "metric": {"const": "interest_bearing_debt"},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"const": "USD"},
+    "entity": {"type": "object"},
+    "source_period": {"type": "object"},
+    "resolved_period_end": {"type": "string", "format": "date"},
+    "date_resolution": {"type": "object", "required": ["method","date_assertion_sha256"], "properties": {"method": {"const": "SOURCE_EXACT"}, "date_assertion_sha256": {"type": "null"}}},
+    "policy": {"type": "object", "required": ["version","as_of","max_age_days"], "properties": {"version": {"const": "DEBT_BINDING_CONTEXT_V02_SEC_AGGREGATE"}}},
+    "freshness": {"type": "object", "required": ["status","age_days","max_age_days"]},
+    "binding_eligibility": {"type": "object", "required": ["eligible","reason"]},
+    "source_debt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_debt_profile_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review_assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "semantic_boundary": {"type": "object"},
+    "reviewed_profile": {"type": "object"},
+    "context_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

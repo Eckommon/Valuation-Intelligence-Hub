@@ -192,6 +192,16 @@ The v0.2 candidate preserves the exact M28 `draft_after`. For canonical admissio
 
 M29 prepares and validates admission artifacts and the guarded repository plan, but it does not perform canonical writes. Actual canonicalization still requires the separate `admission/*` PR, full CI, human review, and merge.
 
+Canonical closure:
+
+```text
+final tested head: a666d00d45431914fd98deb08f5b336f3c28eeef
+final-head CI:     34791253465 (Python 3.11/3.12 success)
+merge/main:        97dc84d8e9a09b5bd9c6864137a537037baac4f6
+Issue #62:         completed
+post-merge CI:     34791345455 (Python 3.11/3.12 success)
+```
+
 See [`docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md`](docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md).
 
 ## Web product / Web 제품
@@ -250,9 +260,11 @@ M29's admission commands are successor-aware dispatchers: historical v0.1 behavi
 - [x] M26 integrated six-field forecast assumption → atomic Draft binding
 - [x] M27 governed market-price FACT → `market_price`
 - [x] M28 governed minority-interest `NORMALIZED_FACT` → `equity.minority_interest`
-- [ ] **M29 complete governed equity handoff → promotion/admission bridge — active finalization**
-- [ ] first canonical case admitted through the complete M29 handoff
+- [x] **M29 complete governed equity handoff → promotion/admission bridge**
+- [ ] first real canonical case admitted through the complete M29 handoff
 - [ ] first non-equity valuation adapter
+
+The next product proof is the first **real, collision-free public-equity case** admitted through the complete M29 path. Synthetic integration fixtures must not be inserted into the canonical registry merely to claim end-to-end success.
 
 ## Canonical documentation / 정식 문서
 

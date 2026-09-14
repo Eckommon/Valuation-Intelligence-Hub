@@ -20,10 +20,7 @@ from valuation_hub.forecast_assumption import (
     build_forecast_review_assertion,
     finalize_reviewed_forecast,
 )
-from valuation_hub.forecast_draft_binding import (
-    build_binding_proposal_with_forecast,
-    validate_binding_proposal_any as validate_latest_proposal,
-)
+from valuation_hub.forecast_draft_binding import build_binding_proposal_with_forecast
 from valuation_hub.market_price import (
     build_market_price_candidate,
     build_market_price_review_assertion,
@@ -36,7 +33,10 @@ from valuation_hub.minority_interest import (
     finalize_reviewed_minority_interest,
     normalize_minority_interest_candidate,
 )
-from valuation_hub.minority_interest_draft_binding import build_binding_proposal_with_minority_interest
+from valuation_hub.minority_interest_draft_binding import (
+    build_binding_proposal_with_minority_interest,
+    validate_binding_proposal_any as validate_latest_proposal,
+)
 from valuation_hub.promotion_m29 import (
     OBSERVED_FIELD_CLASSES,
     build_complete_equity_candidate,

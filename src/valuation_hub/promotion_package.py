@@ -20,7 +20,7 @@ from typing import Any
 
 from valuation_hub.case_service import CaseServiceError, find_repo_root, load_registry
 from valuation_hub.draft_service import run_draft
-from valuation_hub.promotion import promotion_check
+from valuation_hub.promotion_m29 import promotion_check
 
 PACKAGE_SCHEMA_VERSION = "promotion-package-v0.1"
 PACKAGE_STATUS = "PROMOTION_PACKAGE_STAGED"

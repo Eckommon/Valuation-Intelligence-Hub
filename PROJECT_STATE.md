@@ -20,6 +20,7 @@
 | M25 Governed terminal growth → `scenario.terminal_growth` | `0c0a7591a59f163fa34aba54fdeb6001fb9b7dc0` | #54 |
 | M26 Integrated forecast → six-field atomic binding | `130363475139fe6ea30d00d615f387b440a23c71` | #56 |
 | M27 Governed market price → `market_price` | `3a5f2742acd11756a78579e8fd8ba8709a267327` | #58 |
+| M28 Governed minority interest → `equity.minority_interest` | `db5d8e835455de9e52bc656b1ddb4c352736768b` | #60 |
 
 Earlier M1–M19 milestones remain completed and regression-locked in repository history.
 
@@ -29,6 +30,8 @@ Earlier M1–M19 milestones remain completed and regression-locked in repository
 - M25 final/post-merge: `34694777238` / `34694840768` → Python 3.11/3.12 success
 - M26 final/post-merge: `34708790304` / `34708847816` → Python 3.11/3.12 success
 - M27 final/post-merge: `34721632879` / `34721689531` → Python 3.11/3.12 success
+- M28 final tested head `0af0a31899d2af71d0c07cad7ebac44385f18cfd`: `34748926438` → Python 3.11/3.12 success
+- M28 post-merge main `db5d8e835455de9e52bc656b1ddb4c352736768b`: `34748992915` → Python 3.11/3.12 success
 
 ## Authority model / 권위모델
 
@@ -39,7 +42,7 @@ IMMUTABLE / SOURCE-LOCKED INPUT / NOT CANONICAL
   ↓
 FACT_CANDIDATE / NORMALIZED FACT / ASSUMPTION_CANDIDATE
   ↓
-HUMAN-REVIEWED FACT / GOVERNED CONTEXT / ASSUMPTION / NOT CANONICAL
+HUMAN-REVIEWED FACT / NORMALIZED_FACT / DERIVED / ASSUMPTION / NOT CANONICAL
   ↓
 BINDING PROPOSAL / NOT CANONICAL
   ↓
@@ -47,223 +50,246 @@ HUMAN APPROVAL LOCK / NOT CANONICAL
   ↓
 BOUND DRAFT RESULT / NOT CANONICAL
   ↓
-DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
+COMPLETE GOVERNED HANDOFF
+  ↓
+PROMOTION → ADMISSION → guarded apply → PR/CI merge
   ↓
 CANONICAL
 ```
 
-Calculation never silently upgrades candidate authority. Reviewed FACT/ASSUMPTION remains noncanonical until repository governance completes.
+Calculation never silently upgrades authority. `DERIVED` is not `FACT`; reviewed state is not canonical state; a complete bound Draft is still noncanonical until the repository-governed promotion/admission lifecycle completes.
 
 ## Active mission / 활성 미션
 
-- Issue: `#60 [M28] Governed minority-interest FACT + Draft binding`
-- PR: `#61 M28 Governed minority-interest FACT + Draft binding`
-- Branch: `mission/m28-minority-interest-binding-v01`
-- Base main: `3a5f2742acd11756a78579e8fd8ba8709a267327`
+- Issue: `#62 [M29] Complete governed equity handoff: bound Draft → promotion candidate`
+- PR: `#63 M29 Complete governed equity handoff → promotion candidate v0.2`
+- Branch: `mission/m29-complete-governed-equity-handoff-v01`
+- Base main: `db5d8e835455de9e52bc656b1ddb4c352736768b`
 - Status: `ACTIVE_FINALIZATION`
+- Verified implementation checkpoint: `632136c2489d6f85c6c79407907170b86268749d`
+- Checkpoint CI: `34790402787` → full Python 3.11/3.12 success
 
-## M28 mission / M28 미션
+The branch head is intentionally mutable during documentation finalization. **Never use an embedded branch SHA in this document as merge authorization.** The only merge-authorizing SHA is the exact final PR #63 head recorded in the PR body after fresh final-head CI succeeds.
 
-Close the final remaining equity-FCFF material-field gap by governing valuation-date noncontrolling/minority interest as source-backed balance-sheet evidence and binding only reviewed, fresh, eligible `NORMALIZED_FACT` into:
+문서 최종화 중 branch head는 변경될 수 있다. **이 문서 내부의 branch SHA를 병합 승인값으로 사용하지 않는다.** 병합 승인 SHA는 최종 문서 head에 대한 새 CI가 성공한 뒤 PR #63 body에 기록한 exact final head뿐이다.
 
-```text
-equity.minority_interest
-```
+## M29 mission / M29 미션
 
-가치평가일 비지배지분을 출처기반 재무상태표 근거로 거버넌스하고 검토완료·최신·적격 `NORMALIZED_FACT`만 Draft에 연결한다.
+Eliminate manual reclassification between a complete M28 bound equity-FCFF Draft and the historical M9–M12 promotion/admission pipeline, while preserving the exact governed authority, values, human approvals, applied diffs, and nested SHA lineage already established by M20–M28.
 
-## M28 semantic boundary / M28 의미경계
-
-```text
-total equity != minority interest
-parent-attributable equity != minority interest
-liabilities != minority interest
-missing minority-interest evidence != zero
-redeemable NCI != M28 v0.1 SEC field
-minority-interest FACT != analyst assumption
-```
-
-Explicit source-reported zero is valid evidence. Missing evidence fails closed.
-
-## Exact source architecture / 정확한 출처구조
-
-M28 does not mutate M13/M14 historical registries. It uses isolated adapters over validated immutable source snapshots.
-
-SEC v0.1 exact concept:
+완전한 M28 bound equity-FCFF Draft와 기존 M9–M12 승격·수용 흐름 사이의 수동 재분류를 제거하되 M20–M28이 확립한 정확한 권위·값·인간승인·applied diff·nested SHA lineage를 그대로 보존한다.
 
 ```text
-us-gaap:NonredeemableNoncontrollingInterest
+complete M28 v0.8 bound result
+        ↓
+promotion-candidate-v0.2
+        ↓
+human promotion review + review_scope_sha256
+        ↓
+promotion-package-v0.1
+        ↓
+M29 admission dispatcher
+        ↓
+M29 guarded repository-plan dispatcher
+        ↓
+separate admission/* PR + full CI + human review + merge
 ```
 
-OpenDART v0.1 exact account:
+## Complete-result boundary / 완전결과 경계
+
+M29 accepts only an independently validated M28 result satisfying all of:
 
 ```text
-CFS + BS + ifrs-full_NoncontrollingInterests
+proposal schema          = draft-binding-proposal-v0.8
+material decisions       = 13/13 DIRECT_BIND
+human approved fields    = exactly 13/13
+applied diffs             = exactly 13/13, unique
+unresolved matrix         = []
+draft_after               = valid equity_fcff Draft
+canonical                 = false
+result/proposal lineage   = independently recomputable
 ```
 
-No equity-difference derivation or label-only fallback is allowed.
+Partial approval, a missing/duplicate diff, an older proposal version, nested lineage tampering, or outer-SHA re-signing fails closed.
 
-## Evidence lifecycle / 근거 수명주기
+## Authority inheritance / 권위 상속
+
+M29 does not re-decide authority. Exact classes are:
 
 ```text
-immutable SEC/OpenDART snapshot
-        ↓
-minority-interest-candidate-v0.1 / FACT_CANDIDATE
-        ↓
-minority-interest-observation-v0.1 / NORMALIZED_FACT_CANDIDATE
-        ↓
-minority-interest-review-assertion-v0.1
-        ↓
-reviewed-minority-interest-fact-v0.1 / NORMALIZED_FACT / canonical=false
-        ↓
-draft-binding-proposal-v0.8
-        ↓
-M17-family human binding approval/apply
-        ↓
-noncanonical bound Draft result
+market_price               → FACT
+equity.cash                → NORMALIZED_FACT
+equity.minority_interest   → NORMALIZED_FACT
+equity.debt                → DERIVED
+equity.diluted_shares      → DERIVED
+scenario WACC paths        → ASSUMPTION
+terminal-growth paths      → ASSUMPTION
+six forecast-input paths   → ASSUMPTION
 ```
 
-Nested candidate/observation/review/package hashes and source snapshot lineage are independently revalidated.
+Debt and diluted shares must never be upgraded to `FACT` or `NORMALIZED_FACT`.
 
-## Date and freshness / 날짜·최신성
+## Evidence catalog / 근거 catalog
 
-- SEC instant facts: exact source period end, `SOURCE_EXACT`; human override forbidden.
-- OpenDART: `REPORT_STAGE_ONLY`; separate SHA-locked human exact-date assertion required.
-- resolved period end after valuation `as_of` fails closed.
-- freshness is independently recomputed.
-- stale reviewed package remains visible but cannot DIRECT_BIND.
+M29 receives exactly five observed claims for market price, cash, minority interest, debt, and diluted shares. The catalog supplies M9-compatible descriptive evidence metadata but cannot change any bound value, authority class, valuation `as_of`, proposal decision, applied diff, or exact lineage.
 
-## v0.8 binding / v0.8 바인딩
+All five observed fields require source tier A/B/C. Tier D is forbidden even for the two `DERIVED` fields.
 
-M28 accepts only validated M27 `draft-binding-proposal-v0.7`.
+Every material numeric Draft path is deterministically projected through the historical M9 material-path enumeration. Every path must appear exactly once; no material `UNKNOWN` state is allowed.
 
-v0.8 may replace only:
+## Review lock / 검토 잠금
+
+`promotion-candidate-v0.2` embeds:
 
 ```text
-equity.minority_interest
+exact M28 draft_after
+complete source bound result
+source bound-result SHA
+input_governance projection
+five observed evidence claims
+human review object
 ```
 
-Every other material-field decision from v0.7 must remain identical. Exact compatibility is required for entity ID, consolidated scope, currency, and valuation `as_of`.
+Promotion requires explicit `APPROVE`, reviewer identity, rationale, timezone-aware `reviewed_at`, and exact `review_scope_sha256`. The scope includes the embedded source result, so nested mutation invalidates the approval even if an outer object is re-signed.
 
-The proposal and applied diff preserve:
+## M10–M12 compatibility / M10–M12 호환
 
-```text
-minority-interest package SHA
-normalized observation SHA
-source snapshot SHA
-review assertion SHA
-resolved period end
-date-resolution method
-```
+Historical v0.1 behavior remains delegated unchanged.
 
-## Apply / 적용
+M10:
+- `promotion-package-v0.1` remains the package contract.
+- promotion checking dispatches to v0.1 or v0.2 candidate semantics.
 
-Human binding approval remains mandatory. Apply changes only the in-memory result's `draft["equity"]["minority_interest"]`; the input Draft remains unchanged and the result remains noncanonical. M26 unique-diff-field result-integrity protection remains active.
+M11-compatible M29 admission:
+- `SOURCE_PACKAGE.json` preserves the exact reviewed v0.2 package, exact raw M28 `draft_after`, and complete governance/lineage.
+- `case_inputs.json` uses only the deterministic normalized view of that same Draft required by the historical canonical adapter.
+- the historical canonical equity profile `BEAR / BASE / BULL` remains mandatory.
+- values, authority classes, evidence claims, and source lineage are not reconstructed or re-governed.
+
+M12-compatible M29 plan:
+- reuses target collision and registry collision checks;
+- locks the current registry SHA and planned registry SHA;
+- verifies every artifact hash and safe path;
+- retains `admission/*` branch policy and blocks `main`/`master` direct application;
+- deterministically reconstructs the plan.
+
+Actual canonical file application remains outside M29 as a separate guarded repository operation.
 
 ## Interfaces / 인터페이스
 
 Installed CLI entrypoint:
 
 ```text
-vih = valuation_hub.cli_entry_m28:main
+vih = valuation_hub.cli_entry_m29:main
 ```
 
-M28 commands:
+M29 commands/intercepts:
 
 ```text
-minority-sec-extract
-minority-dart-extract
-minority-candidate-validate
-minority-normalize
-minority-observation-validate
-minority-review-build
-minority-review-validate
-minority-finalize
-minority-validate
-binding-build-with-minority-interest
-binding-validate
+complete-handoff-catalog-claim
+complete-handoff-build
+complete-handoff-assess
+candidate-validate
+promotion-check
+admission-build
+admission-validate
+admission-plan
+admission-plan-validate
+web
 ```
 
-All older commands delegate through `cli_entry_m27` and predecessor wrappers.
+All non-M29 commands delegate through `cli_entry_m28` and the predecessor chain.
 
 Web:
 
 ```text
-/minority-interest
-/api/minority-interest/*
+/equity-handoff
+/api/equity-handoff/catalog-claim
+/api/equity-handoff/build
+/api/equity-handoff/assess
+/api/equity-handoff/validate
+/api/equity-handoff/check
 ```
 
-M28 Web is preparation/validation only: no direct Draft apply, file write, promotion, admission, or canonical write.
+Explicit Web boundary:
 
-## M28 CI history / M28 CI 이력
+```text
+NO AUTO APPROVAL
+NO FILE WRITE
+NO ADMISSION APPLY
+NO CANONICAL WRITE
+```
 
-- Initial branch head `ddb5c7f7f74a30624a80072daacacc7500a2b899`
-  - CI `34722357783`: corrective failure, 361 passed / 2 stale predecessor entrypoint tests failed.
-- First successor-compatible correction `220069fa8db6cb7fee8a03b0eb1a9e317108b0d8`
-  - CI `34748635300`: corrective failure, 362 passed / 1 remaining stale M27 entrypoint test failed.
-- Full successor-compatible correction `b94de627313f1ff42bbe192b8294a75ee27df9bb`
-  - CI `34748676308`: Python 3.11/3.12 success.
-- Additional M28 integrity/interface/schema/docs hardening follows on the active branch.
+## M29 CI history / M29 CI 이력
 
-A fresh exact final-head Python 3.11/3.12 CI is required after this handoff update. Only that exact tested head may authorize merge.
+- Core implementation checkpoint: CI `34789595564` → Python 3.11/3.12 success.
+- M10–M12 integration checkpoint after canonical `BEAR / BASE / BULL` and exact-source/normalized-view separation: CI `34790170693` → Python 3.11/3.12 success.
+- Successor-interface correction checkpoint `632136c2489d6f85c6c79407907170b86268749d`: CI `34790402787` → Python 3.11/3.12 success.
+- Documentation finalization then adds the M29 methodology, acceptance, implementation summary, README update, and this state handoff.
+- A **fresh exact final-head Python 3.11/3.12 CI** is mandatory after the documentation-complete head is formed.
 
-## M28 files / M28 파일
+## M29 files / M29 파일
 
 Core:
-- `src/valuation_hub/minority_interest.py`
-- `src/valuation_hub/minority_interest_draft_binding.py`
-- `src/valuation_hub/binding_apply_m28.py`
-- `src/valuation_hub/cli_entry_m28.py`
-- `src/valuation_hub/web_minority_interest.py`
+- `src/valuation_hub/promotion_m29.py`
+- `src/valuation_hub/admission_m29.py`
+- `src/valuation_hub/admission_apply_m29.py`
+- `src/valuation_hub/cli_entry_m29.py`
+- `src/valuation_hub/web_complete_equity_handoff.py`
+- `src/valuation_hub/promotion_package.py` — promotion-check dispatcher only
 
-Schemas:
-- `schemas/minority_interest_candidate.schema.json`
-- `schemas/minority_interest_observation.schema.json`
-- `schemas/minority_interest_review_assertion.schema.json`
-- `schemas/reviewed_minority_interest_fact.schema.json`
-- `schemas/draft_binding_proposal_v08.schema.json`
+Schema:
+- `schemas/promotion_candidate_v02.schema.json`
 
-Tests/docs:
-- `tests/test_m28_minority_interest_binding.py`
-- `tests/test_m28_hardening.py`
-- `tests/test_m28_interfaces.py`
-- `docs/MINORITY_INTEREST_FACT_BINDING.md`
-- `docs/M28_ACCEPTANCE.md`
-- `docs/M28_IMPLEMENTATION_SUMMARY.md`
+Tests:
+- `tests/test_m29_complete_equity_handoff.py`
+- `tests/test_m29_promotion_admission_integration.py`
+- `tests/test_m29_interfaces.py`
+- successor-chain updates in `tests/test_m26_interfaces.py`, `tests/test_m27_interfaces.py`, `tests/test_m28_interfaces.py`
+
+Docs:
+- `docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md`
+- `docs/M29_ACCEPTANCE.md`
+- `docs/M29_IMPLEMENTATION_SUMMARY.md`
+- `README.md`
+- `PROJECT_STATE.md`
 
 ## Grounding authority / 근거화 권위
 
 1. merged `main` files and completed Issue/PR decisions
-2. `PROJECT_STATE.md` + active Issue/PR/branch
-3. v0.7 proposal SHA → minority candidate/source snapshot → observation SHA → review assertion SHA → reviewed package SHA → v0.8 proposal SHA → binding approval/result SHA
-4. current chat
-5. AI recollection
+2. current active Issue #62 / PR #63 / branch state
+3. `PROJECT_STATE.md` and exact M29 docs
+4. source M28 result SHA → v0.2 candidate/review-scope SHA → promotion-package SHA → admission bundle SHA → repository-plan SHA
+5. current chat
+6. AI recollection
 
 ## Exact resume point / 정확한 재개점
 
-1. Verify fresh full CI on the exact current PR #61 head after README/docs/PROJECT_STATE updates.
-2. Fix only real failures; do not weaken semantic/fail-closed contracts.
-3. Update PR #61 body with the correct SEC concept and exact final tested SHA + CI run.
-4. Merge using `expected_head_sha` only.
-5. Confirm Issue #60 closes as completed.
-6. Verify post-merge `main` Python 3.11/3.12 CI.
-7. Re-ground latest main before selecting the next mission.
+1. Resolve the exact current PR #63 head after the M29 docs/README/PROJECT_STATE finalization commits.
+2. Run/verify fresh full CI on that **exact head** for Python 3.11 and 3.12.
+3. Fix only real failures; never weaken the 13/13, authority, lineage, human-review, adapter, or no-write contracts.
+4. Update PR #63 body with the exact final tested SHA, CI run, final M29 architecture, and `Closes #62`.
+5. Re-read PR #63 head and merge only with the same `expected_head_sha`.
+6. Confirm Issue #62 is completed.
+7. Re-ground merged `main` and verify post-merge Python 3.11/3.12 CI.
+8. Do **not** begin M30 until step 7 is green.
 
 Merge only if all remain green:
 
-- exact SEC/OpenDART mapping and isolated adapters
-- missing ≠ zero; explicit zero preserved
-- candidate/reviewed authority separation
-- SEC exact date / OpenDART human date-resolution boundary
-- freshness and stale non-bindability
-- nested source/review/package tamper blocking
-- v0.7-only base requirement
-- exact entity/scope/currency/as-of compatibility
-- only minority-interest decision replaced
-- Draft immutability + exact diff lineage
-- M26 unique-diff-field integrity guard
-- additive CLI successor chain
-- Web no-write boundary
-- all M1–M27 regressions
+- complete M28 v0.8 source gate and exact source-result revalidation
+- 13/13 DIRECT_BIND + 13/13 approval + 13/13 unique applied diffs + unresolved=[]
+- exact M28 `draft_after` preserved in v0.2 candidate and source package
+- fixed authority inheritance including `DERIVED` debt/diluted shares
+- exactly five A/B/C-tier observed evidence claims and no Tier D
+- exact value/class/as-of/proposal-decision/applied-diff lineage
+- full material numeric-path coverage and no `UNKNOWN`
+- SHA-locked explicit human promotion review
+- v0.1 backward compatibility
+- exact SOURCE_PACKAGE vs deterministic canonical normalized-view separation
+- historical `BEAR / BASE / BULL` canonical adapter contract
+- deterministic M29 admission and guarded M12-style plan
+- additive M26 → M27 → M28 → M29 CLI successor chain
+- Web no-auto-approval/no-write/no-admission-apply/no-canonical-write boundary
+- all M1–M28 regressions
 
-After M28 canonical closure, the equity-FCFF material-field matrix should have governed paths for all material fields. Do not automatically add M29; reassess end-to-end case completion, product UX/reporting, and the first non-equity adapter against the product vision.
+After M29 canonical closure, reassess the next mission from the merged product state. Do not assume M30 before the M29 merge and post-merge CI are durable.

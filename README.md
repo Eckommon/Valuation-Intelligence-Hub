@@ -24,14 +24,16 @@ HUMAN APPROVAL LOCK
         ↓
 BOUND DRAFT RESULT / NOT CANONICAL
         ↓
-DRAFT GOVERNANCE → PROMOTION → ADMISSION → guarded apply → PR/CI merge
+COMPLETE GOVERNED HANDOFF
+        ↓
+PROMOTION → ADMISSION → guarded apply → PR/CI merge
         ↓
 CANONICAL
 ```
 
-Deterministic calculation never upgrades authority by itself. `FACT`, `ASSUMPTION`, human review, Draft binding, and canonical repository state remain distinct.
+Deterministic calculation never upgrades authority by itself. `FACT`, `NORMALIZED_FACT`, `DERIVED`, `ASSUMPTION`, human review, Draft binding, promotion, admission, and canonical repository state remain distinct.
 
-결정론적 계산만으로 권위가 승격되지 않는다. `FACT`, `ASSUMPTION`, 인간검토, Draft 바인딩, canonical 저장소 상태는 분리된다.
+결정론적 계산만으로 권위가 승격되지 않는다. `FACT`, `NORMALIZED_FACT`, `DERIVED`, `ASSUMPTION`, 인간검토, Draft 바인딩, 승격·수용, canonical 저장소 상태는 분리된다.
 
 ## Valuation kernel / 가치평가 커널
 
@@ -74,6 +76,7 @@ python -m pip install -e ".[dev]"
 - M26: six FCFF forecast inputs → one reviewed integrated scenario `ASSUMPTION` → atomic forecast binding
 - M27: exact as-traded market quote → reviewed market `FACT` → top-level `market_price` binding
 - M28: exact consolidated noncontrolling-interest evidence → reviewed `NORMALIZED_FACT` → `equity.minority_interest` binding
+- M29: complete human-approved 13/13 M28 bound Draft → authority-preserving `promotion-candidate-v0.2` → existing promotion/admission/guarded-plan pipeline
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -91,6 +94,8 @@ quoted number without provenance    ≠ governed market-price fact
 historical adjusted price           ≠ valuation-date market price
 total equity                        ≠ minority interest
 missing minority-interest evidence  ≠ zero minority interest
+DERIVED                             ≠ FACT
+complete bound Draft                ≠ canonical case
 FACT_CANDIDATE                      ≠ FACT
 ASSUMPTION_CANDIDATE                ≠ ASSUMPTION
 reviewed FACT / ASSUMPTION          ≠ canonical state
@@ -144,15 +149,50 @@ M28 never derives minority interest from total equity or liabilities. Redeemable
 
 SEC exact instant dates use `SOURCE_EXACT`. OpenDART `REPORT_STAGE_ONLY` evidence requires a separate human exact-date assertion. Freshness is independently recomputed, and stale reviewed evidence cannot bind.
 
-v0.8 accepts only validated v0.7 and may replace only:
-
-```text
-equity.minority_interest
-```
-
-All earlier material-field decisions remain unchanged. Human approval is still required and the source Draft remains immutable.
+v0.8 accepts only validated v0.7 and may replace only `equity.minority_interest`. All earlier material-field decisions remain unchanged. Human approval is still required and the source Draft remains immutable.
 
 See [`docs/MINORITY_INTEREST_FACT_BINDING.md`](docs/MINORITY_INTEREST_FACT_BINDING.md).
+
+## M29 — Complete governed equity handoff / 완전 거버넌스 Equity 인계
+
+M29 removes the largest remaining manual duplication between a fully governed Draft and the historical promotion/admission pipeline.
+
+```text
+complete M28 bound Draft result
+  = 13/13 DIRECT_BIND
+  = 13/13 human-approved
+  = 13/13 unique applied diffs
+  = unresolved []
+        ↓
+promotion-candidate-v0.2
+        ↓
+human promotion review + review_scope_sha256
+        ↓
+promotion-package-v0.1
+        ↓
+M29 admission dispatcher
+        ↓
+M29 guarded repository-plan dispatcher
+```
+
+Authority is inherited, not reinvented:
+
+| Input | Class |
+|---|---|
+| `market_price` | `FACT` |
+| `equity.cash` | `NORMALIZED_FACT` |
+| `equity.minority_interest` | `NORMALIZED_FACT` |
+| `equity.debt` | `DERIVED` |
+| `equity.diluted_shares` | `DERIVED` |
+| WACC / terminal growth / forecast inputs | `ASSUMPTION` |
+
+The five observed fields require an explicit A/B/C-tier evidence catalog whose values, classes, valuation date, and exact proposal/applied-diff lineage must match the embedded M28 result. Tier D is blocked even for `DERIVED` inputs. Every material numeric path is covered exactly once and no `UNKNOWN` may remain.
+
+The v0.2 candidate preserves the exact M28 `draft_after`. For canonical admission, `SOURCE_PACKAGE.json` retains that exact source package while `case_inputs.json` uses only the deterministic normalized view required by the existing equity adapter. The historical `BEAR / BASE / BULL` canonical profile is not weakened.
+
+M29 prepares and validates admission artifacts and the guarded repository plan, but it does not perform canonical writes. Actual canonicalization still requires the separate `admission/*` PR, full CI, human review, and merge.
+
+See [`docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md`](docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md).
 
 ## Web product / Web 제품
 
@@ -178,27 +218,29 @@ Default: `http://127.0.0.1:8765`
 /forecast           — integrated forecast candidate/review/v0.6 preparation
 /market-price       — market FACT candidate/review/v0.7 preparation
 /minority-interest  — minority-interest FACT candidate/review/v0.8 preparation
+/equity-handoff     — complete 13/13 governed Draft → promotion-candidate-v0.2 preparation
 ```
 
-Preparation Labs expose no direct Draft-file write, promotion, admission, or canonical-write route.
+Preparation Labs expose no automatic approval or canonical write. The M29 handoff surface explicitly exposes **NO AUTO APPROVAL · NO FILE WRITE · NO ADMISSION APPLY · NO CANONICAL WRITE**.
 
-## M28 CLI / M28 CLI
+## M29 CLI / M29 CLI
 
-`vih` enters through additive `cli_entry_m28`; all M1–M27 commands delegate through the predecessor chain.
+`vih` enters through additive `cli_entry_m29`; all predecessor commands delegate through `cli_entry_m28` and the earlier wrapper chain.
 
 ```text
-minority-sec-extract
-minority-dart-extract
-minority-candidate-validate
-minority-normalize
-minority-observation-validate
-minority-review-build
-minority-review-validate
-minority-finalize
-minority-validate
-binding-build-with-minority-interest
-binding-validate
+complete-handoff-catalog-claim
+complete-handoff-build
+complete-handoff-assess
+candidate-validate
+promotion-check
+admission-build
+admission-validate
+admission-plan
+admission-plan-validate
+web
 ```
+
+M29's admission commands are successor-aware dispatchers: historical v0.1 behavior remains delegated while v0.2 receives the complete governed handoff path.
 
 ## Milestones / 마일스톤
 
@@ -207,8 +249,9 @@ binding-validate
 - [x] M25 governed terminal growth → `scenario.terminal_growth`
 - [x] M26 integrated six-field forecast assumption → atomic Draft binding
 - [x] M27 governed market-price FACT → `market_price`
-- [ ] **M28 governed minority-interest FACT → `equity.minority_interest` — active finalization**
-- [ ] end-to-end governed equity-FCFF case completion workflow
+- [x] M28 governed minority-interest `NORMALIZED_FACT` → `equity.minority_interest`
+- [ ] **M29 complete governed equity handoff → promotion/admission bridge — active finalization**
+- [ ] first canonical case admitted through the complete M29 handoff
 - [ ] first non-equity valuation adapter
 
 ## Canonical documentation / 정식 문서
@@ -230,7 +273,8 @@ Material-input governance:
 - [`docs/MARKET_PRICE_FACT_BINDING.md`](docs/MARKET_PRICE_FACT_BINDING.md)
 - [`docs/MINORITY_INTEREST_FACT_BINDING.md`](docs/MINORITY_INTEREST_FACT_BINDING.md)
 
-Current milestone:
-- [`docs/M28_ACCEPTANCE.md`](docs/M28_ACCEPTANCE.md)
-- [`docs/M28_IMPLEMENTATION_SUMMARY.md`](docs/M28_IMPLEMENTATION_SUMMARY.md)
+Complete governed handoff:
+- [`docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md`](docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md)
+- [`docs/M29_ACCEPTANCE.md`](docs/M29_ACCEPTANCE.md)
+- [`docs/M29_IMPLEMENTATION_SUMMARY.md`](docs/M29_IMPLEMENTATION_SUMMARY.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

@@ -137,4 +137,9 @@ def validate_binding_proposal_v2(proposal: dict[str, Any]) -> dict[str, Any]:
 def validate_binding_proposal_any(proposal: dict[str, Any]) -> dict[str, Any]:
     if isinstance(proposal, dict) and proposal.get("schema_version") == SCHEMA_VERSION_V2:
         return validate_binding_proposal_v2(proposal)
+    if isinstance(proposal, dict) and proposal.get("schema_version") == "draft-binding-proposal-v0.2-sec-aggregate-debt":
+        # Lazy import avoids a module cycle: the successor deliberately delegates
+        # historical v0.1/v0.2 behavior back to this module.
+        from valuation_hub.debt_draft_binding_m30 import validate_binding_proposal_sec_aggregate
+        return validate_binding_proposal_sec_aggregate(proposal)
     return validate_binding_proposal(proposal)

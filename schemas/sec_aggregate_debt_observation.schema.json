@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/sec_aggregate_debt_observation.schema.json",
+  "title": "SEC Aggregate Debt Observation v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","period","filing","source_identity","source","source_candidate_sha256","candidate","observation_sha256"],
+  "properties": {
+    "schema_version": {"const": "sec-aggregate-debt-observation-v0.1"},
+    "status": {"const": "SEC_AGGREGATE_DEBT_NORMALIZED"},
+    "canonical": {"const": false},
+    "class": {"const": "NORMALIZED_FACT_CANDIDATE"},
+    "metric": {"const": "interest_bearing_debt_as_reported"},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"const": "USD"},
+    "entity": {"type": "object"},
+    "period": {"type": "object"},
+    "filing": {"type": "object"},
+    "source_identity": {"type": "object"},
+    "source": {"type": "object"},
+    "source_candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {"type": "object"},
+    "observation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

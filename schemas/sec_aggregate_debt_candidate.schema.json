@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/sec_aggregate_debt_candidate.schema.json",
+  "title": "SEC Aggregate Debt Candidate v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","period","filing","source_identity","source","selection","candidate_sha256"],
+  "properties": {
+    "schema_version": {"const": "sec-aggregate-debt-candidate-v0.1"},
+    "status": {"const": "SEC_AGGREGATE_DEBT_CANDIDATE"},
+    "canonical": {"const": false},
+    "class": {"const": "FACT_CANDIDATE"},
+    "metric": {"const": "interest_bearing_debt_as_reported"},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"const": "USD"},
+    "entity": {"type": "object", "required": ["id","financial_scope"]},
+    "period": {"type": "object", "required": ["kind","start","end","date_precision"]},
+    "filing": {"type": "object", "required": ["accession","form","filed"]},
+    "source_identity": {"type": "object", "required": ["taxonomy","concept"], "properties": {"taxonomy": {"const": "us-gaap"}, "concept": {"const": "DebtLongtermAndShorttermCombinedAmount"}}},
+    "source": {"type": "object", "required": ["publisher","source_type","tier","locator","snapshot_sha256","body_sha256"]},
+    "selection": {"type": "object", "required": ["rule","equal_precedence_count"]},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

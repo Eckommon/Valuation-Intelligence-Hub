@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Eckommon/Valuation-Intelligence-Hub/schemas/reviewed_sec_aggregate_debt_profile.schema.json",
+  "title": "Reviewed SEC Aggregate Debt Profile v0.1",
+  "type": "object",
+  "required": ["schema_version","status","canonical","class","metric","value","unit","entity","period","filing","source_identity","source","semantic_boundary","observation","review_assertion","source_observation_sha256","review_assertion_sha256","binding_eligibility","profile_sha256"],
+  "properties": {
+    "schema_version": {"const": "reviewed-sec-aggregate-debt-profile-v0.1"},
+    "status": {"const": "SEC_AGGREGATE_DEBT_REVIEWED"},
+    "canonical": {"const": false},
+    "class": {"const": "NORMALIZED_FACT"},
+    "metric": {"const": "interest_bearing_debt_as_reported"},
+    "value": {"type": "number", "minimum": 0},
+    "unit": {"const": "USD"},
+    "entity": {"type": "object"},
+    "period": {"type": "object"},
+    "filing": {"type": "object"},
+    "source_identity": {"type": "object"},
+    "source": {"type": "object"},
+    "semantic_boundary": {"type": "object", "required": ["total_liabilities_used","missing_as_zero","lease_liabilities_included","basis"], "properties": {"total_liabilities_used": {"const": false}, "missing_as_zero": {"const": false}, "lease_liabilities_included": {"const": false}, "basis": {"const": "EXPLICIT_FILING_RECONCILIATION_EXCLUDES_LEASE_LIABILITIES"}}},
+    "observation": {"type": "object"},
+    "review_assertion": {"type": "object"},
+    "source_observation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review_assertion_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "binding_eligibility": {"type": "object", "required": ["eligible","reason"]},
+    "profile_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

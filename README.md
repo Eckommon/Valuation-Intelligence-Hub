@@ -59,6 +59,7 @@ python -m pip install -e ".[dev]"
 - M30-C: runtime-safe SEC capture interface with runtime-only `SEC_USER_AGENT`
 - M30-D: deterministic 13-field readiness manifest + prerequisite DAG
 - M30-E: immutable non-SEC source intake + snapshot-bound M27/M24/M25 provenance builders
+- M30-R1: additive CLI exposure of the existing governed SEC aggregate-debt review lifecycle
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -155,6 +156,33 @@ M30 exists to prove the full M13–M29 lifecycle on real company evidence before
 | M30-C | runtime-safe SEC capture | `30609979d0d06040e7eeec276b8233796bfa48af` |
 | M30-D | 13-field readiness manifest + DAG | `fab223354c759e8b961949e8ff85e43d5bbb2ab8` |
 | M30-E | immutable non-SEC source ingress | `e4207f0d9077208881f2a63317861e6f39fa8158` |
+| M30-S | canonical M30 state reconciliation | `5217462cc17937d9684374b363cc7472c8164d4a` |
+
+### Real Ingredion execution evidence / 실제 Ingredion 실행 근거
+
+The first real execution has already crossed the source/preflight/readiness gates without creating canonical valuation state:
+
+```text
+real SEC CompanyFacts snapshot
+  snapshot_sha256 = 57b61f2b535b446664a240228f00020b859052f384488441849da83f0ceebf32
+  body_sha256     = 53e524af4fe360cdf8eed3ee3055c87ff7abae5eb7e2053ff291667f5fb90745
+  PASS_SOURCE_SNAPSHOT_VALIDATION
+        ↓
+M30-B real source preflight
+  preflight_sha256 = 69a458b319ecf89688e2e72439932afbb1057c9f3d1f4f6c8331402202af6773
+  PASS_REAL_EQUITY_SOURCE_PREFLIGHT
+  blockers = []
+        ↓
+M30-D real readiness
+  manifest_sha256 = 6066ef813b2466bdc525ea9ab2b6b9948068a0cb7b59b5630274885499647a40
+  PASS_REAL_EQUITY_READINESS_MANIFEST_VALIDATION
+  13 material fields / 31 DAG nodes
+  AWAITING_HUMAN_REVIEW = 4
+  AWAITING_REAL_SOURCE  = 2
+  AWAITING_DEPENDENCY   = 7
+```
+
+The four SEC-derived fields at the human-review boundary are cash, diluted shares, debt, and minority interest. Market price and WACC still require real non-SEC source inputs. `HOLD_AT_GOVERNED_BOUNDARIES` is the expected fail-closed state, not a failure.
 
 ### Protected SEC runtime boundary
 
@@ -169,11 +197,11 @@ It must not be invented by AI, inferred from GitHub metadata, committed to the r
 ### M30 real execution sequence
 
 ```text
-real SEC CompanyFacts capture
-→ immutable M13 snapshot validation
-→ M30-B real source preflight
-→ M30-D 13-field readiness manifest
-→ explicit review of cash / shares / NCI / aggregate debt paths
+real SEC CompanyFacts capture                                  ✓
+→ immutable M13 snapshot validation                            ✓
+→ M30-B real source preflight                                  ✓
+→ M30-D 13-field readiness manifest                            ✓
+→ explicit review of cash / shares / NCI / aggregate debt     CURRENT
 → M30-E immutable non-SEC snapshots for market/macro sources
 → M24/M25/M26/M27/M28 explicit human-review gates
 → complete M28 v0.8 13/13 bound result
@@ -185,11 +213,11 @@ real SEC CompanyFacts capture
 
 No synthetic fixture may be inserted into `registry/cases.json` to claim end-to-end success.
 
-## M30 CLI / 현재 top-level CLI
+## M30-R1 CLI / 현재 top-level CLI
 
-Installed `vih` enters through additive `valuation_hub.cli_entry_m30`. Commands not owned by M30 delegate through M29 and the historical wrapper chain.
+Installed `vih` enters through additive `valuation_hub.cli_entry_m30r1`. Commands not owned by M30-R1 delegate unchanged through M30 → M29 and the historical wrapper chain.
 
-M30-specific commands include:
+M30 source/readiness commands include:
 
 ```text
 sec-companyfacts-fetch
@@ -204,7 +232,26 @@ wacc-source-build-from-snapshot
 terminal-growth-anchor-build-from-snapshot
 ```
 
-Historical M1–M29 commands remain delegated and regression-locked.
+M30-R1 exposes the existing M30-P1 governed aggregate-debt lifecycle:
+
+```text
+sec-aggregate-debt-extract
+sec-aggregate-debt-candidate-validate
+sec-aggregate-debt-normalize
+sec-aggregate-debt-observation-validate
+sec-aggregate-debt-review-build
+sec-aggregate-debt-review-validate
+sec-aggregate-debt-finalize
+sec-aggregate-debt-profile-validate
+sec-aggregate-debt-context-build
+sec-aggregate-debt-context-validate
+binding-sec-aggregate-debt-build
+binding-sec-aggregate-debt-validate
+```
+
+The review builder requires an explicit human reviewer, timezone-aware review timestamp, review basis, source-basis locator, and the exact semantic-scope decision. Nothing in source extraction or normalization implies approval.
+
+Historical M1–M30 commands remain delegated and regression-locked.
 
 ## Web product / Web 제품
 
@@ -238,7 +285,9 @@ Preparation surfaces do not auto-approve or perform canonical repository writes.
 - [x] M1–M23 evidence/Draft/share/debt governance foundation
 - [x] M24–M28 complete material-input governance
 - [x] M29 complete governed equity handoff
-- [x] M30-A~E real-case architecture and source-ingress preparation
+- [x] M30-A~E + M30-S real-case architecture/source-ingress/state preparation
+- [x] real Ingredion SEC source capture, M30-B preflight, and M30-D readiness validation
+- [ ] complete real human-review + remaining source/assumption gates
 - [ ] **first real Ingredion canonical case through complete M29 handoff**
 - [ ] first non-equity valuation adapter
 
@@ -267,4 +316,5 @@ Complete handoff and M30:
 - [`docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md`](docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md)
 - [`docs/M30_D_REAL_CASE_READINESS.md`](docs/M30_D_REAL_CASE_READINESS.md)
 - [`docs/M30_E_EXTERNAL_SOURCE_INTAKE.md`](docs/M30_E_EXTERNAL_SOURCE_INTAKE.md)
+- [`docs/M30_R1_SEC_AGGREGATE_DEBT_CLI.md`](docs/M30_R1_SEC_AGGREGATE_DEBT_CLI.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점

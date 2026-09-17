@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from valuation_hub import cli_entry_m27, cli_entry_m28, cli_entry_m29, cli_entry_m30, cli_entry_m30r1
+from valuation_hub import cli_entry_m27, cli_entry_m28, cli_entry_m29, cli_entry_m30, cli_entry_m30r1, cli_entry_m30r2
 from valuation_hub.web_market_price import render_market_price_lab
 
 
@@ -12,8 +12,9 @@ def test_m27_wrapper_remains_in_successor_delegation_chain() -> None:
     assert cli_entry_m29.prior_cli is cli_entry_m28
     assert cli_entry_m30.prior_cli is cli_entry_m29
     assert cli_entry_m30r1.prior_cli is cli_entry_m30
+    assert cli_entry_m30r2.prior_cli is cli_entry_m30r1
     pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
-    assert 'vih = "valuation_hub.cli_entry_m30r1:main"' in pyproject
+    assert 'vih = "valuation_hub.cli_entry_m30r2:main"' in pyproject
 
 
 def test_m27_cli_intercepts_market_price_and_delegates_older_commands() -> None:

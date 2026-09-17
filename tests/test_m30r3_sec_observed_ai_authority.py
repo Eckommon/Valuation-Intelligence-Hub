@@ -30,6 +30,7 @@ from valuation_hub.valuation_shares import (
     build_valuation_share_base_context,
     extract_sec_current_common_shares_candidate,
     normalize_current_common_shares_candidate,
+    validate_valuation_share_base_context,
 )
 
 CIK = "0001046257"
@@ -133,8 +134,14 @@ def test_current_share_ai_authority_unlocks_base_context_without_diluted_equival
     assert reviewed["semantic_boundary"] == {"current_common_shares_only": True, "fully_diluted_shares": False}
 
     context = build_valuation_share_base_context(reviewed, as_of="2026-09-14")
-    assert context["binding_eligibility"]["eligible_as_current_common_share_base"] is True
-    assert context["semantic_boundary"]["fully_diluted_shares"] is False
+    checked_context = validate_valuation_share_base_context(context, observation=reviewed)
+    assert checked_context["status"] == "PASS_VALUATION_SHARE_BASE_CONTEXT_VALIDATION"
+    assert checked_context["freshness"] == "FRESH"
+    assert context["semantic_boundary"] == {
+        "current_common_shares_base": True,
+        "fully_diluted_shares": False,
+        "direct_bind_to_diluted_shares": False,
+    }
 
 
 def test_explicit_zero_nci_ai_authority_preserves_missing_not_zero_boundary() -> None:

@@ -16,6 +16,12 @@ from valuation_hub.ai_debt_adjudication import (
     validate_ai_sec_aggregate_debt_evidence,
 )
 from valuation_hub.case_service import CaseServiceError
+from valuation_hub.sec_aggregate_debt_authority import (
+    build_sec_aggregate_debt_binding_context,
+    finalize_reviewed_sec_aggregate_debt,
+    validate_reviewed_sec_aggregate_debt,
+    validate_sec_aggregate_debt_binding_context,
+)
 
 INTERCEPT = {
     "sec-aggregate-debt-ai-evidence-build",
@@ -23,6 +29,10 @@ INTERCEPT = {
     "sec-aggregate-debt-ai-adjudicate",
     "sec-aggregate-debt-ai-adjudication-validate",
     "sec-aggregate-debt-ai-review-build",
+    "sec-aggregate-debt-finalize",
+    "sec-aggregate-debt-profile-validate",
+    "sec-aggregate-debt-context-build",
+    "sec-aggregate-debt-context-validate",
 }
 
 
@@ -80,6 +90,19 @@ def _parser() -> argparse.ArgumentParser:
     c.add_argument("observation", type=Path)
     c.add_argument("adjudication", type=Path)
     c.add_argument("evidence", type=Path)
+
+    c = sub.add_parser("sec-aggregate-debt-finalize")
+    c.add_argument("observation", type=Path)
+    c.add_argument("assertion", type=Path)
+
+    sub.add_parser("sec-aggregate-debt-profile-validate").add_argument("profile", type=Path)
+
+    c = sub.add_parser("sec-aggregate-debt-context-build")
+    c.add_argument("profile", type=Path)
+    c.add_argument("--as-of", required=True)
+    c.add_argument("--max-age-days", type=int, default=550)
+
+    sub.add_parser("sec-aggregate-debt-context-validate").add_argument("context", type=Path)
     return parser
 
 
@@ -125,6 +148,25 @@ def _run(argv: list[str]) -> int:
                 _obj(args.adjudication, "AI adjudication"),
                 _obj(args.evidence, "AI evidence"),
             ))
+            return 0
+        if args.command == "sec-aggregate-debt-finalize":
+            _dump(finalize_reviewed_sec_aggregate_debt(
+                _obj(args.observation, "SEC aggregate-debt observation"),
+                _obj(args.assertion, "SEC aggregate-debt review assertion"),
+            ))
+            return 0
+        if args.command == "sec-aggregate-debt-profile-validate":
+            _dump(validate_reviewed_sec_aggregate_debt(_obj(args.profile, "reviewed SEC aggregate-debt profile")))
+            return 0
+        if args.command == "sec-aggregate-debt-context-build":
+            _dump(build_sec_aggregate_debt_binding_context(
+                _obj(args.profile, "reviewed SEC aggregate-debt profile"),
+                as_of=args.as_of,
+                max_age_days=args.max_age_days,
+            ))
+            return 0
+        if args.command == "sec-aggregate-debt-context-validate":
+            _dump(validate_sec_aggregate_debt_binding_context(_obj(args.context, "SEC aggregate-debt binding context")))
             return 0
         raise CaseServiceError("unsupported M30-R2 command / 미지원 M30-R2 명령")
     except (CaseServiceError, ValueError, OSError, KeyError, TypeError) as exc:

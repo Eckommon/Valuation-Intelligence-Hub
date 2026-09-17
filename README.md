@@ -3,9 +3,9 @@
 > **Separate price from economic value, make assumptions explicit, and make valuation reproducible.**  
 > **가격과 경제적 가치를 분리하고, 가정을 명시하며, 가치평가를 재현 가능하게 만든다.**
 
-Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intelligence system connecting source evidence, normalization, governed facts and assumptions, Draft preparation, human review, valuation execution, promotion/admission, and repository-controlled canonicalization.
+Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intelligence system connecting source evidence, normalization, governed facts and assumptions, typed evidence-first analytical adjudication, Draft preparation, valuation execution, promotion/admission, and repository-controlled canonicalization.
 
-Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·Draft·인간검토·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다.
+Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
 ## Core authority flow / 핵심 권위 흐름
 
@@ -16,11 +16,14 @@ IMMUTABLE OR SOURCE-LOCKED INPUT / NOT CANONICAL
         ↓
 FACT_CANDIDATE / NORMALIZED FACT / ASSUMPTION_CANDIDATE
         ↓
-HUMAN-REVIEWED FACT / GOVERNED CONTEXT / ASSUMPTION
+EVIDENCE-FIRST GOVERNED REVIEW
+  (typed AI analytical authority; human where externally binding)
+        ↓
+GOVERNED FACT / CONTEXT / ASSUMPTION
         ↓
 DRAFT BINDING PROPOSAL / NOT CANONICAL
         ↓
-HUMAN APPROVAL LOCK
+GOVERNED APPROVAL / AUTHORITY LOCK
         ↓
 BOUND DRAFT RESULT / NOT CANONICAL
         ↓
@@ -59,7 +62,11 @@ python -m pip install -e ".[dev]"
 - M30-C: runtime-safe SEC capture interface with runtime-only `SEC_USER_AGENT`
 - M30-D: deterministic 13-field readiness manifest + prerequisite DAG
 - M30-E: immutable non-SEC source intake + snapshot-bound M27/M24/M25 provenance builders
-- M30-R1: additive CLI exposure of the existing governed SEC aggregate-debt review lifecycle
+- M30-R1: additive CLI exposure of the SEC aggregate-debt review lifecycle
+- M30-R2/R2.1/R2.2: evidence-first AI analytical authority, AI debt adjudication CLI, reviewer-type provenance truth
+- M30-R3: AI authority for SEC cash, current common shares, and explicit-zero NCI
+- M30-R4: six-category evidence-first dilution coverage and fully diluted-share bridge
+- M30-R5: dual-source-capable evidence-first AI market-price authority
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -135,7 +142,7 @@ See [`docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md`](docs/COMPLETE_GOVERNED_EQUITY_H
 
 ## M30 — First real complete-governed equity case / 첫 실기업 완전 거버넌스 사례
 
-The active parent mission is Issue **#66**. Target:
+The active parent mission is Issue **#66**. Real execution is Issue **#79**.
 
 ```text
 Ingredion Incorporated
@@ -144,114 +151,85 @@ SEC CIK: 0001046257
 Target case ID: US_INGR_INGREDION
 ```
 
-M30 exists to prove the full M13–M29 lifecycle on real company evidence before expanding valuation breadth.
+### Current runtime baseline
 
-### Canonical preparation completed
+`main@4f8a9c988ee20ddf33585e8810db312821f43698`
 
-| Slice | Purpose | Canonical main |
+Latest runtime slice: **M30-R5 — evidence-first AI market-price authority**.
+
+Recent canonical sequence:
+
+| Slice | Canonical main | Post-merge CI |
 |---|---|---|
-| M30-A | real-case source-contract preflight | `2034075db50bedb4feb9ec69000f3e1f789c4234` |
-| M30-P1 | exact SEC aggregate-debt successor | `11182eeab7e60a90e6ddc140ca05f45e93af7e40` |
-| M30-B | real source preflight v0.2 | `a970d74b85e44e617dd604cc829637caaf65420e` |
-| M30-C | runtime-safe SEC capture | `30609979d0d06040e7eeec276b8233796bfa48af` |
-| M30-D | 13-field readiness manifest + DAG | `fab223354c759e8b961949e8ff85e43d5bbb2ab8` |
-| M30-E | immutable non-SEC source ingress | `e4207f0d9077208881f2a63317861e6f39fa8158` |
-| M30-S | canonical M30 state reconciliation | `5217462cc17937d9684374b363cc7472c8164d4a` |
+| M30-R2.2 debt reviewer-type truth | `61ab850e58626a6c5ac69abfdb276ac63bc385f9` | `35184077583` |
+| M30-R3 SEC observed-field AI authority | `ec92bb4ef5fba2c005004d7b1214cd6a3f3e60a0` | `35247619398` |
+| M30-R4 AI dilution coverage | `5bd1d92a9733621393bbada4f301876180647829` | `35256710738` |
+| M30-R5 AI market-price authority | `4f8a9c988ee20ddf33585e8810db312821f43698` | `35283190462` |
 
-### Real Ingredion execution evidence / 실제 Ingredion 실행 근거
+### Real Ingredion fields already governed
 
-The first real execution has already crossed the source/preflight/readiness gates without creating canonical valuation state:
+- debt: USD **1.783B**, AI-reviewed and binding-context eligible;
+- cash: USD **948M**, AI-reviewed `NORMALIZED_FACT`;
+- current common shares: **63,063,979**, AI-reviewed and `FRESH` as the M22 base;
+- minority interest: explicit USD **0**, AI-reviewed and eligible.
 
-```text
-real SEC CompanyFacts snapshot
-  snapshot_sha256 = 57b61f2b535b446664a240228f00020b859052f384488441849da83f0ceebf32
-  body_sha256     = 53e524af4fe360cdf8eed3ee3055c87ff7abae5eb7e2053ff291667f5fb90745
-  PASS_SOURCE_SNAPSHOT_VALIDATION
-        ↓
-M30-B real source preflight
-  preflight_sha256 = 69a458b319ecf89688e2e72439932afbb1057c9f3d1f4f6c8331402202af6773
-  PASS_REAL_EQUITY_SOURCE_PREFLIGHT
-  blockers = []
-        ↓
-M30-D real readiness
-  manifest_sha256 = 6066ef813b2466bdc525ea9ab2b6b9948068a0cb7b59b5630274885499647a40
-  PASS_REAL_EQUITY_READINESS_MANIFEST_VALIDATION
-  13 material fields / 31 DAG nodes
-  AWAITING_HUMAN_REVIEW = 4
-  AWAITING_REAL_SOURCE  = 2
-  AWAITING_DEPENDENCY   = 7
-```
+Current common shares remain **not** fully diluted shares.
 
-The four SEC-derived fields at the human-review boundary are cash, diluted shares, debt, and minority interest. Market price and WACC still require real non-SEC source inputs. `HOLD_AT_GOVERNED_BOUNDARIES` is the expected fail-closed state, not a failure.
+### Active next boundary
 
-### Protected SEC runtime boundary
+The next real task is market-price authority followed by diluted shares.
 
-Real SEC CompanyFacts capture requires an identifying fair-access User-Agent containing a contact email. The value is accepted **only** through the runtime environment variable:
+Independent external research agrees that INGR closed at **USD 98.63 on 2026-09-14**, but this number is not governed repository authority until the M30-E/M30-R5 local source path is executed.
 
 ```text
-SEC_USER_AGENT
+two independent UTF-8 market sources
+→ immutable M30-E snapshots
+→ M27 price candidate at 98.63 USD
+→ M30-R5 evidence + contradiction search
+→ typed AI market-price adjudication
+→ reviewed M27 FACT
+→ M30-R4 options TSM
+→ resolve all six dilution categories
+→ equity.diluted_shares
 ```
 
-It must not be invented by AI, inferred from GitHub metadata, committed to the repository, or persisted in a snapshot.
+M30-R4 requires exactly six categories: options TSM, RSU/restricted stock, warrants, convertibles, contingent shares, and other explicit equity. Missing evidence never becomes zero/absence. Historical weighted-average diluted-EPS shares may not substitute for valuation-date diluted shares.
 
-### M30 real execution sequence
+### Authority policy
+
+Internal accounting/valuation interpretation may be AI-approved only after exact provenance, semantic criteria, cross-check and contradiction search succeed. Human approval is reserved for externally binding/irreversible actions such as funds movement, paid commitments, contracts/legal attestations, regulatory submissions, credentials/accounts/permissions, or secret disclosure.
+
+No synthetic fixture may be inserted into `registry/cases.json` to claim completion.
+
+## M30-R5 CLI / 현재 top-level CLI
+
+Installed `vih` enters through `valuation_hub.cli_entry_m30r5` and delegates older commands unchanged.
+
+R5 adds:
 
 ```text
-real SEC CompanyFacts capture                                  ✓
-→ immutable M13 snapshot validation                            ✓
-→ M30-B real source preflight                                  ✓
-→ M30-D 13-field readiness manifest                            ✓
-→ explicit review of cash / shares / NCI / aggregate debt     CURRENT
-→ M30-E immutable non-SEC snapshots for market/macro sources
-→ M24/M25/M26/M27/M28 explicit human-review gates
-→ complete M28 v0.8 13/13 bound result
-→ M29 promotion/admission/guarded plan
-→ admission/* branch
-→ CI + human review + exact-head merge
-→ one real Ingredion canonical case
+market-price-ai-evidence-build
+market-price-ai-evidence-validate
+market-price-ai-adjudicate
+market-price-ai-adjudication-validate
+market-price-ai-finalize
+market-price-ai-package-validate
 ```
 
-No synthetic fixture may be inserted into `registry/cases.json` to claim end-to-end success.
-
-## M30-R1 CLI / 현재 top-level CLI
-
-Installed `vih` enters through additive `valuation_hub.cli_entry_m30r1`. Commands not owned by M30-R1 delegate unchanged through M30 → M29 and the historical wrapper chain.
-
-M30 source/readiness commands include:
+R4 adds:
 
 ```text
-sec-companyfacts-fetch
-sec-source-snapshot-validate
-real-equity-preflight-v2
-real-equity-readiness-build
-real-equity-readiness-validate
-external-source-snapshot-build
-external-source-snapshot-validate
-market-price-candidate-build-from-snapshot
-wacc-source-build-from-snapshot
-terminal-growth-anchor-build-from-snapshot
+dilution-ai-inventory-build
+dilution-ai-inventory-validate
+dilution-ai-adjudicate
+dilution-ai-adjudication-validate
+dilution-ai-finalize
+dilution-ai-package-validate
 ```
 
-M30-R1 exposes the existing M30-P1 governed aggregate-debt lifecycle:
+M30/M30-R1/R2/R3 source, debt, SEC-observed-field and readiness commands remain available through delegation.
 
-```text
-sec-aggregate-debt-extract
-sec-aggregate-debt-candidate-validate
-sec-aggregate-debt-normalize
-sec-aggregate-debt-observation-validate
-sec-aggregate-debt-review-build
-sec-aggregate-debt-review-validate
-sec-aggregate-debt-finalize
-sec-aggregate-debt-profile-validate
-sec-aggregate-debt-context-build
-sec-aggregate-debt-context-validate
-binding-sec-aggregate-debt-build
-binding-sec-aggregate-debt-validate
-```
-
-The review builder requires an explicit human reviewer, timezone-aware review timestamp, review basis, source-basis locator, and the exact semantic-scope decision. Nothing in source extraction or normalization implies approval.
-
-Historical M1–M30 commands remain delegated and regression-locked.
+See `PROJECT_STATE.md` for exact real-case SHA lineage and the current resume point.
 
 ## Web product / Web 제품
 

@@ -5,313 +5,273 @@
 
 ## Repository / 저장소
 
-- `Eckommon/Valuation-Intelligence-Hub`
-- Purpose: reproducible, evidence-grounded cross-asset valuation intelligence / 재현 가능한 근거 기반 범자산 가치분석 인텔리전스
+- Repository: `Eckommon/Valuation-Intelligence-Hub`
+- Active parent: Issue **#66**
+- Real Ingredion execution: Issue **#79**
+- Target case: `US_INGR_INGREDION`
+- Company: Ingredion Incorporated / NYSE: INGR / SEC CIK `0001046257`
+
+No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
 ## Current runtime-canonical baseline / 현재 runtime 정식 기준선
 
-M30-R1 is canonical on:
+Latest runtime-changing canonical main:
 
-`main@210095f9ee491fa8a561273a744b6fd194fd9adc`
+`4f8a9c988ee20ddf33585e8810db312821f43698`
 
-This merge contains M1–M29, M30-A/P1/B/C/D/E/S, the real-Ingredion execution state through M30-D, and the additive M30-R1 aggregate-debt CLI surface.
+This is **M30-R5 — evidence-first AI market-price authority**.
 
-State-only descendants created solely to reconcile this document do not change runtime behavior; `210095f9ee491fa8a561273a744b6fd194fd9adc` remains the runtime baseline until a later runtime PR merges.
+State-only descendants that only reconcile documentation do not change runtime behavior; the runtime baseline remains the SHA above until another runtime PR merges.
 
-Active missions:
-- Parent M30: Issue **#66**
-- Real execution: Issue **#79**
-- M30-R1 runtime child: Issue **#80 — COMPLETE**
-- M30-R1 state reconciliation: Issue **#82**
+Installed `vih` enters through:
 
-Target:
+`valuation_hub.cli_entry_m30r5:main`
 
-```text
-Ingredion Incorporated
-Ticker: INGR
-Venue: NYSE
-SEC CIK: 0001046257
-Case ID: US_INGR_INGREDION
-```
+and delegates unchanged through:
 
-No synthetic fixture may be inserted into `registry/cases.json` to claim real-case success.
+`M30-R5 → M30-R4 → M30-R3 → M30-R2 → M30-R1 → M30 → M29 → ...`
 
-## Canonical milestone lineage / 정식 마일스톤 계보
+## Authority policy / 권위 정책
 
-| Milestone | Main commit | Issue |
-|---|---|---:|
-| M20 Reviewed debt → `equity.debt` | `236547512919b5d68e283b3431183f56f5fc845c` | #44 |
-| M21 Historical dilution reference | `03af933835b8fbcf9ef4e6b3fd1b3db7603782fc` | #46 |
-| M22 Valuation-date share bridge | `0a476cc9927b2d63164143447428f3e69b06051b` | #48 |
-| M23 Complete share bridge → `equity.diluted_shares` | `58d963238992f562c89c8325b42046ae35ac71bf` | #50 |
-| M24 Governed WACC → `scenario.wacc` | `ca85f04c1bd84c5189f78c81e2653cc4f65bccca` | #52 |
-| M25 Governed terminal growth | `0c0a7591a59f163fa34aba54fdeb6001fb9b7dc0` | #54 |
-| M26 Integrated six-field forecast | `130363475139fe6ea30d00d615f387b440a23c71` | #56 |
-| M27 Governed market price | `3a5f2742acd11756a78579e8fd8ba8709a267327` | #58 |
-| M28 Governed minority interest | `db5d8e835455de9e52bc656b1ddb4c352736768b` | #60 |
-| M29 Complete governed equity handoff | `97dc84d8e9a09b5bd9c6864137a537037baac4f6` | #62 |
-| M30-A Real-case source preflight | `2034075db50bedb4feb9ec69000f3e1f789c4234` | #66 |
-| M30-P1 Exact SEC aggregate-debt successor | `11182eeab7e60a90e6ddc140ca05f45e93af7e40` | #68 |
-| M30-B Real-source preflight v0.2 | `a970d74b85e44e617dd604cc829637caaf65420e` | #66 |
-| M30-C Runtime-safe SEC capture | `30609979d0d06040e7eeec276b8233796bfa48af` | #71 |
-| M30-D 13-field readiness DAG | `fab223354c759e8b961949e8ff85e43d5bbb2ab8` | #73 |
-| M30-E Immutable non-SEC source ingress | `e4207f0d9077208881f2a63317861e6f39fa8158` | #75 |
-| M30-S Canonical M30 state reconciliation | `5217462cc17937d9684374b363cc7472c8164d4a` | #77 |
-| M30-R1 Governed aggregate-debt CLI | `210095f9ee491fa8a561273a744b6fd194fd9adc` | #80 |
+M30-R2 replaced the obsolete assumption that all analytical review requires a human.
 
-Earlier M1–M19 milestones remain completed and regression-locked in repository history.
-
-## M29 canonical handoff contract / M29 정식 인계 계약
-
-M29 is complete and defines the eventual real-case admission path:
+Current policy:
 
 ```text
-complete M28 v0.8 bound result
-  = 13/13 DIRECT_BIND
-  = 13/13 human-approved
-  = 13/13 unique applied diffs
-  = unresolved []
-        ↓
-promotion-candidate-v0.2
-        ↓
-explicit human promotion review
-        ↓
-promotion-package-v0.1
-        ↓
-admission bundle
-        ↓
-guarded repository plan
-        ↓
-separate admission/* PR + CI + human review + exact-head merge
-        ↓
-CANONICAL CASE
+credible source evidence
+  → exact provenance / identity / SHA lineage
+  → semantic-fit criteria
+  → cross-check / contradiction search
+  → no material unresolved contradiction
+  → typed AI analytical adjudication
 ```
 
-M29 closure evidence:
-- tested head `a666d00d45431914fd98deb08f5b336f3c28eeef`
-- CI `34791253465`
-- merge/main `97dc84d8e9a09b5bd9c6864137a537037baac4f6`
-- post-merge CI `34791345455`
+Internal accounting, valuation, semantic interpretation, assumption preparation, repository governance, CI/PR/merge, and analytical canonical admission may be AI-governed when their evidence contracts pass.
 
-## M30 preparation / M30 준비
+Human approval remains mandatory for externally binding or irreversible actions, including:
+- spending or committing funds / paid services;
+- trading, payment, transfer, or real fund movement;
+- contracts, legal attestations, regulatory/external submissions;
+- credentials, accounts, permissions, or secret disclosure/change;
+- other externally binding actions not already explicitly delegated.
 
-M30-A/P1/B/C/D/E/S are complete.
+No human identity may be fabricated. AI authority must be explicitly typed as AI.
 
-- exact aggregate debt source concept: `us-gaap:DebtLongtermAndShorttermCombinedAmount`
-- SEC User-Agent is accepted only from runtime `SEC_USER_AGENT` and is not persisted
-- readiness contract covers exactly 13 material fields and a 31-node prerequisite DAG
-- non-SEC M27/M24/M25 source bytes use immutable local UTF-8 intake and snapshot-bound provenance
-- architecture preparation is no longer the blocker; the active work is real Ingredion execution
+## Recent canonical runtime lineage / 최근 정식 runtime 계보
 
-## M30-R real Ingredion execution / 실제 Ingredion 실행
+| Slice | Issue / PR | Merge/main | Post-merge CI | Result |
+|---|---|---|---|---|
+| M30-R2 AI analytical authority | #84 / #85 | `f7ab190a32695b302e6bea67cc4647be2b106014` | `35181287106` | complete |
+| M30-R2.1 AI debt evidence CLI | #86 / #87 | `ad41443753b1ce0c9f411743769ce66d9efa9618` | `35181524490` | complete |
+| M30-R2.2 reviewer-type truth | #88 / #89 | `61ab850e58626a6c5ac69abfdb276ac63bc385f9` | `35184077583` | complete |
+| M30-R3 SEC observed-field AI authority | #92 / #93 | `ec92bb4ef5fba2c005004d7b1214cd6a3f3e60a0` | `35247619398` | complete |
+| M30-R4 AI dilution coverage | #94 / #95 | `5bd1d92a9733621393bbada4f301876180647829` | `35256710738` | complete |
+| M30-R5 AI market-price authority | #96 / #97 | `4f8a9c988ee20ddf33585e8810db312821f43698` | `35283190462` | complete |
 
-Issue **#79** remains active.
+M30-R5 exact tested head:
+- `a0389ce192e747258269757ec40a8d876ce9de5b`
+- PR CI `35283056169`
+- Python 3.11: **462 passed**
+- Python 3.12: **462 passed**
 
-### Real SEC source — PASS
+Historical M1–M30-E/S/R1 remain regression-locked in repository history.
+
+## Real Ingredion source baseline / 실기업 원문 기준선
+
+Immutable SEC source:
 
 ```text
-CIK:                  0001046257
-snapshot_sha256:      57b61f2b535b446664a240228f00020b859052f384488441849da83f0ceebf32
-body_sha256:          53e524af4fe360cdf8eed3ee3055c87ff7abae5eb7e2053ff291667f5fb90745
-status:               PASS_SOURCE_SNAPSHOT_VALIDATION
-user_agent_persisted: false
-canonical:            false
+snapshot_sha256 = 57b61f2b535b446664a240228f00020b859052f384488441849da83f0ceebf32
+body_sha256     = 53e524af4fe360cdf8eed3ee3055c87ff7abae5eb7e2053ff291667f5fb90745
+status          = PASS_SOURCE_SNAPSHOT_VALIDATION
+canonical       = false
 ```
 
-Raw source remains user-local under gitignored `workspace/source_snapshots/**`.
+M30-B preflight:
+- SHA `69a458b319ecf89688e2e72439932afbb1057c9f3d1f4f6c8331402202af6773`
+- `PASS_REAL_EQUITY_SOURCE_PREFLIGHT`
+- blockers `[]`
 
-### M30-B real preflight — PASS
+M30-D readiness:
+- SHA `6066ef813b2466bdc525ea9ab2b6b9948068a0cb7b59b5630274885499647a40`
+- 13 material fields
+- 31 DAG nodes
+- historical initial decision `HOLD_AT_GOVERNED_BOUNDARIES`
+
+That initial readiness manifest predates the R2–R5 authority migration and must not be read as the current field status.
+
+## Real field execution / 실기업 필드 실행
+
+### equity.debt — AI-governed path PASS
 
 ```text
-schema:              real-equity-source-preflight-v0.2
-preflight_sha256:    69a458b319ecf89688e2e72439932afbb1057c9f3d1f4f6c8331402202af6773
-status:              PASS_REAL_EQUITY_SOURCE_PREFLIGHT
-blockers:            []
-registry collision:  false
-next_action:         CONTINUE_TO_HUMAN_DEBT_SEMANTIC_REVIEW
+value                   = USD 1,783,000,000
+period_end              = 2026-06-30
+SEC concept             = us-gaap:DebtLongtermAndShorttermCombinedAmount
+observation_sha256      = 32027c57ac368fb115c06aa1a50152af353fefdc2dbb5b9fa834cc2ed2f6a2ad
+AI evidence_sha256      = 0b2fd4fbc8b3d8f8c2faf6ce3cfeee6e92beafa0be45b7df1277f673183f820c
+AI adjudication_sha256  = d8a7d94059e5affca895af09ae962bebfa94a5c341cd6ce72c795a61abbf233f
+review assertion_sha256 = c5f465b9e88608f80e0bf31177a0ec7a99b571656b493de3ecdebd7fd1801832
+reviewed profile_sha256 = b5fb0cbaa9758b2d772452ce00e3d3139af9aef7dd6e6b35a38db85b031d36e3
+binding context_sha256  = 1339821cb11c66482cfcbff66838ea6bdd42d32ebabcd32927e6839e6fa1286a
+review_authority        = AI
+freshness               = FRESH
+eligible                = true
 ```
 
-Real source candidates are proven for:
-- cash
-- current common shares
-- minority interest, including explicit reported zero
-- exact aggregate debt
-
-Candidate existence does not imply review approval.
-
-### M30-D real readiness — PASS
-
-```text
-schema:          real-equity-readiness-manifest-v0.1
-manifest_sha256: 6066ef813b2466bdc525ea9ab2b6b9948068a0cb7b59b5630274885499647a40
-status:          REAL_EQUITY_READINESS_EVALUATED
-decision:        HOLD_AT_GOVERNED_BOUNDARIES
-validation:      PASS_REAL_EQUITY_READINESS_MANIFEST_VALIDATION
-blockers:        0
-material fields: 13
-DAG nodes:       31
-```
-
-Field states:
-
-```text
-AWAITING_HUMAN_REVIEW = 4
-AWAITING_REAL_SOURCE  = 2
-AWAITING_DEPENDENCY   = 7
-```
-
-Human-review boundary:
-- `equity.cash`
-- `equity.diluted_shares`
-- `equity.debt`
-- `equity.minority_interest`
-
-Still awaiting real non-SEC source:
-- `market_price`
-- `scenario.wacc`
-
-Terminal growth and the six forecast fields remain dependency-bound.
-
-## M30-R1 governed debt CLI — CANONICAL COMPLETE
-
-Real execution exposed that M30-P1's governed aggregate-debt lifecycle existed in Python but was not reachable through installed `vih`. Issue **#80** / PR **#81** fixed only this operability gap.
-
-Canonical evidence:
-
-```text
-initial failing CI: 35004811782
-  result: 427 passed / 4 failed
-  cause: four stale interface tests hard-coded cli_entry_m30 as forever-latest
-  M30-R1 lifecycle failures: 0
-
-corrected intermediate head: eda067ad055e10d885d4f9e7c308847f0e3caebe
-CI: 35005018129 → Python 3.11/3.12 success
-
-final tested head: b06a816a93bec722e948030ff0d839a1e464f1f7
-exact-head CI:    35005420900 → Python 3.11/3.12 success
-expected-head PR: #81
-merge/main:       210095f9ee491fa8a561273a744b6fd194fd9adc
-post-merge CI:    35005558446 → Python 3.11/3.12 success
-Issue #80:        completed
-```
-
-Installed `vih` now enters through `valuation_hub.cli_entry_m30r1` and delegates non-M30-R1 commands unchanged through `M30 → M29 → ...`.
-
-New governed commands:
-
-```text
-sec-aggregate-debt-extract
-sec-aggregate-debt-candidate-validate
-sec-aggregate-debt-normalize
-sec-aggregate-debt-observation-validate
-sec-aggregate-debt-review-build
-sec-aggregate-debt-review-validate
-sec-aggregate-debt-finalize
-sec-aggregate-debt-profile-validate
-sec-aggregate-debt-context-build
-sec-aggregate-debt-context-validate
-binding-sec-aggregate-debt-build
-binding-sec-aggregate-debt-validate
-```
-
-The core M30-P1 semantic contract was not relaxed.
-
-## Authority model / 권위 모델
-
-```text
-market_price               → FACT
-equity.cash                → NORMALIZED_FACT
-equity.minority_interest   → NORMALIZED_FACT
-equity.debt                → DERIVED
-equity.diluted_shares      → DERIVED
-scenario.wacc              → ASSUMPTION
-scenario.terminal_growth   → ASSUMPTION
-six forecast inputs        → ASSUMPTION
-```
-
-Authority is inherited, never silently upgraded. `DERIVED != FACT`; source snapshot != reviewed fact; complete bound Draft != canonical case.
-
-## Protected runtime and human-review boundaries / 보호 실행·인간검토 경계
-
-SEC live capture:
-- AI must not invent or infer the identifying contact value;
-- `SEC_USER_AGENT` is runtime-only;
-- the value must not be committed or persisted.
-
-Human review:
-- no automatic approval;
-- no inferred reviewer identity;
-- no inferred timestamp;
-- no invented review basis or source locator;
-- no Draft/registry/canonical write merely because a candidate exists.
-
-For the M30-P1 successor, the exact semantic decision is:
+Semantic decision:
 
 `EXPLICIT_FILING_RECONCILIATION_EXCLUDES_LEASE_LIABILITIES`
 
-This decision may only be supplied after an actual human reviewer establishes the issuer-filing basis. AI must not infer it from the SEC CompanyFacts value.
+The obsolete pre-R2.2 profile/context are superseded and must not be used.
 
-## Remaining M30 acceptance / 잔여 M30 완료조건
+### equity.cash — AI-reviewed PASS
 
-- [x] real-case preflight contract
-- [x] exact U.S. aggregate-debt successor
-- [x] runtime-safe SEC capture
-- [x] deterministic 13-field readiness DAG
-- [x] immutable non-SEC source-ingress mechanism
-- [x] real Ingredion SEC source captured and validated
-- [x] registry non-collision proven
-- [x] exact cash / shares / NCI / aggregate-debt candidates proven
-- [x] real readiness manifest validated
-- [x] M30-R1 aggregate-debt CLI repair merged and post-merge validated
-- [ ] real debt semantic review by an actual human reviewer
-- [ ] real cash / share / NCI review paths
-- [ ] real valuation-date market-price source + review
-- [ ] seven M24 WACC source inputs + review
-- [ ] two M25 macro anchors + terminal-growth review
-- [ ] M26 six-field atomic forecast block + review
-- [ ] complete M28 v0.8 13/13 result with `unresolved=[]`
-- [ ] deterministic M29 candidate/package/admission/guarded plan
-- [ ] canonical apply only on `admission/*`
-- [ ] final exact-head CI + expected-head merge
-- [ ] registry gains exactly one real Ingredion case
-- [ ] Issue #66 closes and final post-merge CI succeeds
+```text
+value                = USD 948,000,000
+source observation   = 5603c65cb092f5d2ac49b67cc524da8e0d620561835baf8d4cc93afbf854363b
+reviewed observation = c4c7cc9768835cd4ada7129f1ca33d6f7cf9b08a795e08d0085639f90d4551ec
+class                = NORMALIZED_FACT
+```
 
-Do not begin a non-equity adapter during M30.
+### current common shares — AI-reviewed base PASS
 
-## Existing canonical registry / 기존 정식 registry
+```text
+value                = 63,063,979
+source observation   = 7c54c10037edce452e4db03991e44440d24cd50e7a37a39e2efc90c9e1bee8f0
+reviewed observation = 5624065ae34b4fb3d7adba25f865180b3efc9853f9ee2904875110c3e8e833f2
+M22 base context     = 12ac21026b1a06756d0474e0ad2aec10bdd9391caf2ff03ca512c2cb3d8a0adc
+freshness            = FRESH
+```
 
-- `KR_010120_LS_ELECTRIC` — `equity_fcff`
-- `KR_229640_LS_ECO_ENERGY` — `equity_fcff`
-- `US_JTAI_JET_AI` — `venture_probability`
+Immutable semantic boundary:
 
-None was admitted through this complete M30 real-company path.
+```text
+current_common_shares_base    = true
+fully_diluted_shares          = false
+direct_bind_to_diluted_shares = false
+```
+
+### equity.minority_interest — AI-reviewed PASS
+
+```text
+value            = explicit USD 0
+source observation = 703f9f53859d8cef04fd207b604468735272c49d7955b7047ebe2304694cfa27
+reviewed package = 92c741160fc4ea268cfda1eded5b2080afb622e7a0fd27f2fc40c41e9ab71331
+eligible         = true
+missing_is_zero  = false
+```
+
+## M30-R4 dilution contract / 희석 계약
+
+`equity.diluted_shares` remains unresolved.
+
+Exactly six categories are mandatory:
+
+1. `options_treasury_stock_method`
+2. `rsu_restricted_stock`
+3. `warrants`
+4. `convertibles_if_converted`
+5. `contingent_shares`
+6. `other_explicit`
+
+Each must be explicitly:
+- `PRESENT`
+- `ABSENT_SUPPORTED`
+- `BLOCKED_DEPENDENCY`
+- `UNKNOWN_CONFLICT`
+
+Missing evidence never becomes zero or absence.
+
+Historical weighted-average diluted EPS shares are reference-only and may not become valuation-date fully diluted shares.
+
+Options/warrants TSM requires a fresh source-bound reviewed market-price FACT.
+
+## M30-R5 market-price contract / 시장가격 계약
+
+R5 is canonical, but the **real INGR market-price FACT has not yet been materialized locally**.
+
+External research cross-check currently agrees on:
+- ticker: INGR
+- venue: NYSE
+- valuation/trading date: 2026-09-14
+- close: USD 98.63
+
+This research result is not repository authority by itself.
+
+R5 requires:
+
+```text
+already-acquired UTF-8 source bytes
+  → M30-E immutable snapshot
+  → M27 market-price candidate
+  → exact snapshot↔candidate provenance validation
+  → exact quote excerpt
+  → Tier-B independent corroborating snapshot
+  → contradiction search
+  → AI_MARKET_PRICE_ADJUDICATOR_V01
+  → existing reviewed-market-price-fact-v0.1
+```
+
+Primary snapshot must identify symbol, venue, currency, and closing-price semantics. Material contradiction fails closed.
 
 ## Exact resume point / 정확한 재개점
 
-Runtime-canonical resume baseline:
+Runtime baseline:
 
-`210095f9ee491fa8a561273a744b6fd194fd9adc`
+`4f8a9c988ee20ddf33585e8810db312821f43698`
 
-Active work returns to Issue **#79**.
+Next work is **real source execution**, not another architecture slice:
 
-Next execution is **not** another architecture mission. On the user's local clone:
+1. sync user-local main to the current canonical repository state;
+2. refresh editable install so `vih` points to `cli_entry_m30r5`;
+3. acquire two independent source texts for INGR 2026-09-14 close;
+4. materialize and validate both M30-E snapshots under gitignored `workspace/source_snapshots/**`;
+5. build the M27 candidate at USD 98.63;
+6. build/validate M30-R5 AI evidence;
+7. AI adjudicate/finalize/validate the reviewed market-price FACT;
+8. feed that FACT to M30-R4 options TSM;
+9. resolve RSU / contingent-performance / warrants / convertibles / other-explicit categories;
+10. obtain reviewed `equity.diluted_shares`;
+11. continue WACC → terminal growth → six-field forecast → complete M28/M29 handoff;
+12. only then perform guarded real-case admission.
 
-1. update local `main` to the current merged repository state;
-2. refresh editable install because `pyproject.toml` now points `vih` to `cli_entry_m30r1`;
-3. run real Ingredion `sec-aggregate-debt-extract` against the existing hash-locked SEC snapshot;
-4. validate the candidate;
-5. normalize the candidate;
-6. validate the normalized observation;
-7. **STOP before `sec-aggregate-debt-review-build`**.
+Do not begin a non-equity adapter during M30.
 
-Do not create a review assertion until an actual human reviewer supplies reviewer identity, timezone-aware review time, review basis, source-basis locator, and the exact semantic-scope decision.
+## Remaining M30 acceptance / 잔여 완료조건
 
-Issue #82 is state-only; once merged, its resulting main commit is a documentation-only descendant of the runtime baseline above.
+- [x] real SEC source capture / preflight / readiness
+- [x] debt evidence-first AI authority and real debt execution
+- [x] cash AI-reviewed authority
+- [x] current common share base AI-reviewed authority
+- [x] explicit-zero NCI AI-reviewed authority
+- [x] six-category AI dilution governance
+- [x] AI market-price authority successor
+- [ ] real INGR immutable market-price source snapshots
+- [ ] real INGR reviewed market-price FACT
+- [ ] real INGR complete six-category dilution coverage
+- [ ] real `equity.diluted_shares`
+- [ ] seven M24 WACC source inputs + governed assumption
+- [ ] M25 macro anchors + terminal-growth assumption
+- [ ] M26 atomic six-field forecast block
+- [ ] complete M28 13/13 bound result with unresolved=[]
+- [ ] deterministic M29 promotion/admission/guarded plan
+- [ ] separate `admission/*` application
+- [ ] registry gains exactly one real Ingredion case
+- [ ] final post-merge main CI and Issue #66 closure
+
+## Existing canonical registry / 기존 정식 registry
+
+- `KR_010120_LS_ELECTRIC`
+- `KR_229640_LS_ECO_ENERGY`
+- `US_JTAI_JET_AI`
+
+None was admitted through this full M30 real-company path.
 
 ## Grounding authority / 근거화 권위
 
-1. merged `main` files and completed Issue/PR decisions
-2. `PROJECT_STATE.md` and current active Issue/PR/branch
-3. exact source/result/candidate/package/admission/plan SHA lineage
+1. merged GitHub `main`, issue/PR state and exact CI evidence
+2. immutable source/result/package SHA lineage
+3. `PROJECT_STATE.md` + active execution issue
 4. current chat
 5. AI recollection

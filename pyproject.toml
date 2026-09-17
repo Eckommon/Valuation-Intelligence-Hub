@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
-vih = "valuation_hub.cli_entry_m30r2:main"
+vih = "valuation_hub.cli_entry_m30r3:main"
 
 [project.optional-dependencies]
 dev = [

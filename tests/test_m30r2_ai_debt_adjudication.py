@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
+from valuation_hub import cli_entry_m30r2
 from valuation_hub.ai_debt_adjudication import (
     ADJUDICATOR_ID,
     POLICY_ID,
@@ -123,3 +125,55 @@ def test_ai_adjudication_requires_timezone_aware_timestamp() -> None:
     evidence = _evidence(observation)
     with pytest.raises(CaseServiceError, match="timezone"):
         build_ai_sec_aggregate_debt_adjudication(observation, evidence, adjudicated_at="2026-09-17T13:00:00")
+
+
+def test_cli_builds_evidence_without_manual_hash_editing(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    observation_path = tmp_path / "observation.json"
+    observation_path.write_text(json.dumps(_observation(), ensure_ascii=False), encoding="utf-8")
+
+    rc = cli_entry_m30r2.main([
+        "--json",
+        "sec-aggregate-debt-ai-evidence-build",
+        str(observation_path),
+        "--primary-filing-locator", PRIMARY,
+        "--supporting-filing-locator", SUPPORTING,
+        "--evidence-basis", "Issuer financing note reconciles 1.742B long-term plus 0.041B short-term to 1.783B total debt; leases are separately classified.",
+        "--contradiction-search-summary", "No material contrary issuer evidence found.",
+        "--q1-financing-components-are-interest-bearing",
+        "--q2-issuer-total-debt-reconciles-to-observation",
+        "--q3-operating-lease-liabilities-separately-classified",
+        "--q4-lease-exclusion-supported",
+    ])
+    assert rc == 0
+    evidence = json.loads(capsys.readouterr().out)
+    assert evidence["policy_id"] == POLICY_ID
+    assert evidence["evidence_sha256"]
+    assert all(evidence["criteria"].values())
+
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence, ensure_ascii=False), encoding="utf-8")
+    rc = cli_entry_m30r2.main([
+        "--json", "sec-aggregate-debt-ai-evidence-validate", str(evidence_path), str(observation_path)
+    ])
+    assert rc == 0
+    checked = json.loads(capsys.readouterr().out)
+    assert checked["status"] == "PASS_AI_SEC_AGGREGATE_DEBT_EVIDENCE_VALIDATION"
+
+
+def test_cli_evidence_build_fails_closed_when_q4_missing(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    observation_path = tmp_path / "observation.json"
+    observation_path.write_text(json.dumps(_observation(), ensure_ascii=False), encoding="utf-8")
+    rc = cli_entry_m30r2.main([
+        "--json",
+        "sec-aggregate-debt-ai-evidence-build",
+        str(observation_path),
+        "--primary-filing-locator", PRIMARY,
+        "--evidence-basis", "Evidence basis.",
+        "--contradiction-search-summary", "No material contrary evidence found.",
+        "--q1-financing-components-are-interest-bearing",
+        "--q2-issuer-total-debt-reconciles-to-observation",
+        "--q3-operating-lease-liabilities-separately-classified",
+    ])
+    assert rc == 2
+    error = json.loads(capsys.readouterr().out)
+    assert "criteria" in error["error"]

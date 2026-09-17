@@ -146,3 +146,18 @@ def test_cli_evidence_build_with_snapshot_manifest(tmp_path: Path, capsys: pytes
     out = json.loads(capsys.readouterr().out)
     assert out["claim"]["price"] == 98.63
     assert len(out["corroborations"]) == 1
+
+
+def test_primary_snapshot_must_identify_currency_and_venue() -> None:
+    text = PRIMARY_TEXT.replace("Currency in USD\n", "").replace("NYSE\n", "")
+    primary = _snap(text, "Investing.com", "https://www.investing.com/equities/ingredion-inc-historical-data")
+    candidate = _candidate(primary)
+    with pytest.raises(CaseServiceError, match="venue|currency"):
+        build_ai_market_price_evidence(
+            candidate,
+            primary,
+            primary_excerpt=PRIMARY_EXCERPT,
+            corroborations=_corrs(),
+            contradiction_search_summary="No contradiction identified.",
+            material_contradictions=[],
+        )

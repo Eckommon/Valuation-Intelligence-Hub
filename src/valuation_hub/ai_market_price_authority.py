@@ -76,13 +76,26 @@ def _price_tokens(price: float) -> tuple[str, ...]:
     return f"{price:.2f}", f"${price:.2f}", f"{price:g}"
 
 
-def _claim_visible(snapshot: dict[str, Any], excerpt: str, candidate: dict[str, Any]) -> None:
+def _claim_visible(
+    snapshot: dict[str, Any], excerpt: str, candidate: dict[str, Any], *, require_primary_identity: bool = False
+) -> None:
     if not any(token in excerpt for token in _date_tokens(candidate["trading_date"])):
         raise CaseServiceError("source excerpt does not visibly contain trading date / source excerpt에 거래일이 보이지 않음")
     if not any(token in excerpt for token in _price_tokens(float(candidate["price"]))):
         raise CaseServiceError("source excerpt does not visibly contain candidate price / source excerpt에 candidate 가격이 보이지 않음")
-    if candidate["instrument"]["symbol"].lower() not in snapshot["raw_text"].lower():
+    raw = snapshot["raw_text"].lower()
+    symbol = candidate["instrument"]["symbol"].lower()
+    venue = candidate["instrument"]["venue"].lower()
+    if symbol not in raw:
         raise CaseServiceError("source snapshot does not identify candidate symbol / source snapshot에 candidate symbol 식별 없음")
+    if venue not in raw:
+        raise CaseServiceError("source snapshot does not identify candidate venue / source snapshot에 candidate venue 식별 없음")
+    if require_primary_identity:
+        currency = candidate["currency"].lower()
+        if currency not in raw:
+            raise CaseServiceError("primary source snapshot does not identify candidate currency / primary source snapshot에 candidate 통화 식별 없음")
+        if candidate["quote_type"] == "OFFICIAL_CLOSE" and "close" not in raw and "price" not in raw:
+            raise CaseServiceError("primary source snapshot does not identify closing-price semantics / primary source snapshot에 종가 의미 식별 없음")
 
 
 def _source_id(snapshot: dict[str, Any]) -> tuple[str, str]:
@@ -121,7 +134,7 @@ def build_ai_market_price_evidence(
     if candidate["quote_type"] != "OFFICIAL_CLOSE":
         raise CaseServiceError("M30-R5 v0.1 requires OFFICIAL_CLOSE / M30-R5 v0.1은 OFFICIAL_CLOSE 필요")
     primary_excerpt = _excerpt(primary_snapshot, primary_excerpt, "primary_excerpt")
-    _claim_visible(primary_snapshot, primary_excerpt, candidate)
+    _claim_visible(primary_snapshot, primary_excerpt, candidate, require_primary_identity=True)
     rows = _corroboration_rows(candidate, primary_snapshot, corroborations)
     if candidate["source"]["tier"] == "B" and not rows:
         raise CaseServiceError("Tier B market price requires independent corroborating snapshot / Tier B 시장가격은 독립 corroborating snapshot 필요")
@@ -156,7 +169,7 @@ def validate_ai_market_price_evidence(evidence: dict[str, Any], candidate: dict[
     primary = evidence.get("primary")
     if not isinstance(primary, dict) or primary.get("source") != primary_snapshot["source"] or primary.get("snapshot_sha256") != primary_snapshot["snapshot_sha256"] or primary.get("body_sha256") != primary_snapshot["body"]["sha256"]:
         raise CaseServiceError("AI market-price primary provenance mismatch / AI 시장가격 primary provenance 불일치")
-    pexcerpt = _excerpt(primary_snapshot, primary.get("excerpt"), "primary_excerpt"); _claim_visible(primary_snapshot, pexcerpt, candidate)
+    pexcerpt = _excerpt(primary_snapshot, primary.get("excerpt"), "primary_excerpt"); _claim_visible(primary_snapshot, pexcerpt, candidate, require_primary_identity=True)
     expected_rows = _corroboration_rows(candidate, primary_snapshot, corroborations)
     if candidate["source"]["tier"] == "B" and not expected_rows:
         raise CaseServiceError("Tier B market price requires corroboration / Tier B 시장가격 corroboration 필요")

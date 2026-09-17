@@ -10,6 +10,7 @@ from typing import Any
 from valuation_hub import cli_entry_m30r1 as prior_cli
 from valuation_hub.ai_debt_adjudication import (
     build_ai_sec_aggregate_debt_adjudication,
+    build_ai_sec_aggregate_debt_evidence,
     build_legacy_compatible_ai_review_assertion,
     validate_ai_sec_aggregate_debt_adjudication,
     validate_ai_sec_aggregate_debt_evidence,
@@ -17,6 +18,7 @@ from valuation_hub.ai_debt_adjudication import (
 from valuation_hub.case_service import CaseServiceError
 
 INTERCEPT = {
+    "sec-aggregate-debt-ai-evidence-build",
     "sec-aggregate-debt-ai-evidence-validate",
     "sec-aggregate-debt-ai-adjudicate",
     "sec-aggregate-debt-ai-adjudication-validate",
@@ -48,6 +50,18 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--json", action="store_true", dest="as_json")
     sub = parser.add_subparsers(dest="command", required=True)
 
+    c = sub.add_parser("sec-aggregate-debt-ai-evidence-build")
+    c.add_argument("observation", type=Path)
+    c.add_argument("--primary-filing-locator", required=True)
+    c.add_argument("--supporting-filing-locator", action="append", default=[])
+    c.add_argument("--evidence-basis", required=True)
+    c.add_argument("--contradiction-search-summary", required=True)
+    c.add_argument("--material-contradiction", action="append", default=[])
+    c.add_argument("--q1-financing-components-are-interest-bearing", action="store_true")
+    c.add_argument("--q2-issuer-total-debt-reconciles-to-observation", action="store_true")
+    c.add_argument("--q3-operating-lease-liabilities-separately-classified", action="store_true")
+    c.add_argument("--q4-lease-exclusion-supported", action="store_true")
+
     c = sub.add_parser("sec-aggregate-debt-ai-evidence-validate")
     c.add_argument("evidence", type=Path)
     c.add_argument("observation", type=Path)
@@ -72,6 +86,22 @@ def _parser() -> argparse.ArgumentParser:
 def _run(argv: list[str]) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.command == "sec-aggregate-debt-ai-evidence-build":
+            _dump(build_ai_sec_aggregate_debt_evidence(
+                _obj(args.observation, "observation"),
+                primary_filing_locator=args.primary_filing_locator,
+                supporting_filing_locators=list(args.supporting_filing_locator),
+                evidence_basis=args.evidence_basis,
+                contradiction_search_summary=args.contradiction_search_summary,
+                material_contradictions=list(args.material_contradiction),
+                criteria={
+                    "q1_financing_components_are_interest_bearing": args.q1_financing_components_are_interest_bearing,
+                    "q2_issuer_total_debt_reconciles_to_observation": args.q2_issuer_total_debt_reconciles_to_observation,
+                    "q3_operating_lease_liabilities_separately_classified": args.q3_operating_lease_liabilities_separately_classified,
+                    "q4_lease_exclusion_supported": args.q4_lease_exclusion_supported,
+                },
+            ))
+            return 0
         if args.command == "sec-aggregate-debt-ai-evidence-validate":
             _dump(validate_ai_sec_aggregate_debt_evidence(_obj(args.evidence, "AI evidence"), _obj(args.observation, "observation")))
             return 0

@@ -17,9 +17,9 @@ No synthetic fixture may be admitted to `registry/cases.json` to claim real-case
 
 Latest runtime-changing canonical main:
 
-`4f8a9c988ee20ddf33585e8810db312821f43698`
+`aadc8fef8ff3ecb20ad71cbd90809c4e95b69c1f`
 
-This is **M30-R5 — evidence-first AI market-price authority**.
+This is **M30-R4.1 — strike-distribution-safe treasury-stock-method correction**, layered after M30-R5 market-price authority.
 
 State-only descendants that only reconcile documentation do not change runtime behavior; the runtime baseline remains the SHA above until another runtime PR merges.
 
@@ -67,6 +67,7 @@ No human identity may be fabricated. AI authority must be explicitly typed as AI
 | M30-R3 SEC observed-field AI authority | #92 / #93 | `ec92bb4ef5fba2c005004d7b1214cd6a3f3e60a0` | `35247619398` | complete |
 | M30-R4 AI dilution coverage | #94 / #95 | `5bd1d92a9733621393bbada4f301876180647829` | `35256710738` | complete |
 | M30-R5 AI market-price authority | #96 / #97 | `4f8a9c988ee20ddf33585e8810db312821f43698` | `35283190462` | complete |
+| M30-R4.1 strike-distribution-safe TSM | #100 / #101 | `aadc8fef8ff3ecb20ad71cbd90809c4e95b69c1f` | `35555025332` | complete |
 
 M30-R5 exact tested head:
 - `a0389ce192e747258269757ec40a8d876ce9de5b`
@@ -187,56 +188,85 @@ Historical weighted-average diluted EPS shares are reference-only and may not be
 
 Options/warrants TSM requires a fresh source-bound reviewed market-price FACT.
 
-## M30-R5 market-price contract / 시장가격 계약
+## Real M30-R5 market-price execution / 실시장가격 실행
 
-R5 is canonical, but the **real INGR market-price FACT has not yet been materialized locally**.
-
-External research cross-check currently agrees on:
-- ticker: INGR
-- venue: NYSE
-- valuation/trading date: 2026-09-14
-- close: USD 98.63
-
-This research result is not repository authority by itself.
-
-R5 requires:
+The real INGR market-price FACT is now source-bound and reviewed.
 
 ```text
-already-acquired UTF-8 source bytes
-  → M30-E immutable snapshot
-  → M27 market-price candidate
-  → exact snapshot↔candidate provenance validation
-  → exact quote excerpt
-  → Tier-B independent corroborating snapshot
-  → contradiction search
-  → AI_MARKET_PRICE_ADJUDICATOR_V01
-  → existing reviewed-market-price-fact-v0.1
+ticker / venue       = INGR / NYSE
+trading_date         = 2026-09-14
+price                = USD 98.63
+quote_type           = OFFICIAL_CLOSE
+review_authority     = AI
+package_sha256       = 607808de5224a84072427a18100e4933600fa4bad84057f9ffae0a7e436b7e9a
+validator            = PASS_AI_REVIEWED_MARKET_PRICE_VALIDATION
 ```
 
-Primary snapshot must identify symbol, venue, currency, and closing-price semantics. Material contradiction fails closed.
+Independent immutable snapshots:
+- Investing.com: `8d889e4faa4232793d653fb1fed82582d22b570bf485afac9e1c378bef10324f`
+- ChartExchange: `9e19415685779b8794c93fce9a50f772fcff8776d253688574fc6d9893f440da`
+- StockAnalysis: `e30e991451c271d94b906fc5120203ad591c0b1f4b1a9756e4b0fc42496fc57c`
+
+Market price is no longer a blocker.
+
+## Real M30-R4 dilution execution and R4.1 correction / 실제 희석 실행·수정
+
+First real HOLD execution captured and validated Tier-A issuer sources:
+
+- 2026 Q2 10-Q snapshot: `f61f33b0e27403ab56882d8cc1daa3a66571e9452fc5d8012268f39ab098b0f9`
+- 2025 10-K snapshot: `8be63bfbdfd16e77973b37ee7fce94f5131fedd443c01b234962e929c1e7835e`
+- 2026 director-compensation exhibit snapshot: `45104cf9b7625ee851d5a87188a9ae8fb13fc9183a68529ca21c36ee104d1dce`
+
+Initial HOLD artifact:
+- inventory SHA: `fda95dfb56cc40e287a043f4947a6006c0da4fa183e36a135029da6e22a7b86d`
+- adjudication SHA: `818a15b58fd97e627585e315f8f0d3c2db1e677ca8d309f0e264610a304972a1`
+- decision: `HOLD_INCOMPLETE_DILUTION_COVERAGE`
+
+Its overall HOLD remains useful historical execution evidence, but its original option adjustment of zero is **superseded for final authority**.
+
+R4.1 falsified the aggregate weighted-average-strike shortcut:
+
+```text
+weighted_average_exercise_price != complete strike distribution
+portfolio TSM = Σ tranche-level TSM
+```
+
+Canonical R4.1 rule:
+- `TREASURY_STOCK_METHOD_TRANCHES_V01` requires explicit strike tranches whose counts reconcile to total outstanding instruments;
+- aggregate TSM is allowed only when one homogeneous exercise price is explicitly supported;
+- total options + weighted-average exercise price alone must fail closed.
+
+Real current six-category status:
+
+| Category | Current state | Evidence status |
+|---|---|---|
+| options_treasury_stock_method | BLOCKED_DEPENDENCY | complete valuation-date strike distribution unavailable |
+| rsu_restricted_stock | PRESENT | 534,000 employee RSUs |
+| warrants | ABSENT_SUPPORTED | full 10-Q + 10-K search returned zero warrant hits |
+| convertibles_if_converted | ABSENT_SUPPORTED | full 10-Q + 10-K search returned zero convertible hits |
+| contingent_shares | BLOCKED_DEPENDENCY | no complete point-in-time payout-weighted performance-award count |
+| other_explicit | BLOCKED_DEPENDENCY | no complete 2026-09-14 director/deferred-equity aggregate |
+
+Therefore `equity.diluted_shares` remains unresolved. Do not run `dilution-ai-finalize` from the original two-blocker inventory.
 
 ## Exact resume point / 정확한 재개점
 
 Runtime baseline:
 
-`4f8a9c988ee20ddf33585e8810db312821f43698`
+`aadc8fef8ff3ecb20ad71cbd90809c4e95b69c1f`
 
-Next work is **real source execution**, not another architecture slice:
+Next exact work:
 
-1. sync user-local main to the current canonical repository state;
-2. refresh editable install so `vih` points to `cli_entry_m30r5`;
-3. acquire two independent source texts for INGR 2026-09-14 close;
-4. materialize and validate both M30-E snapshots under gitignored `workspace/source_snapshots/**`;
-5. build the M27 candidate at USD 98.63;
-6. build/validate M30-R5 AI evidence;
-7. AI adjudicate/finalize/validate the reviewed market-price FACT;
-8. feed that FACT to M30-R4 options TSM;
-9. resolve RSU / contingent-performance / warrants / convertibles / other-explicit categories;
-10. obtain reviewed `equity.diluted_shares`;
-11. continue WACC → terminal growth → six-field forecast → complete M28/M29 handoff;
-12. only then perform guarded real-case admission.
+1. regenerate the real R4 inventory under R4.1 using the already-captured local issuer snapshots and reviewed market-price/share-base packages;
+2. expected corrected state is a durable **three-blocker HOLD**:
+   - option strike distribution,
+   - payout-weighted performance-award count,
+   - director/deferred-equity point-in-time count;
+3. do not finalize `equity.diluted_shares` from incomplete public evidence;
+4. determine whether exact public reconstruction is possible or whether M30 requires a separately governed **bounded/materiality-aware dilution estimate** successor;
+5. only after dilution authority is resolved, continue WACC → terminal growth → six-field forecast → M28/M29.
 
-Do not begin a non-equity adapter during M30.
+The project must not silently weaken exactness. If public filing granularity prevents exact reconstruction, the repository must represent that uncertainty explicitly rather than fabricate a point estimate.
 
 ## Remaining M30 acceptance / 잔여 완료조건
 
@@ -247,8 +277,8 @@ Do not begin a non-equity adapter during M30.
 - [x] explicit-zero NCI AI-reviewed authority
 - [x] six-category AI dilution governance
 - [x] AI market-price authority successor
-- [ ] real INGR immutable market-price source snapshots
-- [ ] real INGR reviewed market-price FACT
+- [x] real INGR immutable market-price source snapshots
+- [x] real INGR reviewed market-price FACT
 - [ ] real INGR complete six-category dilution coverage
 - [ ] real `equity.diluted_shares`
 - [ ] seven M24 WACC source inputs + governed assumption

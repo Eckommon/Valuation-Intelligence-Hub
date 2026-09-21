@@ -230,9 +230,9 @@ def test_aggregate_weighted_average_strike_fails_closed_without_homogeneous_proo
 
 def test_tranche_tsm_catches_dilution_hidden_by_weighted_average_strike() -> None:
     rows = _complete_rows()
-    # 50 options at 50 and 50 options at 150 have weighted-average strike 100.
-    # At market 90 an aggregate-average shortcut incorrectly returns zero,
-    # while tranche-safe TSM correctly yields 50 * (90-50) / 90.
+    # 50 options at 60 and 50 options at 180 have weighted-average strike 120.
+    # At market 120 an aggregate-average shortcut incorrectly returns zero,
+    # while tranche-safe TSM preserves dilution from the lower-strike tranche.
     expected = 50 * (120 - 60) / 120 + 50 * max(0, 120 - 180) / 120
     rows[0]["calculation_method"] = TSM_TRANCHES_METHOD
     rows[0]["adjustment_shares"] = expected

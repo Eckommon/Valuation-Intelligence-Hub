@@ -53,14 +53,15 @@ APPROVE = "APPROVE_COMPLETE_DILUTION_COVERAGE"
 HOLD_DECISION = "HOLD_INCOMPLETE_DILUTION_COVERAGE"
 
 TSM_METHOD = "TREASURY_STOCK_METHOD_AGGREGATE_V01"
+TSM_TRANCHES_METHOD = "TREASURY_STOCK_METHOD_TRANCHES_V01"
 EXPLICIT_COUNT_METHOD = "EXPLICIT_OUTSTANDING_AWARD_COUNT_V01"
 EXPLICIT_IF_CONVERTED_METHOD = "EXPLICIT_IF_CONVERTED_SHARE_COUNT_V01"
 EXPLICIT_CONTINGENT_METHOD = "EXPLICIT_CONTINGENT_SHARE_COUNT_V01"
 EXPLICIT_OTHER_METHOD = "EXPLICIT_OTHER_SHARE_COUNT_V01"
 ALLOWED_METHODS = {
-    "options_treasury_stock_method": {TSM_METHOD},
+    "options_treasury_stock_method": {TSM_METHOD, TSM_TRANCHES_METHOD},
     "rsu_restricted_stock": {EXPLICIT_COUNT_METHOD},
-    "warrants": {TSM_METHOD, EXPLICIT_COUNT_METHOD},
+    "warrants": {TSM_METHOD, TSM_TRANCHES_METHOD, EXPLICIT_COUNT_METHOD},
     "convertibles_if_converted": {EXPLICIT_IF_CONVERTED_METHOD},
     "contingent_shares": {EXPLICIT_CONTINGENT_METHOD},
     "other_explicit": {EXPLICIT_OTHER_METHOD, EXPLICIT_COUNT_METHOD},
@@ -170,6 +171,21 @@ def _tsm_shares(outstanding: float, exercise_price: float, market_price: float) 
     return outstanding * (market_price - exercise_price) / market_price
 
 
+def _tsm_tranche_shares(tranches: Any, market_price: float) -> tuple[float, list[dict[str, float]]]:
+    if not isinstance(tranches, list) or not tranches:
+        raise CaseServiceError("TSM tranche method requires nonempty strike tranches / TSM tranche 방식은 행사가 tranche 필요")
+    normalized: list[dict[str, float]] = []
+    total = 0.0
+    for index, row in enumerate(tranches):
+        if not isinstance(row, dict) or set(row) != {"outstanding_instruments", "exercise_price"}:
+            raise CaseServiceError("TSM tranche contract invalid / TSM tranche 계약 오류")
+        outstanding = _num(row.get("outstanding_instruments"), f"tranches[{index}].outstanding_instruments")
+        strike = _num(row.get("exercise_price"), f"tranches[{index}].exercise_price")
+        normalized.append({"outstanding_instruments": outstanding, "exercise_price": strike})
+        total += _tsm_shares(outstanding, strike, market_price)
+    return total, normalized
+
+
 def _validate_category(row: dict[str, Any], *, market_price_package: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(row, dict):
         raise CaseServiceError("dilution category object required / 희석 category 객체 필요")
@@ -202,13 +218,24 @@ def _validate_category(row: dict[str, Any], *, market_price_package: dict[str, A
         supplied_shares = _num(shares, "adjustment_shares")
         if not isinstance(inputs, dict):
             raise CaseServiceError("PRESENT dilution category requires calculation_inputs / PRESENT 희석 category 계산입력 필요")
-        if category in {"options_treasury_stock_method", "warrants"} and method == TSM_METHOD:
+        if category in {"options_treasury_stock_method", "warrants"} and method in {TSM_METHOD, TSM_TRANCHES_METHOD}:
             if market_price_package is None:
                 raise CaseServiceError("TSM dilution requires source-bound reviewed market price / TSM 희석은 출처결합 검토 시장가격 필요")
-            outstanding = _num(inputs.get("outstanding_instruments"), "outstanding_instruments")
-            strike = _num(inputs.get("weighted_average_exercise_price"), "weighted_average_exercise_price")
             market = _num(market_price_package.get("price"), "market price", positive=True)
-            expected = _tsm_shares(outstanding, strike, market)
+            if method == TSM_METHOD:
+                if inputs.get("homogeneous_exercise_price") is not True:
+                    raise CaseServiceError(
+                        "aggregate weighted-average strike cannot represent multi-strike TSM; explicit homogeneous strike proof or tranches required / 가중평균 행사가로 다중 strike TSM 계산 불가"
+                    )
+                outstanding = _num(inputs.get("outstanding_instruments"), "outstanding_instruments")
+                strike = _num(inputs.get("weighted_average_exercise_price"), "weighted_average_exercise_price")
+                expected = _tsm_shares(outstanding, strike, market)
+            else:
+                expected, normalized_tranches = _tsm_tranche_shares(inputs.get("tranches"), market)
+                declared_total = _num(inputs.get("total_outstanding_instruments"), "total_outstanding_instruments")
+                tranche_total = sum(row["outstanding_instruments"] for row in normalized_tranches)
+                if abs(declared_total - tranche_total) > max(1e-6, abs(declared_total) * 1e-9):
+                    raise CaseServiceError("TSM tranche outstanding total mismatch / TSM tranche 총수량 불일치")
             if abs(supplied_shares - expected) > max(1e-6, abs(expected) * 1e-9):
                 raise CaseServiceError("TSM adjustment does not reproduce source-bound calculation / TSM 조정 재현 불일치")
         else:
@@ -281,6 +308,7 @@ def build_ai_dilution_inventory(
             "current_common_shares_not_fully_diluted": True,
             "missing_category_never_zero_or_absent": True,
             "historical_weighted_average_eps_reference_only": True,
+            "weighted_average_strike_not_portfolio_tsm": True,
             "complete_requires_all_six_categories_resolved": True,
         },
         "inventory_sha256": "",
@@ -308,6 +336,7 @@ def validate_ai_dilution_inventory(inventory: dict[str, Any], base_context: dict
         "current_common_shares_not_fully_diluted": True,
         "missing_category_never_zero_or_absent": True,
         "historical_weighted_average_eps_reference_only": True,
+        "weighted_average_strike_not_portfolio_tsm": True,
         "complete_requires_all_six_categories_resolved": True,
     }:
         raise CaseServiceError("AI dilution inventory semantic boundary invalid / AI 희석 inventory 의미경계 오류")

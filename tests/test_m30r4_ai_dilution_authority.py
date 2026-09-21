@@ -19,6 +19,7 @@ from valuation_hub.ai_dilution_authority import (
     HOLD,
     PRESENT,
     TSM_METHOD,
+    TSM_TRANCHES_METHOD,
     build_ai_dilution_adjudication,
     build_ai_dilution_inventory,
     build_ai_reviewed_dilution_package,
@@ -127,7 +128,7 @@ def _incomplete_rows() -> list[dict]:
 def _complete_rows() -> list[dict]:
     # At $120 market price, 100 options at $60 strike produce 50 incremental TSM shares.
     return [
-        _row("options_treasury_stock_method", PRESENT, "a", adjustment_id="OPT", adjustment_shares=50.0, calculation_method=TSM_METHOD, calculation_inputs={"outstanding_instruments": 100, "weighted_average_exercise_price": 60.0}),
+        _row("options_treasury_stock_method", PRESENT, "a", adjustment_id="OPT", adjustment_shares=50.0, calculation_method=TSM_METHOD, calculation_inputs={"outstanding_instruments": 100, "weighted_average_exercise_price": 60.0, "homogeneous_exercise_price": True}),
         _row("rsu_restricted_stock", PRESENT, "b", adjustment_id="RSU", adjustment_shares=20, calculation_method=EXPLICIT_COUNT_METHOD, calculation_inputs={"explicit_share_count": 20}),
         _row("warrants", ABSENT_SUPPORTED, "c"),
         _row("convertibles_if_converted", ABSENT_SUPPORTED, "d"),
@@ -218,3 +219,42 @@ def test_inventory_requires_exactly_all_m22_categories() -> None:
     with pytest.raises(CaseServiceError, match="exactly six"):
         build_ai_dilution_inventory(_base(), rows)
     assert tuple(row["category"] for row in _incomplete_rows()) == ADJUSTMENT_CATEGORIES
+
+
+def test_aggregate_weighted_average_strike_fails_closed_without_homogeneous_proof() -> None:
+    rows = _complete_rows()
+    rows[0]["calculation_inputs"].pop("homogeneous_exercise_price")
+    with pytest.raises(CaseServiceError, match="weighted-average strike"):
+        build_ai_dilution_inventory(_base(), rows, market_price_package=_market())
+
+
+def test_tranche_tsm_catches_dilution_hidden_by_weighted_average_strike() -> None:
+    rows = _complete_rows()
+    # 50 options at 60 and 50 options at 180 have weighted-average strike 120.
+    # At market 120 an aggregate-average shortcut incorrectly returns zero,
+    # while tranche-safe TSM preserves dilution from the lower-strike tranche.
+    expected = 50 * (120 - 60) / 120 + 50 * max(0, 120 - 180) / 120
+    rows[0]["calculation_method"] = TSM_TRANCHES_METHOD
+    rows[0]["adjustment_shares"] = expected
+    rows[0]["calculation_inputs"] = {
+        "total_outstanding_instruments": 100,
+        "tranches": [
+            {"outstanding_instruments": 50, "exercise_price": 60.0},
+            {"outstanding_instruments": 50, "exercise_price": 180.0},
+        ],
+    }
+    inventory = build_ai_dilution_inventory(_base(), rows, market_price_package=_market())
+    option_row = inventory["categories"][0]
+    assert option_row["adjustment_shares"] == expected
+
+
+def test_tranche_tsm_requires_complete_outstanding_reconciliation() -> None:
+    rows = _complete_rows()
+    rows[0]["calculation_method"] = TSM_TRANCHES_METHOD
+    rows[0]["adjustment_shares"] = 25.0
+    rows[0]["calculation_inputs"] = {
+        "total_outstanding_instruments": 100,
+        "tranches": [{"outstanding_instruments": 50, "exercise_price": 60.0}],
+    }
+    with pytest.raises(CaseServiceError, match="total mismatch"):
+        build_ai_dilution_inventory(_base(), rows, market_price_package=_market())

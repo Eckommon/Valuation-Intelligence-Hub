@@ -67,6 +67,7 @@ python -m pip install -e ".[dev]"
 - M30-R3: AI authority for SEC cash, current common shares, and explicit-zero NCI
 - M30-R4: six-category evidence-first dilution coverage and fully diluted-share bridge
 - M30-R5: dual-source-capable evidence-first AI market-price authority
+- M30-R4.1: strike-distribution-safe TSM; weighted-average strike cannot stand in for a multi-strike option portfolio
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -75,6 +76,7 @@ liabilities                         ≠ debt
 shares_outstanding                  ≠ diluted_shares
 current_common_shares               ≠ fully_diluted_shares
 historical dilution factor          ≠ automatic current dilution
+weighted-average exercise price     ≠ option strike distribution / portfolio TSM
 historical revenue                  ≠ forecast revenue
 historical margin                   ≠ forecast margin
 calculated WACC                     ≠ reviewed WACC assumption
@@ -153,9 +155,9 @@ Target case ID: US_INGR_INGREDION
 
 ### Current runtime baseline
 
-`main@4f8a9c988ee20ddf33585e8810db312821f43698`
+`main@aadc8fef8ff3ecb20ad71cbd90809c4e95b69c1f`
 
-Latest runtime slice: **M30-R5 — evidence-first AI market-price authority**.
+Latest runtime slice: **M30-R4.1 — strike-distribution-safe TSM correction**, after M30-R5 market-price authority.
 
 Recent canonical sequence:
 
@@ -165,6 +167,7 @@ Recent canonical sequence:
 | M30-R3 SEC observed-field AI authority | `ec92bb4ef5fba2c005004d7b1214cd6a3f3e60a0` | `35247619398` |
 | M30-R4 AI dilution coverage | `5bd1d92a9733621393bbada4f301876180647829` | `35256710738` |
 | M30-R5 AI market-price authority | `4f8a9c988ee20ddf33585e8810db312821f43698` | `35283190462` |
+| M30-R4.1 strike-safe TSM | `aadc8fef8ff3ecb20ad71cbd90809c4e95b69c1f` | `35555025332` |
 
 ### Real Ingredion fields already governed
 
@@ -177,23 +180,26 @@ Current common shares remain **not** fully diluted shares.
 
 ### Active next boundary
 
-The next real task is market-price authority followed by diluted shares.
+The real INGR market-price FACT is now governed:
 
-Independent external research agrees that INGR closed at **USD 98.63 on 2026-09-14**, but this number is not governed repository authority until the M30-E/M30-R5 local source path is executed.
+- 2026-09-14 official close: **USD 98.63**
+- reviewed package SHA: `607808de5224a84072427a18100e4933600fa4bad84057f9ffae0a7e436b7e9a`
+- `review_authority=AI`
+
+The current bottleneck is `equity.diluted_shares`, not market price.
+
+R4.1 requires tranche-safe option TSM. Ingredion publicly reports total options plus weighted-average exercise price, but that is insufficient to reconstruct a multi-strike portfolio. The current real dilution state is therefore:
 
 ```text
-two independent UTF-8 market sources
-→ immutable M30-E snapshots
-→ M27 price candidate at 98.63 USD
-→ M30-R5 evidence + contradiction search
-→ typed AI market-price adjudication
-→ reviewed M27 FACT
-→ M30-R4 options TSM
-→ resolve all six dilution categories
-→ equity.diluted_shares
+options_treasury_stock_method = BLOCKED_DEPENDENCY
+rsu_restricted_stock          = PRESENT (534,000)
+warrants                      = ABSENT_SUPPORTED
+convertibles_if_converted     = ABSENT_SUPPORTED
+contingent_shares             = BLOCKED_DEPENDENCY
+other_explicit                = BLOCKED_DEPENDENCY
 ```
 
-M30-R4 requires exactly six categories: options TSM, RSU/restricted stock, warrants, convertibles, contingent shares, and other explicit equity. Missing evidence never becomes zero/absence. Historical weighted-average diluted-EPS shares may not substitute for valuation-date diluted shares.
+The three unresolved evidence gaps are option strike distribution, point-in-time payout-weighted performance awards, and point-in-time director/deferred equity. Historical diluted-EPS averages and weighted-average option strike shortcuts may not substitute for those missing valuation-date facts.
 
 ### Authority policy
 
@@ -265,7 +271,7 @@ Preparation surfaces do not auto-approve or perform canonical repository writes.
 - [x] M29 complete governed equity handoff
 - [x] M30-A~E + M30-S real-case architecture/source-ingress/state preparation
 - [x] real Ingredion SEC source capture, M30-B preflight, and M30-D readiness validation
-- [ ] complete real human-review + remaining source/assumption gates
+- [ ] complete remaining evidence-first source/assumption gates, including an explicit resolution of public dilution-data insufficiency
 - [ ] **first real Ingredion canonical case through complete M29 handoff**
 - [ ] first non-equity valuation adapter
 

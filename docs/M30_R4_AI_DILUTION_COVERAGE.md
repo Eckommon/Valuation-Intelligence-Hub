@@ -52,15 +52,24 @@ A `PRESENT` adjustment must be tied to explicit point-in-time evidence and a sup
 
 ## Options and warrants TSM / 옵션·워런트 TSM
 
-Treasury-stock-method adjustments use:
+Treasury-stock-method adjustments use the same formula **per strike tranche**:
 
 ```text
-incremental shares = outstanding instruments × max(0, market price - exercise price) / market price
+incremental shares
+  = Σ [tranche outstanding × max(0, market price - tranche strike) / market price]
 ```
+
+A weighted-average exercise price is **not** a complete option-strike distribution. Applying `max(0, market - weighted_average_strike)` to a multi-strike portfolio can incorrectly erase dilution from lower-strike in-the-money options.
+
+Therefore:
+
+- `TREASURY_STOCK_METHOD_TRANCHES_V01` requires explicit strike tranches whose outstanding counts reconcile to the declared total;
+- legacy `TREASURY_STOCK_METHOD_AGGREGATE_V01` is permitted only when source evidence explicitly proves one homogeneous exercise price;
+- a filing that reports only total outstanding options plus weighted-average exercise price must remain `BLOCKED_DEPENDENCY` for valuation-date TSM.
 
 M30-R4 requires a **fresh reviewed, source-bound M27 market-price package with the same entity and valuation `as_of`** before a TSM category may be `PRESENT`.
 
-Without it, the correct state is `BLOCKED_DEPENDENCY`; no EPS dilution number or historical price may substitute.
+Without both market price and strike-distribution evidence, the correct state is `BLOCKED_DEPENDENCY`; no EPS dilution number, historical price, or weighted-average-strike shortcut may substitute.
 
 ## AI authority / AI 권위
 
@@ -128,3 +137,10 @@ dilution-ai-package-validate
 ```
 
 The CLI is calculate/validate-only. It does not write Drafts, mutate the registry, or admit a canonical case.
+
+
+## M30-R4.1 falsification / R4.1 반증
+
+Real Ingredion execution exposed why the distribution rule is necessary. At 2026-06-30 the issuer reported 1.242 million options outstanding, weighted-average exercise price USD 105.61, **and positive aggregate intrinsic value of USD 3 million**. The positive intrinsic value proves that some options were in the money even though an aggregate average strike can sit above a later market price.
+
+The first real HOLD artifact that treated the whole population as one option at USD 105.61 is therefore historical execution evidence only and must not be used for final dilution authority. The real Ingredion option category must remain blocked until complete strike-tranche/distribution evidence is obtained.

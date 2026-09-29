@@ -3,8 +3,11 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
+
+from valuation_hub import cli_entry_m30r7
 
 from valuation_hub.ai_historical_dilution_authority import (
     ADJUDICATOR_ID,
@@ -325,3 +328,54 @@ def test_evidence_and_adjudication_validators_lock_lineage() -> None:
         checked_adjudication["status"]
         == "PASS_AI_HISTORICAL_DILUTION_ADJUDICATION_VALIDATION"
     )
+
+
+def test_r7_cli_build_and_prior_delegation(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pair = _pairs()
+    names = (
+        "basic_candidate",
+        "basic_observation",
+        "diluted_candidate",
+        "diluted_observation",
+    )
+    paths: list[Path] = []
+    for name, value in zip(names, pair):
+        path = tmp_path / f"{name}.json"
+        path.write_text(json.dumps(value), encoding="utf-8")
+        paths.append(path)
+
+    argv = [
+        "--root",
+        str(tmp_path),
+        "--json",
+        "historical-dilution-ai-evidence-build",
+        *(str(path) for path in paths),
+        "--primary-filing-locator",
+        PRIMARY,
+        "--evidence-basis",
+        "Exact issuer SEC Q2 denominator evidence.",
+        "--contradiction-search-summary",
+        "No material contrary denominator evidence identified.",
+    ]
+    for criterion in REQUIRED_CRITERIA:
+        argv.extend(["--criterion", criterion])
+
+    assert cli_entry_m30r7.main(argv) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["pair"]["basic_shares"] == 63_300_000
+    assert out["pair"]["diluted_shares"] == 63_900_000
+    assert all(out["criteria"].values())
+
+    seen: list[list[str]] = []
+    monkeypatch.setattr(
+        cli_entry_m30r7.prior_cli,
+        "main",
+        lambda values: seen.append(list(values)) or 29,
+    )
+    old = ["dilution-assumption-package-validate", "package.json"]
+    assert cli_entry_m30r7.main(old) == 29
+    assert seen == [old]

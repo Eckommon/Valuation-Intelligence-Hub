@@ -319,15 +319,38 @@ def test_validator_independently_recomputes_selected_value() -> None:
 
 
 def test_approved_r6_finalizes_as_assumption_not_derived_fact() -> None:
-    evidence = _evidence()
+    base = _base()
+    inventory = _hold_inventory()
+    historical = _historical()
+    components = _components()
+    evidence = build_disclosure_limited_dilution_evidence(
+        base,
+        inventory,
+        historical,
+        components,
+        as_of="2026-09-14",
+        materiality_threshold=0.05,
+        max_historical_age_days=180,
+    )
     adjudication = build_disclosure_limited_dilution_adjudication(
-        evidence, adjudicated_at="2026-09-29T12:00:00+09:00"
+        evidence,
+        base,
+        inventory,
+        historical,
+        components,
+        adjudicated_at="2026-09-29T12:00:00+09:00",
     )
     assert adjudication["decision"] == APPROVE
     assert adjudication["adjudicator"] == {"type": "AI", "id": ADJUDICATOR_ID}
-    assert validate_disclosure_limited_dilution_adjudication(adjudication, evidence)["decision"] == APPROVE
-    package = finalize_disclosure_limited_dilution_assumption(evidence, adjudication)
-    checked = validate_disclosure_limited_dilution_assumption(package, evidence, adjudication)
+    assert validate_disclosure_limited_dilution_adjudication(
+        adjudication, evidence, base, inventory, historical, components
+    )["decision"] == APPROVE
+    package = finalize_disclosure_limited_dilution_assumption(
+        evidence, adjudication, base, inventory, historical, components
+    )
+    checked = validate_disclosure_limited_dilution_assumption(
+        package, evidence, adjudication, base, inventory, historical, components
+    )
     assert checked["eligible_for_assumption_aware_successor"] is True
     assert package["class"] == "ASSUMPTION"
     assert package["value"] == 63_900_000
@@ -367,3 +390,25 @@ def test_cli_builds_real_shaped_evidence_and_delegates_prior_commands(
     old = ["market-price-ai-package-validate", "x", "y", "z", "a", "--corroborations", "m"]
     assert cli_entry_m30r6.main(old) == 47
     assert seen == [old]
+
+
+def test_adjudication_revalidates_upstream_evidence() -> None:
+    base = _base()
+    inventory = _hold_inventory()
+    historical = _historical()
+    components = _components()
+    evidence = build_disclosure_limited_dilution_evidence(
+        base, inventory, historical, components, as_of="2026-09-14"
+    )
+    tampered = copy.deepcopy(evidence)
+    tampered["selection"]["selected_shares"] += 100_000
+    tampered["evidence_sha256"] = _sha(tampered, "evidence_sha256")
+    with pytest.raises(CaseServiceError, match="independent projection"):
+        build_disclosure_limited_dilution_adjudication(
+            tampered,
+            base,
+            inventory,
+            historical,
+            components,
+            adjudicated_at="2026-09-29T12:00:00+09:00",
+        )

@@ -222,10 +222,14 @@ def _normalize_spec(
 
     calculation = raw.get("calculation")
     if role in {ROLE_ANCHOR, ROLE_SUBSEQUENT}:
+        if calculation not in (None, {}):
+            raise CaseServiceError("direct envelope claim cannot carry calculation / 직접 envelope 주장 계산정보 불가")
         if len(claim_values) != 1 or abs(shares - claim_values[0]) > 1e-9:
             raise CaseServiceError("direct envelope claim must equal one source-bound quantity / 직접 envelope 주장은 단일 출처수량과 일치 필요")
         normalized_calculation = None
     elif role == ROLE_PERFORMANCE_UPLIFT:
+        if calculation not in (None, {}):
+            raise CaseServiceError("performance uplift cannot carry calculation / 성과 uplift 계산정보 불가")
         if len(claim_values) < 1 or abs(shares - sum(claim_values)) > 1e-9:
             raise CaseServiceError("performance uplift must equal source-bound claim sum / 성과 uplift는 출처수량 합계와 일치 필요")
         normalized_calculation = None

@@ -139,6 +139,30 @@ def _normalize_components(value: Any) -> list[dict[str, Any]]:
         if role not in ROLES:
             raise CaseServiceError("unsupported upper-envelope role / 미지원 upper-envelope 역할")
         shares = _num(raw.get("shares"), "component.shares")
+        calculation = raw.get("calculation")
+        if role == ROLE_BUFFER:
+            if not isinstance(calculation, dict) or calculation.get("method") != "PRO_RATA_GROSS_GRANT_RUN_RATE_V01":
+                raise CaseServiceError("disclosure-lag buffer requires reproducible pro-rata calculation / 공시시차 buffer는 재현 가능한 비례계산 필요")
+            observed_grants = _num(calculation.get("observed_gross_grants"), "buffer.observed_gross_grants")
+            observed_days = calculation.get("observed_days")
+            lag_days = calculation.get("lag_days")
+            if isinstance(observed_days, bool) or not isinstance(observed_days, int) or observed_days <= 0:
+                raise CaseServiceError("buffer observed_days positive integer required / buffer observed_days 양의 정수 필요")
+            if isinstance(lag_days, bool) or not isinstance(lag_days, int) or lag_days < 0:
+                raise CaseServiceError("buffer lag_days nonnegative integer required / buffer lag_days 음이 아닌 정수 필요")
+            expected_buffer = observed_grants * lag_days / observed_days
+            if abs(shares - expected_buffer) > max(1e-6, abs(expected_buffer) * 1e-9):
+                raise CaseServiceError("disclosure-lag buffer does not reproduce pro-rata inputs / 공시시차 buffer 재현 불일치")
+            normalized_calculation = {
+                "method": "PRO_RATA_GROSS_GRANT_RUN_RATE_V01",
+                "observed_gross_grants": observed_grants,
+                "observed_days": observed_days,
+                "lag_days": lag_days,
+            }
+        elif calculation not in (None, {}):
+            raise CaseServiceError("non-buffer envelope component cannot carry calculation / 비buffer envelope 구성요소 계산정보 불가")
+        else:
+            normalized_calculation = None
         rows.append({
             "component_id": component_id,
             "role": role,
@@ -146,6 +170,7 @@ def _normalize_components(value: Any) -> list[dict[str, Any]]:
             "as_of": _iso(raw.get("as_of"), "component.as_of"),
             "sources": _source_rows(raw.get("sources")),
             "evidence_basis": _text(raw.get("evidence_basis"), "component.evidence_basis"),
+            "calculation": normalized_calculation,
         })
     if sum(1 for row in rows if row["role"] == ROLE_ANCHOR) != 1:
         raise CaseServiceError("exactly one anchor outstanding-awards component required / anchor outstanding-awards 구성요소 정확히 1개 필요")

@@ -159,9 +159,9 @@ Target case ID: US_INGR_INGREDION
 
 ### Current runtime baseline
 
-`main@9829dc11758b243c4320bfd50588cc7bd600a17f`
+`main@b951637a16698b2cae5ecdf6c51e7e7c5cb30636`
 
-Latest runtime slice: **M30-R7 — evidence-first AI historical-dilution authority**, after the R6/R6B disclosure-limited dilution successors.
+Latest runtime slice: **M30-R7X — source-bound R6 upper-envelope ingress**, layered on the R7 top-level CLI and R6/R6B disclosure-limited dilution successors.
 
 Recent canonical sequence:
 
@@ -175,6 +175,7 @@ Recent canonical sequence:
 | M30-R6 disclosure-limited dilution assumption | `749901e3234e441fabb4fdace298c5d779d35b7e` | `36526648339` |
 | M30-R6B bounded dilution envelope | `1a9fa0d1a9d475ccf5c13f72722f81132031d496` | `36547591128` |
 | M30-R7 historical-dilution AI authority | `9829dc11758b243c4320bfd50588cc7bd600a17f` | `36549218203` |
+| M30-R7X source-bound R6 envelope ingress | `b951637a16698b2cae5ecdf6c51e7e7c5cb30636` | `36631518156` |
 
 ### Real Ingredion fields already governed
 
@@ -282,7 +283,8 @@ Preparation surfaces do not auto-approve or perform canonical repository writes.
 - [x] M29 complete governed equity handoff
 - [x] M30-A~E + M30-S real-case architecture/source-ingress/state preparation
 - [x] real Ingredion SEC source capture, M30-B preflight, and M30-D readiness validation
-- [ ] execute the real R7 → R6 Ingredion dilution path and record immutable package lineage
+- [x] source-bound Tier-A/excerpt ingress for the real R6 upper envelope
+- [ ] execute real R7 → R7X source-bound envelope → R6 Ingredion dilution path and record immutable package lineage
 - [ ] if R6 materiality passes, add the assumption-aware diluted-share Draft/M28/M29 successor without relabeling the R6 `ASSUMPTION` as `DERIVED`
 - [ ] complete WACC, terminal growth, forecast, and the remaining 13/13 governed handoff
 - [ ] **first real Ingredion canonical case through complete M29 handoff**

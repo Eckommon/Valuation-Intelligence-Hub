@@ -376,11 +376,20 @@ def validate_disclosure_limited_dilution_evidence(
         "relative_upper_spread": spread,
     }
 
-def build_disclosure_limited_dilution_adjudication(evidence: dict[str, Any], *, adjudicated_at: str) -> dict[str, Any]:
-    if not isinstance(evidence, dict) or evidence.get("schema_version") != EVIDENCE_SCHEMA:
-        raise CaseServiceError("R6 evidence required / R6 evidence 필요")
+def build_disclosure_limited_dilution_adjudication(
+    evidence: dict[str, Any],
+    base_context: dict[str, Any],
+    hold_inventory: dict[str, Any],
+    historical_dilution: dict[str, Any],
+    upper_envelope_components: list[dict[str, Any]],
+    *,
+    adjudicated_at: str,
+) -> dict[str, Any]:
+    checked_evidence = validate_disclosure_limited_dilution_evidence(
+        evidence, base_context, hold_inventory, historical_dilution, upper_envelope_components
+    )
     when = _timestamp(adjudicated_at, "adjudicated_at")
-    decision = APPROVE if evidence.get("decision") == READY else HOLD_MATERIALITY
+    decision = APPROVE if checked_evidence["decision"] == READY else HOLD_MATERIALITY
     adjudication = {
         "schema_version": ADJUDICATION_SCHEMA,
         "status": ADJUDICATION_STATUS,
@@ -390,31 +399,68 @@ def build_disclosure_limited_dilution_adjudication(evidence: dict[str, Any], *, 
         "decision": decision,
         "adjudicated_at": when,
         "evidence_sha256": evidence["evidence_sha256"],
-        "selected_shares": evidence["selection"]["selected_shares"],
-        "upper_shares": evidence["upper_envelope"]["upper_shares"],
-        "relative_upper_spread": evidence["upper_envelope"]["relative_upper_spread"],
+        "base_context_sha256": base_context["context_sha256"],
+        "r4_inventory_sha256": hold_inventory["inventory_sha256"],
+        "historical_dilution_sha256": historical_dilution["derived_sha256"],
+        "selected_shares": checked_evidence["selected_shares"],
+        "upper_shares": checked_evidence["upper_shares"],
+        "relative_upper_spread": checked_evidence["relative_upper_spread"],
         "adjudication_sha256": "",
     }
     adjudication["adjudication_sha256"] = _sha(_without(adjudication, "adjudication_sha256"))
-    validate_disclosure_limited_dilution_adjudication(adjudication, evidence)
+    validate_disclosure_limited_dilution_adjudication(
+        adjudication, evidence, base_context, hold_inventory, historical_dilution, upper_envelope_components
+    )
     return adjudication
 
 
-def validate_disclosure_limited_dilution_adjudication(adjudication: dict[str, Any], evidence: dict[str, Any]) -> dict[str, Any]:
+def validate_disclosure_limited_dilution_adjudication(
+    adjudication: dict[str, Any],
+    evidence: dict[str, Any],
+    base_context: dict[str, Any],
+    hold_inventory: dict[str, Any],
+    historical_dilution: dict[str, Any],
+    upper_envelope_components: list[dict[str, Any]],
+) -> dict[str, Any]:
+    checked_evidence = validate_disclosure_limited_dilution_evidence(
+        evidence, base_context, hold_inventory, historical_dilution, upper_envelope_components
+    )
     if not isinstance(adjudication, dict) or adjudication.get("schema_version") != ADJUDICATION_SCHEMA or adjudication.get("status") != ADJUDICATION_STATUS or adjudication.get("canonical") is not False or adjudication.get("policy_id") != POLICY_ID or adjudication.get("adjudicator") != {"type": ADJUDICATOR_TYPE, "id": ADJUDICATOR_ID}:
         raise CaseServiceError("R6 adjudication schema/authority invalid / R6 adjudication 스키마·권위 오류")
     _timestamp(adjudication.get("adjudicated_at"), "adjudicated_at")
-    expected_decision = APPROVE if evidence.get("decision") == READY else HOLD_MATERIALITY
-    if adjudication.get("decision") != expected_decision or adjudication.get("evidence_sha256") != evidence.get("evidence_sha256") or adjudication.get("selected_shares") != evidence.get("selection", {}).get("selected_shares") or adjudication.get("upper_shares") != evidence.get("upper_envelope", {}).get("upper_shares"):
+    expected_decision = APPROVE if checked_evidence["decision"] == READY else HOLD_MATERIALITY
+    if (
+        adjudication.get("decision") != expected_decision
+        or adjudication.get("evidence_sha256") != evidence.get("evidence_sha256")
+        or adjudication.get("base_context_sha256") != base_context.get("context_sha256")
+        or adjudication.get("r4_inventory_sha256") != hold_inventory.get("inventory_sha256")
+        or adjudication.get("historical_dilution_sha256") != historical_dilution.get("derived_sha256")
+        or adjudication.get("selected_shares") != checked_evidence["selected_shares"]
+        or adjudication.get("upper_shares") != checked_evidence["upper_shares"]
+        or abs(adjudication.get("relative_upper_spread") - checked_evidence["relative_upper_spread"]) > 1e-12
+    ):
         raise CaseServiceError("R6 adjudication projection mismatch / R6 adjudication 투영 불일치")
     expected_sha = _sha(_without(adjudication, "adjudication_sha256"))
     if adjudication.get("adjudication_sha256") != expected_sha:
         raise CaseServiceError("R6 adjudication SHA mismatch / R6 adjudication SHA 불일치")
-    return {"status": "PASS_DISCLOSURE_LIMITED_DILUTION_ADJUDICATION_VALIDATION", "adjudication_sha256": expected_sha, "decision": expected_decision}
+    return {
+        "status": "PASS_DISCLOSURE_LIMITED_DILUTION_ADJUDICATION_VALIDATION",
+        "adjudication_sha256": expected_sha,
+        "decision": expected_decision,
+    }
 
 
-def finalize_disclosure_limited_dilution_assumption(evidence: dict[str, Any], adjudication: dict[str, Any]) -> dict[str, Any]:
-    checked = validate_disclosure_limited_dilution_adjudication(adjudication, evidence)
+def finalize_disclosure_limited_dilution_assumption(
+    evidence: dict[str, Any],
+    adjudication: dict[str, Any],
+    base_context: dict[str, Any],
+    hold_inventory: dict[str, Any],
+    historical_dilution: dict[str, Any],
+    upper_envelope_components: list[dict[str, Any]],
+) -> dict[str, Any]:
+    checked = validate_disclosure_limited_dilution_adjudication(
+        adjudication, evidence, base_context, hold_inventory, historical_dilution, upper_envelope_components
+    )
     if checked["decision"] != APPROVE:
         raise CaseServiceError("R6 assumption finalization requires approved materiality envelope / R6 가정 finalization은 materiality 승인 필요")
     package = {
@@ -453,12 +499,24 @@ def finalize_disclosure_limited_dilution_assumption(evidence: dict[str, Any], ad
         "package_sha256": "",
     }
     package["package_sha256"] = _sha(_without(package, "package_sha256"))
-    validate_disclosure_limited_dilution_assumption(package, evidence, adjudication)
+    validate_disclosure_limited_dilution_assumption(
+        package, evidence, adjudication, base_context, hold_inventory, historical_dilution, upper_envelope_components
+    )
     return package
 
 
-def validate_disclosure_limited_dilution_assumption(package: dict[str, Any], evidence: dict[str, Any], adjudication: dict[str, Any]) -> dict[str, Any]:
-    checked = validate_disclosure_limited_dilution_adjudication(adjudication, evidence)
+def validate_disclosure_limited_dilution_assumption(
+    package: dict[str, Any],
+    evidence: dict[str, Any],
+    adjudication: dict[str, Any],
+    base_context: dict[str, Any],
+    hold_inventory: dict[str, Any],
+    historical_dilution: dict[str, Any],
+    upper_envelope_components: list[dict[str, Any]],
+) -> dict[str, Any]:
+    checked = validate_disclosure_limited_dilution_adjudication(
+        adjudication, evidence, base_context, hold_inventory, historical_dilution, upper_envelope_components
+    )
     if checked["decision"] != APPROVE:
         raise CaseServiceError("approved R6 adjudication required / 승인된 R6 adjudication 필요")
     if not isinstance(package, dict) or package.get("schema_version") != PACKAGE_SCHEMA or package.get("status") != PACKAGE_STATUS or package.get("canonical") is not False or package.get("class") != "ASSUMPTION" or package.get("metric") != "fully_diluted_shares" or package.get("unit") != "shares" or package.get("policy_id") != POLICY_ID:
@@ -475,4 +533,11 @@ def validate_disclosure_limited_dilution_assumption(package: dict[str, Any], evi
     expected_sha = _sha(_without(package, "package_sha256"))
     if package.get("package_sha256") != expected_sha:
         raise CaseServiceError("R6 assumption package SHA mismatch / R6 가정 package SHA 불일치")
-    return {"status": "PASS_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION_VALIDATION", "package_sha256": expected_sha, "eligible_for_assumption_aware_successor": True, "fully_diluted_shares_assumption": package["value"], "relative_upper_spread": package["range"]["relative_upper_spread"]}
+    return {
+        "status": "PASS_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION_VALIDATION",
+        "package_sha256": expected_sha,
+        "eligible_for_assumption_aware_successor": True,
+        "fully_diluted_shares_assumption": package["value"],
+        "relative_upper_spread": package["range"]["relative_upper_spread"],
+    }
+

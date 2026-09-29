@@ -262,7 +262,7 @@ def test_real_shaped_disclosure_limited_envelope_selects_issuer_anchor_and_passe
     assert evidence["selection"]["historical_diluted_anchor"] == 63_900_000
     assert evidence["selection"]["exact_present_floor"] == 63_597_979
     assert evidence["selection"]["selected_shares"] == 63_900_000
-    assert evidence["upper_envelope"]["upper_shares"] == pytest.approx(65_979_424.27071823)
+    assert evidence["upper_envelope"]["upper_shares"] == pytest.approx(65_979_436.42541436)
     assert evidence["upper_envelope"]["relative_upper_spread"] < 0.05
     assert evidence["semantic_boundary"]["direct_bind_as_m22_derived_fact"] is False
 
@@ -423,4 +423,13 @@ def test_adjudication_revalidates_upstream_evidence() -> None:
             historical,
             components,
             adjudicated_at="2026-09-29T12:00:00+09:00",
+        )
+
+
+def test_disclosure_lag_buffer_cannot_be_arbitrary_plug() -> None:
+    components = _components()
+    components[-1]["shares"] += 1
+    with pytest.raises(CaseServiceError, match="does not reproduce"):
+        build_disclosure_limited_dilution_evidence(
+            _base(), _hold_inventory(), _historical(), components, as_of="2026-09-14"
         )

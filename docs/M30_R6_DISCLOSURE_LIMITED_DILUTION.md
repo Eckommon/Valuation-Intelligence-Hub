@@ -54,7 +54,7 @@ R6 accepts source-bound components with explicit roles:
 - `ANCHOR_OUTSTANDING_AWARDS`
 - `SUBSEQUENT_GROSS_GRANT`
 - `PERFORMANCE_MAX_UPLIFT`
-- `DISCLOSURE_LAG_BUFFER`
+- `DISCLOSURE_LAG_BUFFER` — must use `PRO_RATA_GROSS_GRANT_RUN_RATE_V01` with explicit observed grants, observed days and lag days; arbitrary plug values are rejected.
 
 The upper envelope is:
 
@@ -64,7 +64,7 @@ upper diluted shares
   + Σ explicit conservative envelope components
 ```
 
-No netting is performed. Exercises, vesting, cancellations, forfeitures, or settlements that would reduce dilution are intentionally not subtracted unless the envelope itself is rebuilt from stronger evidence.
+No netting is performed. Exercises, vesting, cancellations, forfeitures, or settlements that would reduce dilution are intentionally not subtracted unless the envelope itself is rebuilt from stronger evidence. A disclosure-lag buffer is not chosen to satisfy the materiality threshold; it must mechanically reproduce from source-backed gross grant run-rate inputs.
 
 This makes the upper side conservative but explicitly **not exact**.
 

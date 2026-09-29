@@ -214,7 +214,7 @@ def build_disclosure_limited_dilution_evidence(
     if any(date.fromisoformat(row["as_of"]) > date.fromisoformat(as_of) for row in components):
         raise CaseServiceError("upper-envelope evidence after valuation date not allowed / 가치평가일 이후 envelope 근거 불가")
 
-    base_shares = _num(base_context.get("base", {}).get("current_common_shares"), "base current shares", positive=True)
+    base_shares = _num(base_context.get("value"), "base current shares", positive=True)
     exact_present = _exact_present_adjustments(hold_inventory)
     exact_present_floor = base_shares + exact_present
     selected = max(historical_anchor, exact_present_floor)
@@ -283,15 +283,6 @@ def validate_disclosure_limited_dilution_evidence(
 ) -> dict[str, Any]:
     if not isinstance(evidence, dict) or evidence.get("schema_version") != EVIDENCE_SCHEMA or evidence.get("status") != EVIDENCE_STATUS or evidence.get("canonical") is not False or evidence.get("policy_id") != POLICY_ID:
         raise CaseServiceError("R6 evidence schema/status invalid / R6 evidence 스키마·상태 오류")
-    expected = build_disclosure_limited_dilution_evidence.__wrapped__(  # type: ignore[attr-defined]
-        base_context,
-        hold_inventory,
-        historical_dilution,
-        upper_envelope_components,
-        as_of=evidence.get("as_of"),
-        materiality_threshold=evidence.get("upper_envelope", {}).get("materiality_threshold"),
-        max_historical_age_days=evidence.get("historical_freshness", {}).get("max_age_days"),
-    ) if hasattr(build_disclosure_limited_dilution_evidence, "__wrapped__") else None
     # Revalidate nested contracts explicitly without recursive rebuild.
     validate_valuation_share_base_context(base_context)
     validate_ai_dilution_inventory(hold_inventory, base_context)

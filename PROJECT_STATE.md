@@ -17,19 +17,19 @@ No synthetic fixture may be admitted to `registry/cases.json` to claim real-case
 
 Latest runtime-changing canonical main:
 
-`aadc8fef8ff3ecb20ad71cbd90809c4e95b69c1f`
+`9829dc11758b243c4320bfd50588cc7bd600a17f`
 
-This is **M30-R4.1 — strike-distribution-safe treasury-stock-method correction**, layered after M30-R5 market-price authority.
-
-State-only descendants that only reconcile documentation do not change runtime behavior; the runtime baseline remains the SHA above until another runtime PR merges.
+This is **M30-R7 — evidence-first AI authority for historical dilution**, layered after M30-R6/R6B disclosure-limited dilution successors.
 
 Installed `vih` enters through:
 
-`valuation_hub.cli_entry_m30r5:main`
+`valuation_hub.cli_entry_m30r7:main`
 
 and delegates unchanged through:
 
-`M30-R5 → M30-R4 → M30-R3 → M30-R2 → M30-R1 → M30 → M29 → ...`
+`M30-R7 → M30-R6 → M30-R5 → M30-R4 → M30-R3 → M30-R2 → M30-R1 → M30 → M29 → ...`
+
+Repository state at this SHA is the canonical runtime baseline. Gitignored real-source working artifacts remain local and must not be reconstructed from hashes.
 
 ## Authority policy / 권위 정책
 
@@ -68,6 +68,9 @@ No human identity may be fabricated. AI authority must be explicitly typed as AI
 | M30-R4 AI dilution coverage | #94 / #95 | `5bd1d92a9733621393bbada4f301876180647829` | `35256710738` | complete |
 | M30-R5 AI market-price authority | #96 / #97 | `4f8a9c988ee20ddf33585e8810db312821f43698` | `35283190462` | complete |
 | M30-R4.1 strike-distribution-safe TSM | #100 / #101 | `aadc8fef8ff3ecb20ad71cbd90809c4e95b69c1f` | `35555025332` | complete |
+| M30-R6 disclosure-limited dilution assumption | #104 / #105 | `749901e3234e441fabb4fdace298c5d779d35b7e` | `36526648339` | complete |
+| M30-R6B category-level bounded dilution envelope | #106 / #107 | `1a9fa0d1a9d475ccf5c13f72722f81132031d496` | `36547591128` | complete |
+| M30-R7 AI historical-dilution authority | #108 / #109 | `9829dc11758b243c4320bfd50588cc7bd600a17f` | `36549218203` | complete |
 
 M30-R5 exact tested head:
 - `a0389ce192e747258269757ec40a8d876ce9de5b`
@@ -249,24 +252,58 @@ Real current six-category status:
 
 Therefore `equity.diluted_shares` remains unresolved. Do not run `dilution-ai-finalize` from the original two-blocker inventory.
 
+## M30-R6 / R6B / R7 dilution successors / 희석 후속 계약
+
+Authoritative corrected R4.1 real HOLD:
+- inventory SHA: `bb8242c126fcd0c91c0a3aedd8aac26640c8b3ad829a59823eb861762270a4b2`
+- adjudication SHA: `48545fdeb713af826bd39d1fc2b22a5bb6dde10474d3a6ccac0174370d790d86`
+- decision: `HOLD_INCOMPLETE_DILUTION_COVERAGE`
+- blockers: exactly 3 — option strike distribution, payout-weighted performance awards, director/deferred-equity point-in-time aggregate.
+
+M30-R6 establishes the conservative disclosure-limited dilution assumption path:
+- exact R4 READY outranks fallback;
+- UNKNOWN_CONFLICT cannot fallback;
+- selected diluted-share output is `ASSUMPTION`, never FACT/DERIVED_FACT;
+- default uncertainty materiality threshold is 5%;
+- R6 output cannot direct-bind through M22 as an exact diluted-share fact.
+
+M30-R6B adds a category-preserving analytical envelope:
+- every M22 dilution category remains EXACT / BOUNDED / UNBOUNDED_DEPENDENCY;
+- output class is `ANALYTICAL_RANGE`;
+- a range can never become exact `equity.diluted_shares`;
+- real-shaped conditional sensitivity currently spans 63,597,979 to 64,575,870 shares, with about 1.538% relative share uncertainty and about 1.514% maximum denominator-only per-share reduction;
+- the director/deferred upper used in that research-shaped interval is explicitly `ASSUMPTION_CONDITIONAL`, not an issuer-reported valuation-date exact count.
+
+M30-R7 closes the remaining historical-anchor authority gap:
+- target Q2 weighted-average basic shares: 63.3M;
+- target Q2 weighted-average diluted shares: 63.9M;
+- historical incremental dilution: 0.6M;
+- exact SEC candidate/normalized-observation reproduction, entity/period/filing/source-lineage checks, Tier-A evidence, contradiction search, and typed `AI_HISTORICAL_DILUTION_ADJUDICATOR_V01`;
+- resulting historical dilution remains `DERIVED_FACT` with `historical_only=true` and `valuation_date_direct_bind=false`;
+- R6 independently validates and SHA-locks the complete R7 authority package before consuming it.
+
 ## Exact resume point / 정확한 재개점
 
 Runtime baseline:
 
-`aadc8fef8ff3ecb20ad71cbd90809c4e95b69c1f`
+`9829dc11758b243c4320bfd50588cc7bd600a17f`
 
-Next exact work:
+The remaining dilution step is **real local execution, not another architecture slice**.
 
-1. regenerate the real R4 inventory under R4.1 using the already-captured local issuer snapshots and reviewed market-price/share-base packages;
-2. expected corrected state is a durable **three-blocker HOLD**:
-   - option strike distribution,
-   - payout-weighted performance-award count,
-   - director/deferred-equity point-in-time count;
-3. do not finalize `equity.diluted_shares` from incomplete public evidence;
-4. determine whether exact public reconstruction is possible or whether M30 requires a separately governed **bounded/materiality-aware dilution estimate** successor;
-5. only after dilution authority is resolved, continue WACC → terminal growth → six-field forecast → M28/M29.
+Required local artifacts are intentionally gitignored and GitHub stores only their hashes/results. Therefore they must not be recreated from hashes or silently fabricated.
 
-The project must not silently weaken exactness. If public filing granularity prevents exact reconstruction, the repository must represent that uncertainty explicitly rather than fabricate a point estimate.
+Exact next work:
+
+1. synchronize the local checkout to `main@9829dc11758b243c4320bfd50588cc7bd600a17f`;
+2. use the existing local M21 basic/diluted candidate + normalized-observation JSON with the R7 evidence → adjudication → finalize → package-validation path;
+3. feed the validated R7 package into canonical M30-R6 together with:
+   - M22 share-base context `12ac21026b1a06756d0474e0ad2aec10bdd9391caf2ff03ca512c2cb3d8a0adc`;
+   - corrected R4.1 HOLD inventory `bb8242c126fcd0c91c0a3aedd8aac26640c8b3ad829a59823eb861762270a4b2`;
+4. execute R6 evidence → adjudication → `ASSUMPTION` finalization and independently validate the package;
+5. record the resulting immutable SHA lineage in Issue #79;
+6. then continue WACC → terminal growth → six-field forecast → M28/M29.
+
+No manual class flip, no fabricated artifact reconstruction, and no R4 `dilution-ai-finalize` from incomplete coverage is authorized.
 
 ## Remaining M30 acceptance / 잔여 완료조건
 

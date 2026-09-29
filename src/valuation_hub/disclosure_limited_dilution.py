@@ -283,16 +283,75 @@ def validate_disclosure_limited_dilution_evidence(
 ) -> dict[str, Any]:
     if not isinstance(evidence, dict) or evidence.get("schema_version") != EVIDENCE_SCHEMA or evidence.get("status") != EVIDENCE_STATUS or evidence.get("canonical") is not False or evidence.get("policy_id") != POLICY_ID:
         raise CaseServiceError("R6 evidence schema/status invalid / R6 evidence 스키마·상태 오류")
-    # Revalidate nested contracts explicitly without recursive rebuild.
-    validate_valuation_share_base_context(base_context)
-    validate_ai_dilution_inventory(hold_inventory, base_context)
-    validate_historical_dilution(historical_dilution)
+
+    base_checked = validate_valuation_share_base_context(base_context)
+    if base_checked.get("freshness") != FRESH:
+        raise CaseServiceError("R6 evidence base stale / R6 evidence base 오래됨")
+    inv_checked = validate_ai_dilution_inventory(hold_inventory, base_context)
+    if inv_checked.get("decision") != HOLD or hold_inventory.get("decision") != HOLD:
+        raise CaseServiceError("R6 evidence requires R4 HOLD / R6 evidence는 R4 HOLD 필요")
+    if any(row["state"] == UNKNOWN_CONFLICT for row in hold_inventory["categories"]):
+        raise CaseServiceError("R6 evidence cannot contain UNKNOWN_CONFLICT / R6 evidence UNKNOWN_CONFLICT 불가")
+
+    as_of = _iso(evidence.get("as_of"), "as_of")
+    if hold_inventory.get("as_of") != as_of or base_context.get("policy", {}).get("as_of") != as_of:
+        raise CaseServiceError("R6 evidence as_of lineage mismatch / R6 evidence as_of 계보 불일치")
+    if historical_dilution.get("entity") != base_context.get("entity") or evidence.get("entity") != base_context.get("entity"):
+        raise CaseServiceError("R6 evidence entity mismatch / R6 evidence entity 불일치")
+
+    hist_policy = evidence.get("historical_freshness")
+    if not isinstance(hist_policy, dict) or not isinstance(hist_policy.get("max_age_days"), int):
+        raise CaseServiceError("R6 historical freshness projection invalid / R6 역사 최신성 투영 오류")
+    historical_anchor, expected_hist_freshness = _historical_diluted_shares(
+        historical_dilution, as_of=as_of, max_age_days=hist_policy["max_age_days"]
+    )
+
     components = _normalize_components(upper_envelope_components)
+    if any(date.fromisoformat(row["as_of"]) > date.fromisoformat(as_of) for row in components):
+        raise CaseServiceError("upper-envelope evidence after valuation date not allowed / 가치평가일 이후 envelope 근거 불가")
+
     if evidence.get("base_context_sha256") != base_context.get("context_sha256") or evidence.get("r4_inventory_sha256") != hold_inventory.get("inventory_sha256") or evidence.get("historical_dilution_sha256") != historical_dilution.get("derived_sha256"):
         raise CaseServiceError("R6 evidence lineage mismatch / R6 evidence 계보 불일치")
-    if evidence.get("upper_envelope", {}).get("components") != components:
-        raise CaseServiceError("R6 upper-envelope projection mismatch / R6 upper-envelope 투영 불일치")
-    boundary = evidence.get("semantic_boundary")
+    if evidence.get("historical_freshness") != expected_hist_freshness:
+        raise CaseServiceError("R6 historical freshness mismatch / R6 역사 최신성 불일치")
+
+    threshold = _num(evidence.get("upper_envelope", {}).get("materiality_threshold"), "materiality threshold", positive=True)
+    if threshold > 0.25:
+        raise CaseServiceError("materiality threshold above 25% not permitted / materiality threshold 25% 초과 불가")
+    base_shares = _num(base_context.get("value"), "base current shares", positive=True)
+    exact_present = _exact_present_adjustments(hold_inventory)
+    exact_present_floor = base_shares + exact_present
+    selected = max(historical_anchor, exact_present_floor)
+    upper_increment = sum(row["shares"] for row in components)
+    upper = base_shares + upper_increment
+    lower = base_shares
+    if upper < selected:
+        raise CaseServiceError("upper envelope below selected assumption / upper envelope가 선택 가정보다 작음")
+    spread = upper / selected - 1.0
+    expected_decision = READY if spread <= threshold else HOLD_MATERIALITY
+
+    expected_selection = {
+        "current_common_shares": base_shares,
+        "exact_present_adjustments": exact_present,
+        "exact_present_floor": exact_present_floor,
+        "historical_diluted_anchor": historical_anchor,
+        "selected_shares": selected,
+        "rule": "MAX_LATEST_ISSUER_DILUTED_ANCHOR_AND_EXACT_PRESENT_FLOOR",
+    }
+    expected_envelope = {
+        "components": components,
+        "incremental_shares": upper_increment,
+        "lower_shares": lower,
+        "upper_shares": upper,
+        "relative_upper_spread": spread,
+        "materiality_threshold": threshold,
+        "conservative_no_netting": True,
+    }
+    if evidence.get("selection") != expected_selection or evidence.get("upper_envelope") != expected_envelope:
+        raise CaseServiceError("R6 evidence independent projection mismatch / R6 evidence 독립 재계산 불일치")
+    if evidence.get("blockers") != inv_checked.get("blockers") or evidence.get("decision") != expected_decision:
+        raise CaseServiceError("R6 evidence blockers/materiality decision mismatch / R6 evidence blocker·materiality 판정 불일치")
+
     expected_boundary = {
         "exact_r4_path_outranks_fallback": True,
         "historical_diluted_shares_remain_duration_reference": True,
@@ -302,21 +361,20 @@ def validate_disclosure_limited_dilution_evidence(
         "unknown_conflict_never_fallback": True,
         "direct_bind_as_m22_derived_fact": False,
     }
-    if boundary != expected_boundary:
+    if evidence.get("semantic_boundary") != expected_boundary:
         raise CaseServiceError("R6 semantic boundary invalid / R6 의미경계 오류")
-    selected = _num(evidence.get("selection", {}).get("selected_shares"), "selected shares", positive=True)
-    upper = _num(evidence.get("upper_envelope", {}).get("upper_shares"), "upper shares", positive=True)
-    lower = _num(evidence.get("upper_envelope", {}).get("lower_shares"), "lower shares", positive=True)
-    threshold = _num(evidence.get("upper_envelope", {}).get("materiality_threshold"), "materiality threshold", positive=True)
-    spread = upper / selected - 1.0
-    expected_decision = READY if spread <= threshold else HOLD_MATERIALITY
-    if lower > selected or selected > upper or abs(evidence["upper_envelope"]["relative_upper_spread"] - spread) > 1e-12 or evidence.get("decision") != expected_decision:
-        raise CaseServiceError("R6 envelope/materiality arithmetic mismatch / R6 envelope·materiality 산술 불일치")
+
     expected_sha = _sha(_without(evidence, "evidence_sha256"))
     if evidence.get("evidence_sha256") != expected_sha:
         raise CaseServiceError("R6 evidence SHA mismatch / R6 evidence SHA 불일치")
-    return {"status": "PASS_DISCLOSURE_LIMITED_DILUTION_EVIDENCE_VALIDATION", "evidence_sha256": expected_sha, "decision": expected_decision, "selected_shares": selected, "upper_shares": upper, "relative_upper_spread": spread}
-
+    return {
+        "status": "PASS_DISCLOSURE_LIMITED_DILUTION_EVIDENCE_VALIDATION",
+        "evidence_sha256": expected_sha,
+        "decision": expected_decision,
+        "selected_shares": selected,
+        "upper_shares": upper,
+        "relative_upper_spread": spread,
+    }
 
 def build_disclosure_limited_dilution_adjudication(evidence: dict[str, Any], *, adjudicated_at: str) -> dict[str, Any]:
     if not isinstance(evidence, dict) or evidence.get("schema_version") != EVIDENCE_SCHEMA:

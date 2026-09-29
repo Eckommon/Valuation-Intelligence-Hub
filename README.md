@@ -71,6 +71,7 @@ python -m pip install -e ".[dev]"
 - M30-R6: disclosure-limited diluted-share fallback that remains a governed `ASSUMPTION`, never a derived fact
 - M30-R6B: category-level bounded dilution envelope and denominator-materiality diagnostics
 - M30-R7: evidence-first AI authority for historical basic/diluted-share anchors used by R6
+- M30-R7X: source-bound Tier-A snapshot/excerpt ingress for the real R6 conservative upper envelope
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -219,7 +220,7 @@ No synthetic fixture may be inserted into `registry/cases.json` to claim complet
 
 Installed `vih` enters through `valuation_hub.cli_entry_m30r7` and delegates older commands unchanged.
 
-R7 adds the historical-dilution AI evidence/adjudication/finalization/package-validation path required by R6. R6 adds disclosure-limited dilution-assumption commands while preserving older command delegation.
+R7 adds the historical-dilution AI evidence/adjudication/finalization/package-validation path required by R6. R6 adds disclosure-limited dilution-assumption commands while preserving older command delegation. R7X adds `dilution-envelope-source-build` / `dilution-envelope-source-validate`; the resulting self-contained source-bound manifest can be passed directly as the existing R6 `upper_envelope` input.
 
 R5 adds:
 

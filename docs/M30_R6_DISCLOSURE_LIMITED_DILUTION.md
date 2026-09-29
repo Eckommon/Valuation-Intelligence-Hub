@@ -49,7 +49,7 @@ The historical denominator remains duration evidence. The `max` rule is a conser
 
 ## Conservative upper envelope / 보수적 상단 envelope
 
-R6 accepts source-bound components with explicit roles:
+R6 accepts source-bound components with explicit roles. For real M30 execution, M30-R7X provides the preferred source-bound manifest ingress so locator/snapshot SHA/source type come from validated embedded Tier-A snapshots and exact cited excerpts are revalidated. Historical raw component arrays remain accepted for backward compatibility:
 
 - `ANCHOR_OUTSTANDING_AWARDS`
 - `SUBSEQUENT_GROSS_GRANT`
@@ -144,9 +144,25 @@ eligible_for_m22_derived_fact_direct_bind = false
 
 A later explicit successor is required before this assumption may enter a Draft. M30-R6 does not mutate Drafts, registry, admission state, or canonical cases.
 
+## Source-bound real-execution ingress / 출처결합 실실행 ingress
+
+Preferred M30 real-case path:
+
+```text
+validated external-source snapshots
+  → dilution-envelope-source-build
+  → dilution-envelope-source-validate
+  → source-bound-dilution-envelope-manifest-v0.1
+  → existing R6 upper_envelope positional input
+```
+
+The source-bound manifest embeds the referenced validated snapshots and binds each claimed component quantity to an exact source excerpt. See `docs/M30_R7X_SOURCE_BOUND_DILUTION_ENVELOPE.md`.
+
 ## CLI
 
 ```text
+dilution-envelope-source-build
+dilution-envelope-source-validate
 dilution-assumption-evidence-build
 dilution-assumption-evidence-validate
 dilution-assumption-adjudicate

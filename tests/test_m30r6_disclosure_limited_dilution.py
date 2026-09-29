@@ -265,11 +265,14 @@ def test_materiality_gate_holds_when_public_upper_envelope_is_too_wide() -> None
     evidence = _evidence(extra_anchor=3_000_000)
     assert evidence["decision"] == HOLD_MATERIALITY
     adjudication = build_disclosure_limited_dilution_adjudication(
-        evidence, adjudicated_at="2026-09-29T12:00:00+09:00"
+        evidence, _base(), _hold_inventory(), _historical(), _components(),
+        adjudicated_at="2026-09-29T12:00:00+09:00"
     )
     assert adjudication["decision"] == HOLD_MATERIALITY
     with pytest.raises(CaseServiceError, match="materiality"):
-        finalize_disclosure_limited_dilution_assumption(evidence, adjudication)
+        finalize_disclosure_limited_dilution_assumption(
+            evidence, adjudication, _base(), _hold_inventory(), _historical(), _components(extra_anchor=3_000_000)
+        )
 
 
 def test_unknown_conflict_cannot_use_r6_fallback() -> None:

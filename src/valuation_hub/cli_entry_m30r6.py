@@ -9,6 +9,11 @@ from typing import Any
 
 from valuation_hub import cli_entry_m30r5 as prior_cli
 from valuation_hub.case_service import CaseServiceError, find_repo_root
+from valuation_hub.dilution_envelope_source import (
+    MANIFEST_SCHEMA as SOURCE_BOUND_ENVELOPE_SCHEMA,
+    build_source_bound_dilution_envelope_manifest,
+    validate_source_bound_dilution_envelope_manifest,
+)
 from valuation_hub.disclosure_limited_dilution import (
     build_disclosure_limited_dilution_adjudication,
     build_disclosure_limited_dilution_evidence,
@@ -19,6 +24,8 @@ from valuation_hub.disclosure_limited_dilution import (
 )
 
 INTERCEPT = {
+    "dilution-envelope-source-build",
+    "dilution-envelope-source-validate",
     "dilution-assumption-evidence-build",
     "dilution-assumption-evidence-validate",
     "dilution-assumption-adjudicate",
@@ -44,24 +51,38 @@ def _path(value: Path, root: Path) -> Path:
     return value.resolve() if value.is_absolute() else (root / value).resolve()
 
 
-def _obj(value: Path, root: Path, label: str) -> dict[str, Any]:
+def _payload(value: Path, root: Path, label: str) -> Any:
     try:
-        payload = json.loads(_path(value, root).read_text(encoding="utf-8"))
+        return json.loads(_path(value, root).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise CaseServiceError(f"{label} read failed / {label} 읽기 실패") from exc
+
+
+def _obj(value: Path, root: Path, label: str) -> dict[str, Any]:
+    payload = _payload(value, root, label)
     if not isinstance(payload, dict):
         raise CaseServiceError(f"{label} object required / {label} 객체 필요")
     return payload
 
 
-def _rows(value: Path, root: Path) -> list[dict[str, Any]]:
-    try:
-        payload = json.loads(_path(value, root).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise CaseServiceError("upper-envelope manifest read failed / upper-envelope manifest 읽기 실패") from exc
+def _list(value: Path, root: Path, label: str) -> list[dict[str, Any]]:
+    payload = _payload(value, root, label)
     if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
-        raise CaseServiceError("upper-envelope manifest array required / upper-envelope manifest 배열 필요")
+        raise CaseServiceError(f"{label} array required / {label} 배열 필요")
     return payload
+
+
+def _rows(value: Path, root: Path) -> list[dict[str, Any]]:
+    payload = _payload(value, root, "upper-envelope manifest")
+    if isinstance(payload, list) and all(isinstance(item, dict) for item in payload):
+        return payload
+    if isinstance(payload, dict) and payload.get("schema_version") == SOURCE_BOUND_ENVELOPE_SCHEMA:
+        checked = validate_source_bound_dilution_envelope_manifest(payload)
+        return checked["components"]
+    raise CaseServiceError(
+        "upper-envelope raw array or source-bound manifest required / "
+        "upper-envelope raw 배열 또는 source-bound manifest 필요"
+    )
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -69,6 +90,13 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--root", type=Path, default=None)
     p.add_argument("--json", action="store_true", dest="as_json")
     sub = p.add_subparsers(dest="command", required=True)
+
+    c = sub.add_parser("dilution-envelope-source-build")
+    c.add_argument("component_specs", type=Path)
+    c.add_argument("source_snapshots", type=Path, nargs="+")
+
+    c = sub.add_parser("dilution-envelope-source-validate")
+    c.add_argument("manifest", type=Path)
 
     c = sub.add_parser("dilution-assumption-evidence-build")
     c.add_argument("base_context", type=Path)
@@ -111,6 +139,23 @@ def _run(argv: list[str]) -> int:
     args = _parser().parse_args(argv)
     root = _root(args.root)
     try:
+        if args.command == "dilution-envelope-source-build":
+            specs = _list(args.component_specs, root, "component_specs")
+            snapshots = [
+                _obj(path, root, f"source_snapshot[{index}]")
+                for index, path in enumerate(args.source_snapshots)
+            ]
+            _dump(build_source_bound_dilution_envelope_manifest(specs, snapshots))
+            return 0
+
+        if args.command == "dilution-envelope-source-validate":
+            _dump(
+                validate_source_bound_dilution_envelope_manifest(
+                    _obj(args.manifest, root, "source_bound_envelope_manifest")
+                )
+            )
+            return 0
+
         if args.command == "dilution-assumption-evidence-build":
             _dump(build_disclosure_limited_dilution_evidence(
                 _obj(args.base_context, root, "base_context"),

@@ -227,10 +227,16 @@ def _components(extra_anchor: float = 0.0) -> list[dict]:
         {
             "component_id": "DISCLOSURE_LAG_BUFFER",
             "role": ROLE_BUFFER,
-            "shares": 158_000,
+            "shares": 331_000 * 76 / 181,
             "as_of": "2026-09-14",
             "sources": _source("5"),
-            "evidence_basis": "Explicit buffer for post-quarter unitemized awards through valuation date; not presented as a fact.",
+            "evidence_basis": "Disclosure-lag scenario uses the disclosed 2026 H1 gross employee RSU+PSU grant run-rate pro-rated across the 76 days from June 30 to valuation date; this is an assumption, not a fact.",
+            "calculation": {
+                "method": "PRO_RATA_GROSS_GRANT_RUN_RATE_V01",
+                "observed_gross_grants": 331_000,
+                "observed_days": 181,
+                "lag_days": 76,
+            },
         },
     ]
 
@@ -256,22 +262,28 @@ def test_real_shaped_disclosure_limited_envelope_selects_issuer_anchor_and_passe
     assert evidence["selection"]["historical_diluted_anchor"] == 63_900_000
     assert evidence["selection"]["exact_present_floor"] == 63_597_979
     assert evidence["selection"]["selected_shares"] == 63_900_000
-    assert evidence["upper_envelope"]["upper_shares"] == 65_998_453
+    assert evidence["upper_envelope"]["upper_shares"] == pytest.approx(65_979_424.27071823)
     assert evidence["upper_envelope"]["relative_upper_spread"] < 0.05
     assert evidence["semantic_boundary"]["direct_bind_as_m22_derived_fact"] is False
 
 
 def test_materiality_gate_holds_when_public_upper_envelope_is_too_wide() -> None:
-    evidence = _evidence(extra_anchor=3_000_000)
+    base = _base()
+    inventory = _hold_inventory()
+    historical = _historical()
+    components = _components(extra_anchor=3_000_000)
+    evidence = build_disclosure_limited_dilution_evidence(
+        base, inventory, historical, components, as_of="2026-09-14"
+    )
     assert evidence["decision"] == HOLD_MATERIALITY
     adjudication = build_disclosure_limited_dilution_adjudication(
-        evidence, _base(), _hold_inventory(), _historical(), _components(),
+        evidence, base, inventory, historical, components,
         adjudicated_at="2026-09-29T12:00:00+09:00"
     )
     assert adjudication["decision"] == HOLD_MATERIALITY
     with pytest.raises(CaseServiceError, match="materiality"):
         finalize_disclosure_limited_dilution_assumption(
-            evidence, adjudication, _base(), _hold_inventory(), _historical(), _components(extra_anchor=3_000_000)
+            evidence, adjudication, base, inventory, historical, components
         )
 
 

@@ -23,6 +23,10 @@ from valuation_hub.ai_dilution_authority import (
     UNKNOWN_CONFLICT,
     validate_ai_dilution_inventory,
 )
+from valuation_hub.ai_historical_dilution_authority import (
+    PACKAGE_SCHEMA as AI_HISTORICAL_PACKAGE_SCHEMA,
+    validate_ai_reviewed_historical_dilution_package,
+)
 from valuation_hub.case_service import CaseServiceError
 from valuation_hub.share_dilution import validate_historical_dilution
 from valuation_hub.valuation_shares import FRESH, validate_valuation_share_base_context
@@ -177,14 +181,30 @@ def _normalize_components(value: Any) -> list[dict[str, Any]]:
     return rows
 
 
+def _historical_input(value: dict[str, Any]) -> tuple[dict[str, Any], str, str]:
+    if isinstance(value, dict) and value.get("schema_version") == AI_HISTORICAL_PACKAGE_SCHEMA:
+        checked = validate_ai_reviewed_historical_dilution_package(value)
+        historical = value.get("historical_dilution")
+        if not isinstance(historical, dict):
+            raise CaseServiceError("R7 historical dilution payload missing / R7 역사적 희석 payload 누락")
+        return historical, value["package_sha256"], checked["status"]
+    if not isinstance(value, dict):
+        raise CaseServiceError("historical dilution object required / 역사적 희석 객체 필요")
+    derived_sha = value.get("derived_sha256")
+    if not isinstance(derived_sha, str) or not SHA256_RE.fullmatch(derived_sha):
+        raise CaseServiceError("historical dilution SHA invalid / 역사적 희석 SHA 오류")
+    return value, derived_sha, "LEGACY_HISTORICAL_DILUTION_INPUT"
+
+
 def _historical_diluted_shares(value: dict[str, Any], *, as_of: str, max_age_days: int) -> tuple[float, dict[str, Any]]:
-    checked = validate_historical_dilution(value)
-    if value.get("class") != "DERIVED_FACT":
+    historical, _, authority_status = _historical_input(value)
+    checked = validate_historical_dilution(historical)
+    if historical.get("class") != "DERIVED_FACT":
         raise CaseServiceError("reviewed historical dilution FACT required / 검토된 역사적 희석 FACT 필요")
-    boundary = value.get("semantic_boundary", {})
+    boundary = historical.get("semantic_boundary", {})
     if boundary.get("historical_only") is not True or boundary.get("valuation_date_direct_bind") is not False:
         raise CaseServiceError("historical dilution semantic boundary invalid / 역사적 희석 의미경계 오류")
-    period = value.get("period", {})
+    period = historical.get("period", {})
     end = _iso(period.get("end"), "historical.period.end")
     as_of_date = date.fromisoformat(_iso(as_of, "as_of"))
     end_date = date.fromisoformat(end)
@@ -193,9 +213,15 @@ def _historical_diluted_shares(value: dict[str, Any], *, as_of: str, max_age_day
         raise CaseServiceError("historical dilution freshness policy invalid / 역사적 희석 최신성 정책 오류")
     if age > max_age_days:
         raise CaseServiceError("historical diluted-share anchor stale / 역사적 희석주식 anchor 오래됨")
-    by = {item["metric"]: item for item in value["sources"]}
+    by = {item["metric"]: item for item in historical["sources"]}
     diluted = _num(by["weighted_average_diluted_shares"]["value"], "historical diluted shares", positive=True)
-    return diluted, {"age_days": age, "max_age_days": max_age_days, "status": FRESH, "validation_status": checked["status"]}
+    return diluted, {
+        "age_days": age,
+        "max_age_days": max_age_days,
+        "status": FRESH,
+        "validation_status": checked["status"],
+        "authority_status": authority_status,
+    }
 
 
 def _exact_present_adjustments(inventory: dict[str, Any]) -> float:
@@ -261,7 +287,7 @@ def build_disclosure_limited_dilution_evidence(
         "entity": copy.deepcopy(base_context["entity"]),
         "base_context_sha256": base_context["context_sha256"],
         "r4_inventory_sha256": hold_inventory["inventory_sha256"],
-        "historical_dilution_sha256": historical_dilution["derived_sha256"],
+        "historical_dilution_sha256": _historical_input(historical_dilution)[1],
         "historical_freshness": historical_freshness,
         "selection": {
             "current_common_shares": base_shares,
@@ -335,7 +361,7 @@ def validate_disclosure_limited_dilution_evidence(
     if any(date.fromisoformat(row["as_of"]) > date.fromisoformat(as_of) for row in components):
         raise CaseServiceError("upper-envelope evidence after valuation date not allowed / 가치평가일 이후 envelope 근거 불가")
 
-    if evidence.get("base_context_sha256") != base_context.get("context_sha256") or evidence.get("r4_inventory_sha256") != hold_inventory.get("inventory_sha256") or evidence.get("historical_dilution_sha256") != historical_dilution.get("derived_sha256"):
+    if evidence.get("base_context_sha256") != base_context.get("context_sha256") or evidence.get("r4_inventory_sha256") != hold_inventory.get("inventory_sha256") or evidence.get("historical_dilution_sha256") != _historical_input(historical_dilution)[1]:
         raise CaseServiceError("R6 evidence lineage mismatch / R6 evidence 계보 불일치")
     if evidence.get("historical_freshness") != expected_hist_freshness:
         raise CaseServiceError("R6 historical freshness mismatch / R6 역사 최신성 불일치")
@@ -426,7 +452,7 @@ def build_disclosure_limited_dilution_adjudication(
         "evidence_sha256": evidence["evidence_sha256"],
         "base_context_sha256": base_context["context_sha256"],
         "r4_inventory_sha256": hold_inventory["inventory_sha256"],
-        "historical_dilution_sha256": historical_dilution["derived_sha256"],
+        "historical_dilution_sha256": _historical_input(historical_dilution)[1],
         "selected_shares": checked_evidence["selected_shares"],
         "upper_shares": checked_evidence["upper_shares"],
         "relative_upper_spread": checked_evidence["relative_upper_spread"],
@@ -459,7 +485,7 @@ def validate_disclosure_limited_dilution_adjudication(
         or adjudication.get("evidence_sha256") != evidence.get("evidence_sha256")
         or adjudication.get("base_context_sha256") != base_context.get("context_sha256")
         or adjudication.get("r4_inventory_sha256") != hold_inventory.get("inventory_sha256")
-        or adjudication.get("historical_dilution_sha256") != historical_dilution.get("derived_sha256")
+        or adjudication.get("historical_dilution_sha256") != _historical_input(historical_dilution)[1]
         or adjudication.get("selected_shares") != checked_evidence["selected_shares"]
         or adjudication.get("upper_shares") != checked_evidence["upper_shares"]
         or abs(adjudication.get("relative_upper_spread") - checked_evidence["relative_upper_spread"]) > 1e-12

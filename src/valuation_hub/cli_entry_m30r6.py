@@ -86,22 +86,24 @@ def _parser() -> argparse.ArgumentParser:
     c.add_argument("historical_dilution", type=Path)
     c.add_argument("upper_envelope", type=Path)
 
-    c = sub.add_parser("dilution-assumption-adjudicate")
-    c.add_argument("evidence", type=Path)
-    c.add_argument("--adjudicated-at", required=True)
-
-    c = sub.add_parser("dilution-assumption-adjudication-validate")
-    c.add_argument("adjudication", type=Path)
-    c.add_argument("evidence", type=Path)
-
-    c = sub.add_parser("dilution-assumption-finalize")
-    c.add_argument("evidence", type=Path)
-    c.add_argument("adjudication", type=Path)
-
-    c = sub.add_parser("dilution-assumption-package-validate")
-    c.add_argument("package", type=Path)
-    c.add_argument("evidence", type=Path)
-    c.add_argument("adjudication", type=Path)
+    for name in (
+        "dilution-assumption-adjudicate",
+        "dilution-assumption-adjudication-validate",
+        "dilution-assumption-finalize",
+        "dilution-assumption-package-validate",
+    ):
+        c = sub.add_parser(name)
+        if name == "dilution-assumption-package-validate":
+            c.add_argument("package", type=Path)
+        if name in {"dilution-assumption-adjudication-validate", "dilution-assumption-finalize", "dilution-assumption-package-validate"}:
+            c.add_argument("adjudication", type=Path)
+        c.add_argument("evidence", type=Path)
+        c.add_argument("base_context", type=Path)
+        c.add_argument("hold_inventory", type=Path)
+        c.add_argument("historical_dilution", type=Path)
+        c.add_argument("upper_envelope", type=Path)
+        if name == "dilution-assumption-adjudicate":
+            c.add_argument("--adjudicated-at", required=True)
     return p
 
 
@@ -132,22 +134,44 @@ def _run(argv: list[str]) -> int:
             ))
             return 0
 
+        base_context = _obj(args.base_context, root, "base_context")
+        hold_inventory = _obj(args.hold_inventory, root, "hold_inventory")
+        historical_dilution = _obj(args.historical_dilution, root, "historical_dilution")
+        upper_envelope = _rows(args.upper_envelope, root)
+
         if args.command == "dilution-assumption-adjudicate":
-            _dump(build_disclosure_limited_dilution_adjudication(evidence, adjudicated_at=args.adjudicated_at))
+            _dump(build_disclosure_limited_dilution_adjudication(
+                evidence,
+                base_context,
+                hold_inventory,
+                historical_dilution,
+                upper_envelope,
+                adjudicated_at=args.adjudicated_at,
+            ))
             return 0
 
         adjudication = _obj(args.adjudication, root, "adjudication")
         if args.command == "dilution-assumption-adjudication-validate":
-            _dump(validate_disclosure_limited_dilution_adjudication(adjudication, evidence))
+            _dump(validate_disclosure_limited_dilution_adjudication(
+                adjudication, evidence, base_context, hold_inventory, historical_dilution, upper_envelope
+            ))
             return 0
 
         if args.command == "dilution-assumption-finalize":
-            _dump(finalize_disclosure_limited_dilution_assumption(evidence, adjudication))
+            _dump(finalize_disclosure_limited_dilution_assumption(
+                evidence, adjudication, base_context, hold_inventory, historical_dilution, upper_envelope
+            ))
             return 0
 
         if args.command == "dilution-assumption-package-validate":
             _dump(validate_disclosure_limited_dilution_assumption(
-                _obj(args.package, root, "package"), evidence, adjudication
+                _obj(args.package, root, "package"),
+                evidence,
+                adjudication,
+                base_context,
+                hold_inventory,
+                historical_dilution,
+                upper_envelope,
             ))
             return 0
 

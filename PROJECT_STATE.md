@@ -17,9 +17,9 @@ No synthetic fixture may be admitted to `registry/cases.json` to claim real-case
 
 Latest runtime-changing canonical main:
 
-`9829dc11758b243c4320bfd50588cc7bd600a17f`
+`b951637a16698b2cae5ecdf6c51e7e7c5cb30636`
 
-This is **M30-R7 — evidence-first AI authority for historical dilution**, layered after M30-R6/R6B disclosure-limited dilution successors.
+This is **M30-R7X — source-bound R6 upper-envelope ingress**, layered on the M30-R7 top-level CLI and M30-R6/R6B disclosure-limited dilution successors. The installed entrypoint remains M30-R7; its delegated M30-R6 surface now also exposes R7X source-bound envelope build/validation.
 
 Installed `vih` enters through:
 
@@ -71,6 +71,7 @@ No human identity may be fabricated. AI authority must be explicitly typed as AI
 | M30-R6 disclosure-limited dilution assumption | #104 / #105 | `749901e3234e441fabb4fdace298c5d779d35b7e` | `36526648339` | complete |
 | M30-R6B category-level bounded dilution envelope | #106 / #107 | `1a9fa0d1a9d475ccf5c13f72722f81132031d496` | `36547591128` | complete |
 | M30-R7 AI historical-dilution authority | #108 / #109 | `9829dc11758b243c4320bfd50588cc7bd600a17f` | `36549218203` | complete |
+| M30-R7X source-bound R6 envelope ingress | #113 / #114 | `b951637a16698b2cae5ecdf6c51e7e7c5cb30636` | `36631518156` | complete |
 
 M30-R5 exact tested head:
 - `a0389ce192e747258269757ec40a8d876ce9de5b`
@@ -282,29 +283,42 @@ M30-R7 closes the remaining historical-anchor authority gap:
 - resulting historical dilution remains `DERIVED_FACT` with `historical_only=true` and `valuation_date_direct_bind=false`;
 - R6 independently validates and SHA-locks the complete R7 authority package before consuming it.
 
+M30-R7X closes the real-execution provenance gap for the R6 conservative upper envelope:
+- real M30 envelope sources must be validated Tier-A `external-source-snapshot-v0.1` objects;
+- each component claim is bound to an exact cited source excerpt, observed quantity, and unit multiplier;
+- direct claims, performance uplift, and the pro-rata disclosure-lag buffer are independently reconciled before projection into the unchanged R6 component contract;
+- the self-contained `source-bound-dilution-envelope-manifest-v0.1` embeds the referenced immutable source snapshots and can be supplied directly as R6 `upper_envelope` input;
+- historical raw component arrays remain backward compatible, but the source-bound manifest is the preferred real M30 path.
+
 ## Exact resume point / 정확한 재개점
 
 Runtime baseline:
 
-`9829dc11758b243c4320bfd50588cc7bd600a17f`
+`b951637a16698b2cae5ecdf6c51e7e7c5cb30636`
 
-The remaining dilution step is **real local execution, not another architecture slice**.
+The remaining dilution step is **real local execution, not another valuation-architecture slice**. M30-R7X has removed the need to hand-author R6 source provenance.
 
 Required local artifacts are intentionally gitignored and GitHub stores only their hashes/results. Therefore they must not be recreated from hashes or silently fabricated.
 
 Exact next work:
 
-1. synchronize the local checkout to `main@9829dc11758b243c4320bfd50588cc7bd600a17f`;
+1. synchronize the local checkout to `main@b951637a16698b2cae5ecdf6c51e7e7c5cb30636`;
 2. use the existing local M21 basic/diluted candidate + normalized-observation JSON with the R7 evidence → adjudication → finalize → package-validation path;
-3. feed the validated R7 package into canonical M30-R6 together with:
+3. seal the exact 2026 Ingredion DEF 14A proxy bytes through the existing M30-E external-source snapshot intake under gitignored `workspace/source_snapshots/**`; do not reconstruct the proxy snapshot from quoted numbers;
+4. use the validated proxy snapshot together with the already validated 2026 Q2 10-Q snapshot `f61f33b0e27403ab56882d8cc1daa3a66571e9452fc5d8012268f39ab098b0f9` to build and validate the R7X `source-bound-dilution-envelope-manifest-v0.1`, with exact excerpts binding:
+   - 2025-12-31 equity-compensation-plan securities anchor;
+   - 2026 YTD RSU grants;
+   - 2026 YTD performance-share grants;
+   - explicit performance-max uplift;
+   - mechanically reproduced disclosure-lag buffer;
+5. feed the validated R7 package and R7X source-bound envelope manifest into canonical M30-R6 together with:
    - M22 share-base context `12ac21026b1a06756d0474e0ad2aec10bdd9391caf2ff03ca512c2cb3d8a0adc`;
    - corrected R4.1 HOLD inventory `bb8242c126fcd0c91c0a3aedd8aac26640c8b3ad829a59823eb861762270a4b2`;
-4. execute R6 evidence → adjudication and evaluate the materiality decision;
-5. if R6 returns `APPROVE_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION`, finalize and independently validate the `ASSUMPTION` package, then record its immutable SHA lineage in Issue #79;
-6. before any WACC/M28 progression, close the known downstream authority gap with an explicit assumption-aware diluted-share successor: the R6 package is deliberately `eligible_for_assumption_aware_successor=true` and `eligible_for_m22_derived_fact_direct_bind=false`, while historical M29 currently expects `equity.diluted_shares=DERIVED`;
-7. that successor must preserve route-dependent authority truth — exact M22/R4 dilution may remain `DERIVED`, but a disclosure-limited R6 route must remain `ASSUMPTION`; no class flip is permitted merely to satisfy M28/M29;
-8. only after the diluted-share assumption can enter the Draft and complete-handoff chain without authority relabeling, continue WACC → terminal growth → six-field forecast → M28/M29;
-9. if R6 instead returns a materiality HOLD, do not build a binding successor around an ineligible assumption; return to evidence/policy resolution.
+6. execute R6 evidence → adjudication and evaluate the real materiality decision;
+7. if R6 returns `APPROVE_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION`, finalize and independently validate the `ASSUMPTION` package, record its immutable SHA lineage in Issue #79, and only then activate blocked Issue #112 / M30-R8;
+8. M30-R8 must preserve route-dependent authority truth — exact M22/R4 dilution may remain `DERIVED`, while a disclosure-limited R6 route remains `ASSUMPTION`; no class flip is permitted merely to satisfy M28/M29;
+9. only after the diluted-share assumption can enter the Draft and complete-handoff chain without authority relabeling, continue WACC → terminal growth → six-field forecast → M28/M29;
+10. if R6 instead returns `HOLD_DISCLOSURE_LIMITED_DILUTION_MATERIALITY`, do not finalize the assumption and do not activate R8; return to evidence/policy resolution.
 
 No manual class flip, no fabricated artifact reconstruction, and no R4 `dilution-ai-finalize` from incomplete coverage is authorized.
 
@@ -319,6 +333,8 @@ No manual class flip, no fabricated artifact reconstruction, and no R4 `dilution
 - [x] AI market-price authority successor
 - [x] real INGR immutable market-price source snapshots
 - [x] real INGR reviewed market-price FACT
+- [x] source-bound Tier-A/excerpt ingress for the real R6 conservative upper envelope
+- [ ] real INGR R7 authority package + R7X source-bound envelope local execution
 - [ ] real INGR dilution authority resolved through either exact R4 coverage or a materiality-passing R6 assumption
 - [ ] assumption-aware diluted-share Draft/handoff successor preserving `ASSUMPTION` authority when the R6 route is used
 - [ ] real `equity.diluted_shares` enters the governed Draft without authority relabeling

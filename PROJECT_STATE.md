@@ -299,9 +299,12 @@ Exact next work:
 3. feed the validated R7 package into canonical M30-R6 together with:
    - M22 share-base context `12ac21026b1a06756d0474e0ad2aec10bdd9391caf2ff03ca512c2cb3d8a0adc`;
    - corrected R4.1 HOLD inventory `bb8242c126fcd0c91c0a3aedd8aac26640c8b3ad829a59823eb861762270a4b2`;
-4. execute R6 evidence → adjudication → `ASSUMPTION` finalization and independently validate the package;
-5. record the resulting immutable SHA lineage in Issue #79;
-6. then continue WACC → terminal growth → six-field forecast → M28/M29.
+4. execute R6 evidence → adjudication and evaluate the materiality decision;
+5. if R6 returns `APPROVE_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION`, finalize and independently validate the `ASSUMPTION` package, then record its immutable SHA lineage in Issue #79;
+6. before any WACC/M28 progression, close the known downstream authority gap with an explicit assumption-aware diluted-share successor: the R6 package is deliberately `eligible_for_assumption_aware_successor=true` and `eligible_for_m22_derived_fact_direct_bind=false`, while historical M29 currently expects `equity.diluted_shares=DERIVED`;
+7. that successor must preserve route-dependent authority truth — exact M22/R4 dilution may remain `DERIVED`, but a disclosure-limited R6 route must remain `ASSUMPTION`; no class flip is permitted merely to satisfy M28/M29;
+8. only after the diluted-share assumption can enter the Draft and complete-handoff chain without authority relabeling, continue WACC → terminal growth → six-field forecast → M28/M29;
+9. if R6 instead returns a materiality HOLD, do not build a binding successor around an ineligible assumption; return to evidence/policy resolution.
 
 No manual class flip, no fabricated artifact reconstruction, and no R4 `dilution-ai-finalize` from incomplete coverage is authorized.
 
@@ -316,8 +319,9 @@ No manual class flip, no fabricated artifact reconstruction, and no R4 `dilution
 - [x] AI market-price authority successor
 - [x] real INGR immutable market-price source snapshots
 - [x] real INGR reviewed market-price FACT
-- [ ] real INGR complete six-category dilution coverage
-- [ ] real `equity.diluted_shares`
+- [ ] real INGR dilution authority resolved through either exact R4 coverage or a materiality-passing R6 assumption
+- [ ] assumption-aware diluted-share Draft/handoff successor preserving `ASSUMPTION` authority when the R6 route is used
+- [ ] real `equity.diluted_shares` enters the governed Draft without authority relabeling
 - [ ] seven M24 WACC source inputs + governed assumption
 - [ ] M25 macro anchors + terminal-growth assumption
 - [ ] M26 atomic six-field forecast block

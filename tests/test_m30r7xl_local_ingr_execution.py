@@ -240,6 +240,7 @@ def _prepare_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple
         encoding="utf-8",
     )
 
+    _write(snapshots / "companyfacts_snapshot.json", sec)
     _write(inputs / "basic_candidate.json", basic)
     _write(inputs / "basic_observation.json", basic_obs)
     _write(inputs / "diluted_candidate.json", diluted)
@@ -248,6 +249,7 @@ def _prepare_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple
     _write(inputs / "r4_inventory.json", inventory)
     _write(snapshots / "q2_external_snapshot.json", q2)
 
+    monkeypatch.setattr(runner, "COMPANYFACTS_SNAPSHOT_SHA", sec["snapshot_sha256"])
     monkeypatch.setattr(runner, "BASE_CONTEXT_SHA", base["context_sha256"])
     monkeypatch.setattr(runner, "R4_INVENTORY_SHA", inventory["inventory_sha256"])
     monkeypatch.setattr(runner, "Q2_EXTERNAL_SNAPSHOT_SHA", q2["snapshot_sha256"])
@@ -293,6 +295,62 @@ def test_runner_stops_after_r7_when_proxy_raw_is_missing(
     assert result["status"] == "NEED_PROXY_RAW_BYTES"
     assert result["r7_package_sha256"]
     assert result["next_action"] == "SUPPLY_EXACT_LOCAL_DEF14A_HTML_WITH_PROXY_RAW"
+
+
+def test_runner_rehydrates_missing_m21_derivatives_from_exact_sec_snapshot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace, proxy_raw = _prepare_workspace(tmp_path, monkeypatch)
+    for name in (
+        "basic_candidate.json",
+        "basic_observation.json",
+        "diluted_candidate.json",
+        "diluted_observation.json",
+    ):
+        (workspace / "inputs" / name).unlink()
+
+    result = runner.run_local_execution(
+        repo_root=tmp_path,
+        artifact_root=workspace,
+        proxy_raw=proxy_raw,
+        enforce_git=False,
+    )
+
+    assert result["status"] == "REAL_INGR_R6_ASSUMPTION_APPROVED"
+    run_dir = Path(result["run_dir"])
+    rehydrated = run_dir / "rehydrated_inputs"
+    assert json.loads((rehydrated / "basic_candidate.json").read_text(encoding="utf-8"))["value"] == 63_300_000
+    assert json.loads((rehydrated / "diluted_candidate.json").read_text(encoding="utf-8"))["value"] == 63_900_000
+    assert (rehydrated / "basic_observation.json").exists()
+    assert (rehydrated / "diluted_observation.json").exists()
+
+
+def test_runner_fails_closed_when_m21_derivatives_and_source_snapshot_are_missing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace, proxy_raw = _prepare_workspace(tmp_path, monkeypatch)
+    for name in (
+        "basic_candidate.json",
+        "basic_observation.json",
+        "diluted_candidate.json",
+        "diluted_observation.json",
+    ):
+        (workspace / "inputs" / name).unlink()
+    (workspace / "source_snapshots" / "companyfacts_snapshot.json").unlink()
+
+    result = runner.run_local_execution(
+        repo_root=tmp_path,
+        artifact_root=workspace,
+        proxy_raw=proxy_raw,
+        enforce_git=False,
+    )
+
+    assert result["status"] == "NEED_SEC_COMPANYFACTS_SNAPSHOT"
+    assert result["details"]["required_snapshot_sha256"] == runner.COMPANYFACTS_SNAPSHOT_SHA
+    assert result["next_action"] == "RESTORE_EXACT_SEC_COMPANYFACTS_SNAPSHOT"
+    assert (Path(result["run_dir"]) / "partial_status.json").exists()
 
 
 def test_duplicate_distinct_basic_candidates_fail_closed(

@@ -316,17 +316,17 @@ def ensure_local_git(repo: Path, *, sync_main: bool) -> dict[str, Any]:
     if Path(root).resolve() != repo.resolve():
         raise LocalExecutionError(f"repo root mismatch: expected {repo}, git reports {root}")
 
-    dirty = _run_git(repo, "status", "--porcelain", "--untracked-files=no").stdout.strip()
+    dirty = _run_git(repo, "status", "--porcelain").stdout.strip()
     if dirty:
         raise LocalExecutionError(
-            "tracked working tree is not clean; preserve/commit/stash local tracked changes before M30 execution"
+            "Git worktree is not clean; preserve/commit/stash nonignored changes before M30 execution"
         )
 
     if sync_main:
         _run_git(repo, "fetch", "origin", "main")
         _run_git(repo, "switch", "main")
         _run_git(repo, "pull", "--ff-only", "origin", "main")
-        dirty_after = _run_git(repo, "status", "--porcelain", "--untracked-files=no").stdout.strip()
+        dirty_after = _run_git(repo, "status", "--porcelain").stdout.strip()
         if dirty_after:
             raise LocalExecutionError("tracked working tree became dirty after sync; aborting")
 

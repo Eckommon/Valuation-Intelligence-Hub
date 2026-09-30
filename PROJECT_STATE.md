@@ -15,11 +15,11 @@ No synthetic fixture may be admitted to `registry/cases.json` to claim real-case
 
 ## Current runtime-canonical baseline / 현재 runtime 정식 기준선
 
-Latest runtime-changing canonical main:
+Latest executable-capability canonical main:
 
-`b951637a16698b2cae5ecdf6c51e7e7c5cb30636`
+`ef5c96a17b09f4de56137e2034f7fe8a6c4779e3`
 
-This is **M30-R7X — source-bound R6 upper-envelope ingress**, layered on the M30-R7 top-level CLI and M30-R6/R6B disclosure-limited dilution successors. The installed entrypoint remains M30-R7; its delegated M30-R6 surface now also exposes R7X source-bound envelope build/validation.
+This is **M30-R7XL — fail-closed user-local Ingredion R7→R7X→R6 execution orchestration**, layered after M30-R7X. It adds no valuation formula and does not replace the installed `vih` entrypoint. The top-level `vih` command remains M30-R7, while real local execution is exposed explicitly as `python -m valuation_hub.ingr_local_execution`.
 
 Installed `vih` enters through:
 
@@ -72,6 +72,7 @@ No human identity may be fabricated. AI authority must be explicitly typed as AI
 | M30-R6B category-level bounded dilution envelope | #106 / #107 | `1a9fa0d1a9d475ccf5c13f72722f81132031d496` | `36547591128` | complete |
 | M30-R7 AI historical-dilution authority | #108 / #109 | `9829dc11758b243c4320bfd50588cc7bd600a17f` | `36549218203` | complete |
 | M30-R7X source-bound R6 envelope ingress | #113 / #114 | `b951637a16698b2cae5ecdf6c51e7e7c5cb30636` | `36631518156` | complete |
+| M30-R7XL local real-execution orchestration | #117 / #118 | `ef5c96a17b09f4de56137e2034f7fe8a6c4779e3` | `36653644257` | complete |
 
 M30-R5 exact tested head:
 - `a0389ce192e747258269757ec40a8d876ce9de5b`
@@ -292,9 +293,9 @@ M30-R7X closes the real-execution provenance gap for the R6 conservative upper e
 
 ## Exact resume point / 정확한 재개점
 
-Runtime baseline:
+Canonical repository resume main:
 
-`b951637a16698b2cae5ecdf6c51e7e7c5cb30636`
+`ef5c96a17b09f4de56137e2034f7fe8a6c4779e3`
 
 The remaining dilution step is **real local execution, not another valuation-architecture slice**. M30-R7X has removed the need to hand-author R6 source provenance.
 

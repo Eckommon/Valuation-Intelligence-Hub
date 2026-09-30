@@ -54,12 +54,18 @@ from valuation_hub.external_source import (
     materialize_external_source_snapshot,
     validate_external_source_snapshot,
 )
+from valuation_hub.sec_live import validate_source_snapshot
+from valuation_hub.share_dilution import (
+    extract_sec_dilution_candidate,
+    normalize_share_dilution_candidate,
+)
 
 CASE_ID = "US_INGR_INGREDION"
 MINIMUM_STATE_SYNC_SHA = "05ff4d79924f0767ce6ca8fc6dd429f07a416a64"
 BASE_CONTEXT_SHA = "12ac21026b1a06756d0474e0ad2aec10bdd9391caf2ff03ca512c2cb3d8a0adc"
 R4_INVENTORY_SHA = "bb8242c126fcd0c91c0a3aedd8aac26640c8b3ad829a59823eb861762270a4b2"
 Q2_EXTERNAL_SNAPSHOT_SHA = "f61f33b0e27403ab56882d8cc1daa3a66571e9452fc5d8012268f39ab098b0f9"
+COMPANYFACTS_SNAPSHOT_SHA = "57b61f2b535b446664a240228f00020b859052f384488441849da83f0ceebf32"
 
 Q2_PRIMARY_FILING = "https://www.sec.gov/Archives/edgar/data/1046257/000162828026054722/ingr-20260630.htm"
 PROXY_FILING = "https://www.sec.gov/Archives/edgar/data/1046257/000104625726000151/ingr-20260402.htm"
@@ -206,33 +212,104 @@ def _observation_predicate(metric: str) -> Callable[[dict[str, Any]], bool]:
     return predicate
 
 
-def discover_required_artifacts(artifact_root: Path) -> dict[str, JsonArtifact]:
+def _discover_m21_inputs(
+    artifacts: list[JsonArtifact],
+    *,
+    run_dir: Path | None,
+) -> dict[str, JsonArtifact]:
+    specs = {
+        "basic_candidate": (_candidate_predicate(BASIC_METRIC), "candidate_sha256"),
+        "basic_observation": (_observation_predicate(BASIC_METRIC), "observation_sha256"),
+        "diluted_candidate": (_candidate_predicate(DILUTED_METRIC), "candidate_sha256"),
+        "diluted_observation": (_observation_predicate(DILUTED_METRIC), "observation_sha256"),
+    }
+    existing: dict[str, JsonArtifact | None] = {}
+    for key, (predicate, identity_field) in specs.items():
+        existing[key] = _find_unique(
+            artifacts,
+            predicate,
+            label=f"M21 Q2 {key.replace('_', ' ')}",
+            identity_fields=(identity_field,),
+            required=False,
+        )
+
+    if all(item is not None for item in existing.values()):
+        return {key: item for key, item in existing.items() if item is not None}
+
+    source = _find_unique(
+        artifacts,
+        lambda value: (
+            value.get("schema_version") == "source-snapshot-v0.1"
+            and value.get("snapshot_sha256") == COMPANYFACTS_SNAPSHOT_SHA
+        ),
+        label=f"immutable SEC CompanyFacts snapshot {COMPANYFACTS_SNAPSHOT_SHA}",
+        identity_fields=("snapshot_sha256",),
+        required=False,
+    )
+    if source is None:
+        missing = [key for key, item in existing.items() if item is None]
+        raise LocalInputRequired(
+            "NEED_SEC_COMPANYFACTS_SNAPSHOT",
+            "M21 derivatives are missing and the exact immutable SEC CompanyFacts source snapshot is unavailable locally",
+            details={
+                "required_snapshot_sha256": COMPANYFACTS_SNAPSHOT_SHA,
+                "missing_derivatives": missing,
+            },
+        )
+
+    validate_source_snapshot(source.payload)
+    generated_basic = extract_sec_dilution_candidate(
+        source.payload,
+        BASIC_METRIC,
+        period_start=PERIOD_START,
+        period_end=PERIOD_END,
+        form="10-Q",
+    )
+    generated_diluted = extract_sec_dilution_candidate(
+        source.payload,
+        DILUTED_METRIC,
+        period_start=PERIOD_START,
+        period_end=PERIOD_END,
+        form="10-Q",
+    )
+    generated = {
+        "basic_candidate": generated_basic,
+        "basic_observation": normalize_share_dilution_candidate(generated_basic),
+        "diluted_candidate": generated_diluted,
+        "diluted_observation": normalize_share_dilution_candidate(generated_diluted),
+    }
+
+    if run_dir is None:
+        raise LocalExecutionError(
+            "M21 deterministic rehydration requires a run directory / M21 재생성에는 run directory 필요"
+        )
+
+    resolved: dict[str, JsonArtifact] = {}
+    rehydrated_dir = run_dir / "rehydrated_inputs"
+    for key, payload in generated.items():
+        prior = existing[key]
+        if prior is not None:
+            if prior.payload != payload:
+                raise LocalExecutionError(
+                    f"existing M21 artifact conflicts with deterministic source re-execution: {key}"
+                )
+            resolved[key] = prior
+            continue
+        path = rehydrated_dir / f"{key}.json"
+        _write_json(path, payload)
+        resolved[key] = JsonArtifact(path=path, payload=payload)
+    return resolved
+
+
+def discover_required_artifacts(
+    artifact_root: Path,
+    *,
+    run_dir: Path | None = None,
+) -> dict[str, JsonArtifact]:
     artifacts = _scan_json(artifact_root)
+    m21 = _discover_m21_inputs(artifacts, run_dir=run_dir)
     return {
-        "basic_candidate": _find_unique(
-            artifacts,
-            _candidate_predicate(BASIC_METRIC),
-            label="M21 Q2 basic-share candidate",
-            identity_fields=("candidate_sha256",),
-        ),
-        "basic_observation": _find_unique(
-            artifacts,
-            _observation_predicate(BASIC_METRIC),
-            label="M21 Q2 basic-share normalized observation",
-            identity_fields=("observation_sha256",),
-        ),
-        "diluted_candidate": _find_unique(
-            artifacts,
-            _candidate_predicate(DILUTED_METRIC),
-            label="M21 Q2 diluted-share candidate",
-            identity_fields=("candidate_sha256",),
-        ),
-        "diluted_observation": _find_unique(
-            artifacts,
-            _observation_predicate(DILUTED_METRIC),
-            label="M21 Q2 diluted-share normalized observation",
-            identity_fields=("observation_sha256",),
-        ),
+        **m21,
         "base_context": _find_unique(
             artifacts,
             lambda value: (
@@ -597,7 +674,7 @@ def _issue79_handoff(
     r6_package: dict[str, Any] | None,
 ) -> str:
     package_line = (
-        f"- R6 package SHA: \`{r6_package['package_sha256']}\`\n"
+        f"- R6 package SHA: `{r6_package['package_sha256']}`\n"
         if r6_package is not None
         else "- R6 package: not finalized because adjudication did not approve\n"
     )
@@ -608,13 +685,13 @@ def _issue79_handoff(
     )
     return (
         "## Real local R7 -> R7X -> R6 execution\n\n"
-        f"- local HEAD: \`{git_state.get('head', 'git-check-disabled')}\`\n"
-        f"- run directory: \`{run_dir}\`\n"
-        f"- R7 package SHA: \`{r7_package['package_sha256']}\`\n"
-        f"- R7X envelope manifest SHA: \`{envelope_manifest['manifest_sha256']}\`\n"
-        f"- R6 evidence SHA: \`{r6_evidence['evidence_sha256']}\`\n"
-        f"- R6 adjudication SHA: \`{r6_adjudication['adjudication_sha256']}\`\n"
-        f"- R6 decision: \`{r6_adjudication['decision']}\`\n"
+        f"- local HEAD: `{git_state.get('head', 'git-check-disabled')}`\n"
+        f"- run directory: `{run_dir}`\n"
+        f"- R7 package SHA: `{r7_package['package_sha256']}`\n"
+        f"- R7X envelope manifest SHA: `{envelope_manifest['manifest_sha256']}`\n"
+        f"- R6 evidence SHA: `{r6_evidence['evidence_sha256']}`\n"
+        f"- R6 adjudication SHA: `{r6_adjudication['adjudication_sha256']}`\n"
+        f"- R6 decision: `{r6_adjudication['decision']}`\n"
         + package_line
         + f"- next action: {next_action}\n"
     )
@@ -635,12 +712,29 @@ def run_local_execution(
         git_state = {"head": "git-check-disabled", "branch": "test"}
 
     local_root = (artifact_root or (repo / "workspace")).resolve()
-    inputs = discover_required_artifacts(local_root)
-    validate_external_source_snapshot(inputs["q2_snapshot"].payload)
-
     run_dir = repo / "workspace" / "execution_artifacts" / CASE_ID / f"run_{_run_id()}"
     run_dir.mkdir(parents=True, exist_ok=False)
 
+    try:
+        inputs = discover_required_artifacts(local_root, run_dir=run_dir)
+    except LocalInputRequired as exc:
+        next_action = (
+            "RESTORE_EXACT_SEC_COMPANYFACTS_SNAPSHOT"
+            if exc.status == "NEED_SEC_COMPANYFACTS_SNAPSHOT"
+            else "RESTORE_REQUIRED_USER_LOCAL_ARTIFACTS"
+        )
+        partial = {
+            "status": exc.status,
+            "message": str(exc),
+            "details": exc.details,
+            "git": git_state,
+            "run_dir": str(run_dir),
+            "next_action": next_action,
+        }
+        _write_json(run_dir / "partial_status.json", partial)
+        return partial
+
+    validate_external_source_snapshot(inputs["q2_snapshot"].payload)
     r7_package = _build_r7(inputs, run_dir)
 
     try:

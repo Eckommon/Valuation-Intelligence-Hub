@@ -17,9 +17,9 @@ No synthetic fixture may be admitted to `registry/cases.json` to claim real-case
 
 Latest executable-capability canonical main:
 
-`ef5c96a17b09f4de56137e2034f7fe8a6c4779e3`
+`da6045ce7826310b771ea32cedd90753998502e4`
 
-This is **M30-R7XL — fail-closed user-local Ingredion R7→R7X→R6 execution orchestration**, layered after M30-R7X. It adds no valuation formula and does not replace the installed `vih` entrypoint. The top-level `vih` command remains M30-R7, while real local execution is exposed explicitly as `python -m valuation_hub.ingr_local_execution`.
+This is **M30-R7XL.1 — fail-closed user-local Ingredion R7→R7X→R6 execution orchestration with deterministic M21 rehydration**, layered after M30-R7X. It adds no valuation formula and does not replace the installed `vih` entrypoint. The top-level `vih` command remains M30-R7, while real local execution is exposed explicitly as `python -m valuation_hub.ingr_local_execution`. If the disposable M21 Q2 candidate/observation JSON is missing, the runner now re-extracts and re-normalizes it only from the exact locally validated immutable CompanyFacts snapshot SHA `57b61f2b535b446664a240228f00020b859052f384488441849da83f0ceebf32`; if that source snapshot is absent too, it fails closed with `NEED_SEC_COMPANYFACTS_SNAPSHOT`.
 
 Installed `vih` enters through:
 
@@ -73,6 +73,7 @@ No human identity may be fabricated. AI authority must be explicitly typed as AI
 | M30-R7 AI historical-dilution authority | #108 / #109 | `9829dc11758b243c4320bfd50588cc7bd600a17f` | `36549218203` | complete |
 | M30-R7X source-bound R6 envelope ingress | #113 / #114 | `b951637a16698b2cae5ecdf6c51e7e7c5cb30636` | `36631518156` | complete |
 | M30-R7XL local real-execution orchestration | #117 / #118 | `ef5c96a17b09f4de56137e2034f7fe8a6c4779e3` | `36653644257` | complete |
+| M30-R7XL.1 deterministic M21 rehydration | #121 / #122 | `da6045ce7826310b771ea32cedd90753998502e4` | `36719117986` | complete |
 
 M30-R5 exact tested head:
 - `a0389ce192e747258269757ec40a8d876ce9de5b`

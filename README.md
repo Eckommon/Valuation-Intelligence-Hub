@@ -73,6 +73,7 @@ python -m pip install -e ".[dev]"
 - M30-R7: evidence-first AI authority for historical basic/diluted-share anchors used by R6
 - M30-R7X: source-bound Tier-A snapshot/excerpt ingress for the real R6 conservative upper envelope
 - M30-R7XL: fail-closed user-local Ingredion R7→R7X→R6 execution runner with clean-Git sync and artifact auto-discovery
+- M30-R7XL.1: deterministic M21 Q2 candidate/observation rehydration from the exact immutable SEC CompanyFacts snapshot; source absence still fails closed
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -160,9 +161,9 @@ Target case ID: US_INGR_INGREDION
 
 ### Current runtime baseline
 
-`main@ef5c96a17b09f4de56137e2034f7fe8a6c4779e3`
+`main@da6045ce7826310b771ea32cedd90753998502e4`
 
-Latest executable capability: **M30-R7XL — fail-closed local Ingredion R7→R7X→R6 orchestration**, layered after R7X. The installed `vih` entrypoint remains M30-R7; R7XL is invoked explicitly with `python -m valuation_hub.ingr_local_execution`.
+Latest executable capability: **M30-R7XL.1 — fail-closed local Ingredion R7→R7X→R6 orchestration with deterministic M21 rehydration**, layered after R7X. The installed `vih` entrypoint remains M30-R7; R7XL is invoked explicitly with `python -m valuation_hub.ingr_local_execution`.
 
 Recent canonical sequence:
 
@@ -178,6 +179,7 @@ Recent canonical sequence:
 | M30-R7 historical-dilution AI authority | `9829dc11758b243c4320bfd50588cc7bd600a17f` | `36549218203` |
 | M30-R7X source-bound R6 envelope ingress | `b951637a16698b2cae5ecdf6c51e7e7c5cb30636` | `36631518156` |
 | M30-R7XL local real-execution orchestration | `ef5c96a17b09f4de56137e2034f7fe8a6c4779e3` | `36653644257` |
+| M30-R7XL.1 M21 rehydration fix | `da6045ce7826310b771ea32cedd90753998502e4` | `36719117986` |
 
 ### Real Ingredion fields already governed
 

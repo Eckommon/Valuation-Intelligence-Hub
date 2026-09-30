@@ -72,6 +72,7 @@ python -m pip install -e ".[dev]"
 - M30-R6B: category-level bounded dilution envelope and denominator-materiality diagnostics
 - M30-R7: evidence-first AI authority for historical basic/diluted-share anchors used by R6
 - M30-R7X: source-bound Tier-A snapshot/excerpt ingress for the real R6 conservative upper envelope
+- M30-R7XL: fail-closed user-local Ingredion R7→R7X→R6 execution runner with clean-Git sync and artifact auto-discovery
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -159,9 +160,9 @@ Target case ID: US_INGR_INGREDION
 
 ### Current runtime baseline
 
-`main@b951637a16698b2cae5ecdf6c51e7e7c5cb30636`
+`main@ef5c96a17b09f4de56137e2034f7fe8a6c4779e3`
 
-Latest runtime slice: **M30-R7X — source-bound R6 upper-envelope ingress**, layered on the R7 top-level CLI and R6/R6B disclosure-limited dilution successors.
+Latest executable capability: **M30-R7XL — fail-closed local Ingredion R7→R7X→R6 orchestration**, layered after R7X. The installed `vih` entrypoint remains M30-R7; R7XL is invoked explicitly with `python -m valuation_hub.ingr_local_execution`.
 
 Recent canonical sequence:
 
@@ -176,6 +177,7 @@ Recent canonical sequence:
 | M30-R6B bounded dilution envelope | `1a9fa0d1a9d475ccf5c13f72722f81132031d496` | `36547591128` |
 | M30-R7 historical-dilution AI authority | `9829dc11758b243c4320bfd50588cc7bd600a17f` | `36549218203` |
 | M30-R7X source-bound R6 envelope ingress | `b951637a16698b2cae5ecdf6c51e7e7c5cb30636` | `36631518156` |
+| M30-R7XL local real-execution orchestration | `ef5c96a17b09f4de56137e2034f7fe8a6c4779e3` | `36653644257` |
 
 ### Real Ingredion fields already governed
 
@@ -284,7 +286,8 @@ Preparation surfaces do not auto-approve or perform canonical repository writes.
 - [x] M30-A~E + M30-S real-case architecture/source-ingress/state preparation
 - [x] real Ingredion SEC source capture, M30-B preflight, and M30-D readiness validation
 - [x] source-bound Tier-A/excerpt ingress for the real R6 upper envelope
-- [ ] execute real R7 → R7X source-bound envelope → R6 Ingredion dilution path and record immutable package lineage
+- [x] local fail-closed R7→R7X→R6 execution runner merged
+- [ ] run the real local Ingredion execution runner and record immutable R7/R7X/R6 package lineage
 - [ ] if R6 materiality passes, add the assumption-aware diluted-share Draft/M28/M29 successor without relabeling the R6 `ASSUMPTION` as `DERIVED`
 - [ ] complete WACC, terminal growth, forecast, and the remaining 13/13 governed handoff
 - [ ] **first real Ingredion canonical case through complete M29 handoff**

@@ -27,3 +27,15 @@ For venture/option-like assets / 벤처·옵션형 자산:
 vih draft-template venture_probability > workspace/user_cases/my_venture.json
 vih draft-run workspace/user_cases/my_venture.json
 ```
+
+
+## Governed local execution artifacts / 거버넌스 로컬 실행 산출물
+
+workspace/execution_artifacts/ is reserved for noncanonical, gitignored outputs from governed real-case execution runners.
+
+- never commit these files;
+- never copy them directly into registry/cases.json;
+- each run uses an immutable timestamped directory;
+- M30 Ingredion local execution uses python -m valuation_hub.ingr_local_execution;
+- the runner may also create immutable source snapshots only under workspace/source_snapshots/;
+- final promotion/admission still requires the repository-governed successor path.

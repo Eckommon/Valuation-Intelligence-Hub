@@ -10,6 +10,10 @@
 /workspace/source_snapshots/**
 !/workspace/source_snapshots/.gitkeep
 
+# User-local governed execution artifacts / 사용자 로컬 거버넌스 실행 산출물
+/workspace/execution_artifacts/**
+!/workspace/execution_artifacts/.gitkeep
+
 # Python / Python 임시파일
 __pycache__/
 *.py[cod]

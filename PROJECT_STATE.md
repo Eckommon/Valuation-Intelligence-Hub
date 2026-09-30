@@ -302,23 +302,14 @@ Required local artifacts are intentionally gitignored and GitHub stores only the
 
 Exact next work:
 
-1. synchronize the local checkout to `main@b951637a16698b2cae5ecdf6c51e7e7c5cb30636`;
-2. use the existing local M21 basic/diluted candidate + normalized-observation JSON with the R7 evidence → adjudication → finalize → package-validation path;
-3. seal the exact 2026 Ingredion DEF 14A proxy bytes through the existing M30-E external-source snapshot intake under gitignored `workspace/source_snapshots/**`; do not reconstruct the proxy snapshot from quoted numbers;
-4. use the validated proxy snapshot together with the already validated 2026 Q2 10-Q snapshot `f61f33b0e27403ab56882d8cc1daa3a66571e9452fc5d8012268f39ab098b0f9` to build and validate the R7X `source-bound-dilution-envelope-manifest-v0.1`, with exact excerpts binding:
-   - 2025-12-31 equity-compensation-plan securities anchor;
-   - 2026 YTD RSU grants;
-   - 2026 YTD performance-share grants;
-   - explicit performance-max uplift;
-   - mechanically reproduced disclosure-lag buffer;
-5. feed the validated R7 package and R7X source-bound envelope manifest into canonical M30-R6 together with:
-   - M22 share-base context `12ac21026b1a06756d0474e0ad2aec10bdd9391caf2ff03ca512c2cb3d8a0adc`;
-   - corrected R4.1 HOLD inventory `bb8242c126fcd0c91c0a3aedd8aac26640c8b3ad829a59823eb861762270a4b2`;
-6. execute R6 evidence → adjudication and evaluate the real materiality decision;
-7. if R6 returns `APPROVE_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION`, finalize and independently validate the `ASSUMPTION` package, record its immutable SHA lineage in Issue #79, and only then activate blocked Issue #112 / M30-R8;
-8. M30-R8 must preserve route-dependent authority truth — exact M22/R4 dilution may remain `DERIVED`, while a disclosure-limited R6 route remains `ASSUMPTION`; no class flip is permitted merely to satisfy M28/M29;
-9. only after the diluted-share assumption can enter the Draft and complete-handoff chain without authority relabeling, continue WACC → terminal growth → six-field forecast → M28/M29;
-10. if R6 instead returns `HOLD_DISCLOSURE_LIMITED_DILUTION_MATERIALITY`, do not finalize the assumption and do not activate R8; return to evidence/policy resolution.
+1. on the user's local Windows checkout, preserve any tracked work and synchronize a clean main to origin/main; local history must contain state-sync commit 05ff4d79924f0767ce6ca8fc6dd429f07a416a64 or a newer descendant;
+2. after M30-R7XL is merged and pulled, install/update the editable package and run python -m valuation_hub.ingr_local_execution --sync-main --json;
+3. the runner discovers the required M21/M22/R4.1/Q2 artifacts by schema/metric/period/exact SHA, then executes real R7 automatically;
+4. if a validated Tier-A DEF 14A snapshot is already local, the runner continues through R7X and R6 automatically;
+5. if the runner returns NEED_PROXY_RAW_BYTES, supply only the exact locally saved 2026 DEF 14A HTML bytes with --proxy-raw <path>; the runner seals them through existing M30-E and resumes R7X → R6;
+6. all governed execution outputs are written only below gitignored workspace/execution_artifacts/US_INGR_INGREDION/run_*/, including an issue79_comment.md SHA-lineage handoff;
+7. only REAL_INGR_R6_ASSUMPTION_APPROVED + APPROVE_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION + non-null R6 package SHA may activate blocked Issue #112 / M30-R8;
+8. any R6 materiality HOLD leaves #112 blocked and returns the process to evidence/policy resolution.
 
 No manual class flip, no fabricated artifact reconstruction, and no R4 `dilution-ai-finalize` from incomplete coverage is authorized.
 

@@ -216,7 +216,7 @@ def _prepare_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple
       <p>RSU activity for year-to-date 2026 was as follows:</p>
       <p>Granted 215 115.69</p>
       <p>For the 2026 performance shares awarded based on our total shareholder return, the number of shares that ultimately vest can range from zero to 200 percent of the grant.</p>
-      <p>For year-to-date 2026, we awarded 116 thousand performance shares at a weighted average fair value of $136.63 per share.</p>
+      <p>For year-to-date 2026, we awarded 116 thousand performance shares at a weighted average fair value of $<ix:nonFraction name="us-gaap:ShareBasedCompensationArrangementByShareBasedPaymentAwardEquityInstrumentsOtherThanOptionsGrantsInPeriodTotal" contextRef="x">136.63</ix:nonFraction> per share.</p>
     </body></html>
     """
     q2 = build_external_source_snapshot(
@@ -409,7 +409,7 @@ def test_envelope_specs_keep_case_specific_source_binding() -> None:
         captured_at="2026-09-30T09:00:00+09:00",
     )
     q2 = build_external_source_snapshot(
-        "<p>Granted 215 115.69</p><p>For year-to-date 2026, we awarded 116 thousand performance shares at a weighted average fair value of $136.63 per share.</p>",
+        "<p>Granted 215 115.69</p><p>For year-to-date 2026, we awarded 116 thousand performance shares at a weighted average fair value of $<ix:nonFraction>136.63</ix:nonFraction> per share.</p>",
         source_publisher="U.S. Securities and Exchange Commission",
         source_type="issuer_filing_snapshot",
         source_tier="A",
@@ -421,3 +421,10 @@ def test_envelope_specs_keep_case_specific_source_binding() -> None:
     assert specs[3]["shares"] == 267_570
     assert specs[4]["calculation"]["observed_gross_grants"] == 331_000
     assert specs[4]["calculation"]["lag_days"] == 76
+
+
+def test_q2_psu_excerpt_is_inline_xbrl_safe_semantic_prefix() -> None:
+    assert runner.Q2_PSU_EXCERPT == (
+        "For year-to-date 2026, we awarded 116 thousand performance shares"
+    )
+    assert "$136.63" not in runner.Q2_PSU_EXCERPT

@@ -82,10 +82,7 @@ PROXY_PSU_EXCERPT = (
     "representing outstanding PSUs"
 )
 Q2_RSU_EXCERPT = "Granted 215 115.69"
-Q2_PSU_EXCERPT = (
-    "For year-to-date 2026, we awarded 116 thousand performance shares at a "
-    "weighted average fair value of $136.63 per share."
-)
+Q2_PSU_EXCERPT = "For year-to-date 2026, we awarded 116 thousand performance shares"
 
 
 class LocalExecutionError(RuntimeError):

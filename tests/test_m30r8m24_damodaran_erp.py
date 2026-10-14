@@ -184,3 +184,91 @@ def test_original_downloaded_page_diagnostic_never_creates_source():
     assert diagnostic["eligible_erp_source_assumed"] is False
     assert diagnostic["human_review_completed"] is False
     assert len(diagnostic["raw_body_sha256"]) == 64
+
+
+# Adjacent HTML inline tags produce extra visible-text spaces around %, comma,
+# method parentheses and the author Treasury percent. The original source
+# snapshot still retains the exact unnormalized HTML bytes and source SHA.
+OCTOBER_INLINE_AUTHOR_HTML = (
+    OCTOBER_AUTHOR_HTML
+    .replace(
+        "Implied ERP on October 1, 2026 = 4.20% (Trailing 12 month, with adjusted payout)",
+        "Implied ERP on <b>October 1, 2026</b> = "
+        "<strong>4.20</strong>% (<i>Trailing 12 month</i>, "
+        "<span>with adjusted payout</span>)",
+    )
+    .replace(
+        "Implied ERP in previous month = 4.14% (Trailing 12 month, with adjusted payout)",
+        "Implied ERP in previous month = "
+        "<strong>4.14</strong>% (<i>Trailing 12 month</i>, "
+        "<span>with adjusted payout</span>)",
+    )
+    .replace(
+        "4.09% (Trailing 12 month cash yield)",
+        "<strong>4.09</strong>% (<i>Trailing 12 month cash yield</i>)",
+    )
+    .replace(
+        "6.05% (Average CF yield last 10 years)",
+        "<strong>6.05</strong>% (Average CF yield last 10 years)",
+    )
+    .replace(
+        "3.80% (Net cash yield)",
+        "<strong>3.80</strong>% (Net cash yield)",
+    )
+    .replace(
+        "3.56% (Normalized Earnings &amp; Payout)",
+        "<strong>3.56</strong>% (<i>Normalized Earnings</i> &amp; <em>Payout</em>)",
+    )
+    .replace(
+        "4.75% used as the riskfree",
+        "<strong>4.75</strong>% used as the riskfree",
+    )
+)
+
+
+def test_october_inline_html_markup_is_source_bound_and_unreviewed():
+    info = erp.inspect_erp_html(OCTOBER_INLINE_AUTHOR_HTML)
+    assert info["dated_current_headings"] == ["October 1, 2026"]
+    assert info["explicit_previous_month_sections"] == 1
+    assert info["current_adjusted_payout_model_count"] == 1
+    assert info["previous_month_adjusted_payout_model_count"] == 1
+    result = erp.extract_dated_adjusted_erp(OCTOBER_INLINE_AUTHOR_HTML)
+    assert result["erp_decimal"] == 0.0414
+    assert result["source_is_retrospective_asof"] is True
+    assert result["historical_availability_asof_proven"] is False
+    sealed = erp.build_erp_source(
+        OCTOBER_INLINE_AUTHOR_HTML, captured_at="2026-10-15T01:00:00+00:00")
+    assert sealed["snapshot"]["raw_text"] == OCTOBER_INLINE_AUTHOR_HTML
+    proof = sealed["proof"]
+    assert erp.validate_erp_source_proof(
+        proof, sealed["wacc_input"], sealed["snapshot"]
+    )["status"] == "PASS_SOURCE_BOUND_NYU_IMPLIED_ERP_CANDIDATE"
+    assert proof["human_review_completed"] is False
+    assert proof["wacc_package_created"] is False
+
+
+@pytest.mark.parametrize("bad_html", [
+    # A second dated heading must fail even if it uses an invalid model.
+    OCTOBER_INLINE_AUTHOR_HTML.replace(
+        "</body>", "<p>Implied ERP on October 1, 2026 = "
+        "7.00% (Trailing 12 month cash yield)</p></body>"
+    ),
+    # A second prior-month label must fail even if its method is invalid.
+    OCTOBER_INLINE_AUTHOR_HTML.replace(
+        "</body>", "<p>Implied ERP in previous month = "
+        "7.00% (Trailing 12 month cash yield)</p></body>"
+    ),
+    # Wrong method for the previous-month 4.14% is not adjustable by inference.
+    OCTOBER_INLINE_AUTHOR_HTML.replace(
+        "<strong>4.14</strong>% (<i>Trailing 12 month</i>, "
+        "<span>with adjusted payout</span>)",
+        "<strong>4.14</strong>% (Trailing 12 month cash yield)"
+    ),
+    OCTOBER_INLINE_AUTHOR_HTML.replace(
+        "<strong>4.75</strong>% used as the riskfree",
+        "<strong>5.29</strong>% used as the riskfree"
+    ),
+])
+def test_october_inline_html_markup_conflicts_fail_closed(bad_html):
+    with pytest.raises(CaseServiceError):
+        erp.extract_dated_adjusted_erp(bad_html)

@@ -7,6 +7,26 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
+## 2026-10-15 live work cursor / 최신 M30 작업 재개점
+
+Current feature-complete implementation baseline through
+`main@3add8569b68869e59fa21f1f04185dbdc09be786`
+(PRs #149, #151, #153; all final-head Python 3.11/3.12 CI passed).
+See [PROJECT_STATE.md](PROJECT_STATE.md) **2026-10-15 checkpoint**
+for the authoritative current execution plan; the historical M30-R8
+table later in this README is not the latest resume cursor.
+
+Real Ingredion WACC source readiness last actually verified at **2/7**.
+New offline source-exact importers must still be run on original
+user-local (gitignored) NYU/SEC HTML before claiming ERP (potential 3/7)
+or Level-2-plus-short-term debt market-value proxy (potential 4/7).
+The 2026Q2 SEC tax GAAP/adjusted effective-rate guidance intake captures
+source-locked context **without choosing a WACC marginal tax rate**.
+Beta, forward cost of debt and marginal tax treatment remain unresolved.
+No reviewed WACC, complete 13/13 valuation Draft, or new canonical
+Ingredion case has been established. User-local evidence and authority
+gates always outrank PR or synthetic regression success.
+
 ## Core authority flow / 핵심 권위 흐름
 
 ```text

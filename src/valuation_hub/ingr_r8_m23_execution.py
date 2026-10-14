@@ -24,7 +24,7 @@ from valuation_hub.r8_assumption_proposal import (
     build_r6_v3_proposal,
     validate_r6_v3_proposal,
 )
-from valuation_hub.sec_aggregate_debt import (
+from valuation_hub.sec_aggregate_debt_authority import (
     build_sec_aggregate_debt_binding_context,
     validate_reviewed_sec_aggregate_debt,
     validate_sec_aggregate_debt_binding_context,

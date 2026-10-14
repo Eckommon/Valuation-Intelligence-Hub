@@ -209,7 +209,9 @@ def materialize_debt_mv_source(repo: Path, raw_path: Path) -> dict[str, Any]:
         path.read_text(encoding="utf-8-sig"),
         captured_at=datetime.now(timezone.utc).isoformat())
     snapshot, item, proof = data["snapshot"], data["wacc_input"], data["proof"]
-    tag = snapshot["snapshot_sha256"][:16]
+    # Capture timestamp changes per run; name immutable artifacts by *raw*
+    # source-body SHA so replaying the same bytes cannot bypass no-overwrite.
+    tag = snapshot["body"]["sha256"][:16]
     targets = [
         root / f"INGR_Q2_debt_market_value_{tag}_snapshot.json",
         root / f"INGR_wacc_debt_market_value_20260630_{tag}.json",

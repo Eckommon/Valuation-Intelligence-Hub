@@ -111,3 +111,47 @@ The official NYU monthly spreadsheet can be separately inspected at
 https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx ;
 its historical ERP column must NOT automatically be treated as the
 same adjusted-payout 4.14% method without independent column mapping.
+
+
+## M30-R8M24-ERP.2 — exact-model inline HTML boundary repair (#148)
+
+The **real user-local** 17,069-byte original author HTML diagnostic reports
+October 1, 2026, one prior-month label, original SHA-256
+755ad4d972431c7852bc0a723630d86cbfc84b14febb259858d1938458c0e0c7.
+Nevertheless the preceding parser failed before matching the dated adjusted
+payout model: NYU exactly one dated current ERP headline required.
+
+The synthetic regression for ERP.2 covers **markup-split text nodes** which
+can insert whitespace before a percent sign, around a comma, inside model
+labels, or before the author's Treasury reference. The parser now checks
+**one and only one original dated current headline independently** of
+the adjusted payout match, and exactly one October prior-month label;
+shadow duplicates remain errors. Numeric 4.14%, all four September
+alternatives and author's 4.75% model Treasury rate remain strict.
+Source bytes/SHA are never normalized or replaced by synthetic HTML.
+This is a *plausible* repair, not proof that actual user-local HTML parses.
+
+After merging tested ERP.2, on **clean canonical main** in Windows PowerShell:
+
+
+```powershell
+git switch main
+git pull --ff-only origin main
+$raw = 'workspace\source_snapshots\NYU_Damodaran_ERP_20260901.html'
+python -m valuation_hub.ingr_wacc_damodaran_erp --raw $raw --diagnose --json
+python -m valuation_hub.ingr_wacc_damodaran_erp --raw $raw --json
+python -m valuation_hub.ingr_r8_m24_readiness --json
+```
+
+Observe current_adjusted_payout_model_count and
+previous_month_adjusted_payout_model_count: they should each be exactly
+one for a structurally compatible October author page. Check the original
+raw SHA matches the recorded input file; the source is not replaced by
+the live website or a synthetic fixture. If extraction still returns ERROR,
+retain the 2/7 WACC HOLD and inspect the original HTML locally rather
+than copying expected 4.14% as a fake source input.
+
+If it succeeds, only count a *source candidate* (potentially 3/7),
+still with ASSUMPTION, source_is_retrospective_asof=true,
+historical_availability_asof_proven=false, human_review_completed=false.
+The remaining four WACC inputs and final approval are separately blocked.

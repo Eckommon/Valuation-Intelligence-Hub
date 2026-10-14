@@ -61,9 +61,25 @@ def _visible(raw: str) -> str:
     return " ".join(" ".join(parser.parts).split())
 
 
+def _label_pattern(label: str) -> str:
+    """Preserve full method words while tolerating spacing around punctuation.
+
+    HTMLParser intentionally separates adjacent inline text nodes. For
+    instance, <b>4.20</b>% (<i>Trailing 12 month</i>, with adjusted payout)
+    becomes "4.20 % ( Trailing 12 month , with adjusted payout )".
+    """
+    return (re.escape(label)
+            .replace(r"\ ", r"\s+")
+            .replace(",", r"\s*,\s*")
+            .replace(r"\&", r"\s*&\s*"))
+
+
+def _percent_method_pattern(label: str) -> str:
+    return rf"(?P<value>\d+(?:\.\d+)?)\s*%\s*\(\s*{_label_pattern(label)}\s*\)"
+
+
 def _exact_pct(section: str, label: str) -> float:
-    pattern = rf"(\d+(?:\.\d+)?)%\s*\(\s*{re.escape(label)}\s*\)"
-    matches = re.findall(pattern, section, flags=re.I)
+    matches = re.findall(_percent_method_pattern(label), section, flags=re.I)
     if len(matches) != 1:
         raise CaseServiceError(f"NYU ERP {label} value missing or ambiguous")
     return float(matches[0])
@@ -87,57 +103,69 @@ def inspect_erp_html(raw: str) -> dict[str, Any]:
             r"September\s+1,?\s+2026", h, flags=re.I) for h in headings),
         "has_exact_oct_1_heading": any(re.fullmatch(
             r"October\s+1,?\s+2026", h, flags=re.I) for h in headings),
+        "current_adjusted_payout_model_count": len(re.findall(
+            r"Implied\s+ERP\s+on\s+[A-Za-z]+\s+\d{1,2},?\s+20\d{2}\s*="
+            rf"\s*{_percent_method_pattern(METHOD)}", visible, flags=re.I)),
+        "previous_month_adjusted_payout_model_count": len(re.findall(
+            rf"Implied\s+ERP\s+in\s+previous\s+month\s*="
+            rf"\s*{_percent_method_pattern(METHOD)}", visible, flags=re.I)),
         "eligible_erp_source_assumed": False,
         "human_review_completed": False,
     }
 
 
 def _isolated_method_segment(visible: str) -> tuple[str, str, str]:
-    """Isolate either contemporaneous Sept1 or Oct1's explicit previous-month.
+    """Isolate exactly dated September or October's explicit prior-month panel.
 
-    October's prior-month label alone is insufficient: an exact October 1,
-    2026 current-date headline is required, proving previous-month=Sept1.
-    A November/other current date cannot retroactively relabel its "previous".
+    Date labels must be unique *before* a method match. Otherwise a duplicate
+    current heading with a different model could be silently ignored.
     """
-    headline = re.compile(
-        r"Implied ERP on\s+(?P<date>[A-Za-z]+\s+\d{1,2},?\s+20\d{2})"
-        r"\s*=\s*(?P<value>\d+(?:\.\d+)?)%\s*"
-        r"\(\s*Trailing 12 month,\s*with adjusted payout\s*\)",
-        re.I,
-    )
-    heads = list(headline.finditer(visible))
-    if len(heads) != 1:
-        raise CaseServiceError("NYU exactly one dated current ERP headline required")
-    h = heads[0]
+    dated_headings = list(re.finditer(
+        r"Implied\s+ERP\s+on\s+(?P<date>[A-Za-z]+\s+\d{1,2},?\s+20\d{2})\s*=",
+        visible, flags=re.I))
+    if len(dated_headings) != 1:
+        raise CaseServiceError("NYU exactly one dated current ERP heading required")
+    h = dated_headings[0]
     date_header = " ".join(h.group("date").split())
+    current = re.match(
+        rf"\s*{_percent_method_pattern(METHOD)}", visible[h.end():], flags=re.I)
+    if current is None:
+        raise CaseServiceError("NYU dated current adjusted-payout model missing/ambiguous")
+
     if re.fullmatch(r"September\s+1,?\s+2026", date_header, re.I):
-        if float(h.group("value")) != 4.14:
+        if float(current.group("value")) != 4.14:
             raise CaseServiceError("Sep1 adjusted-payout ERP contradicts 4.14%")
-        tail = visible[h.end():]
+        # A past-month recap can coexist with the September headline; it is
+        # not evidence for September's selected adjusted-payout current model.
+        tail = visible[h.end() + current.end():]
         cut = re.search(
             r"Implied ERP in previous month|Day-to-day ERP|Downloadable datasets",
             tail, flags=re.I)
-        section = visible[h.start(): h.end() + (cut.start() if cut else 1400)]
+        section = visible[h.start(): h.end() + current.end()
+                          + (cut.start() if cut else 1400)]
         route = "SEP1_DATED_CURRENT_AUTHOR_HEADLINE"
         cited = date_header
     elif re.fullmatch(r"October\s+1,?\s+2026", date_header, re.I):
-        # Oct 1's headline references its own fresh date. The *previous
-        # month* panel is explicitly a September 1 model recap, not Oct data.
-        prev = list(re.finditer(
-            r"Implied ERP in previous month\s*=\s*"
-            r"(?P<value>\d+(?:\.\d+)?)%\s*"
-            r"\(\s*Trailing 12 month,\s*with adjusted payout\s*\)",
-            visible[h.end():], re.I))
-        if len(prev) != 1:
-            raise CaseServiceError("October headline requires exactly one explicit prior-month ERP panel")
-        p = prev[0]
-        tail_start = h.end() + p.start()
-        if float(p.group("value")) != 4.14:
+        # Exactly one Oct 1 dated author headline identifies the earlier
+        # month. Only the explicit previous-month panel attests Sep1's values.
+        prev_headings = list(re.finditer(
+            r"Implied\s+ERP\s+in\s+previous\s+month\s*=", visible, flags=re.I))
+        if len(prev_headings) != 1 or prev_headings[0].start() < h.end():
+            raise CaseServiceError(
+                "October headline requires exactly one explicit prior-month ERP panel")
+        p = prev_headings[0]
+        previous = re.match(
+            rf"\s*{_percent_method_pattern(METHOD)}", visible[p.end():], flags=re.I)
+        if previous is None:
+            raise CaseServiceError("October prior-month adjusted-payout method missing")
+        if float(previous.group("value")) != 4.14:
             raise CaseServiceError("October previous-month panel is not Sep1 ERP 4.14%")
-        tail = visible[h.end() + p.end():]
-        cut = re.search(r"Downloadable datasets|Downloadable spreadsheets|Papers:|Other Updates",
-                        tail, flags=re.I)
-        section = visible[tail_start: h.end() + p.end() + (cut.start() if cut else 1400)]
+        tail = visible[p.end() + previous.end():]
+        cut = re.search(
+            r"Downloadable datasets|Downloadable spreadsheets|Papers:|Other Updates",
+            tail, flags=re.I)
+        section = visible[p.start(): p.end() + previous.end()
+                          + (cut.start() if cut else 1400)]
         route = "OCT1_CURRENT_EXPLICIT_SEP1_PREVIOUS_MONTH_RECAP"
         cited = date_header
     else:
@@ -162,7 +190,7 @@ def extract_dated_adjusted_erp(raw: str) -> dict[str, Any]:
         if _exact_pct(segment, label) != expected:
             raise CaseServiceError(f"NYU ERP alternative model {key} mismatch")
     rf = re.findall(
-        r"US\s+treasury\s+rate\s+of\s+(\d+(?:\.\d+)?)%"
+        r"US\s+treasury\s+rate\s+of\s+(\d+(?:\.\d+)?)\s*%"
         r"\s+used\s+as\s+the\s+riskfree", segment, re.I)
     if len(rf) != 1 or float(rf[0]) != 4.75:
         raise CaseServiceError("NYU Sep1 4.75% author risk-free reference missing")

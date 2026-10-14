@@ -179,7 +179,7 @@ def extract_dated_adjusted_erp(raw: str) -> dict[str, Any]:
         "author_page_current_date_header": cited_header,
         "source_extraction_route": route,
         "source_is_retrospective_asof": retrospective,
-        "historical_availability_asof_proven": not retrospective,
+        "historical_availability_asof_proven": False,  # download/capture timestamp cannot attest first publication
         "model_label": METHOD,
         "erp_decimal": ERP,
         "erp_percent": 4.14,

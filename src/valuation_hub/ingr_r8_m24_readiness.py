@@ -29,6 +29,7 @@ M23_RUN = "r8_m23_20261014T141303035707Z"
 SOURCE_INPUT_SCHEMA = "wacc-source-input-v0.1"
 SOURCE_SNAPSHOT_SCHEMAS = {"external-source-snapshot-v0.1", "source-snapshot-v0.1"}
 EQUITY_MARKET_VALUE_PROOF_SCHEMA = "ingr-market-cap-proxy-proof-v0.1"
+ERP_PROOF_SCHEMA = "wacc-erp-method-source-proof-v0.1"
 
 
 def _m23(repo: Path, run_dir: Path) -> dict[str, Any]:
@@ -103,8 +104,30 @@ def _market_cap_proof(input_payload: dict[str, Any], snapshots: list[dict[str, A
             "share_class": "ASSUMPTION"}
 
 
+def _erp_method_proof(item: dict[str, Any], snapshots: list[dict[str, Any]],
+                      proofs: list[dict[str, Any]]) -> dict[str, Any]:
+    from valuation_hub.ingr_wacc_damodaran_erp import validate_erp_source_proof
+    matches = [p for p in proofs if p.get("wacc_input_sha256") == item.get("input_sha256")]
+    if not matches:
+        return {"status": "ERP_EXPLICIT_MODEL_METHOD_PROOF_MISSING"}
+    if len(matches) != 1:
+        raise CaseServiceError("ERP model proof duplicated or conflicting")
+    snapshot = [s for s in snapshots if s.get("snapshot_sha256") == matches[0].get("snapshot_sha256")]
+    if len(snapshot) != 1:
+        return {"status": "ERP_ORIGINAL_AUTHOR_SNAPSHOT_MISSING"}
+    checked = validate_erp_source_proof(matches[0], item, snapshot[0])
+    return {"status": "ERP_SOURCE_MODEL_PROOF_VERIFIED_REVIEW_PENDING",
+            "proof_sha256": checked["method_proof_sha256"],
+            "observed_on": checked["observed_on"],
+            "source_class": "ASSUMPTION",
+            "author_reference_rf": checked["author_model_reference_rf"],
+            "valuation_rf": checked["valuation_reference_rf"],
+            "rf_date_convention": "AUTHOR_SEP1_4.75_PERCENT_VERSUS_VALUATION_SEP14_4.97_PERCENT"}
+
+
 def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]],
-          proofs: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+          proofs: list[dict[str, Any]] | None = None,
+          erp_proofs: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     as_date = date.fromisoformat(AS_OF)
     for metric in REQUIRED_METRICS:
@@ -130,6 +153,13 @@ def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]],
                   else "FRESH_SOURCE_INPUT_CANDIDATE")
         if status == "FRESH_SOURCE_INPUT_CANDIDATE" and provenance["status"] != "SNAPSHOT_VERIFIED_VALUE_REQUIRES_REVIEW":
             status = "SOURCE_BYTES_UNVERIFIED"
+        if metric == "equity_risk_premium" and status == "FRESH_SOURCE_INPUT_CANDIDATE":
+            # A standalone source-attested number does not justify choosing
+            # any given US ERP estimator, date convention or cash payout method.
+            method = _erp_method_proof(item, sources, erp_proofs or [])
+            provenance["erp_method"] = method
+            if method["status"] != "ERP_SOURCE_MODEL_PROOF_VERIFIED_REVIEW_PENDING":
+                status = method["status"]
         if metric == "equity_market_value" and status == "FRESH_SOURCE_INPUT_CANDIDATE":
             # Price alone never proves current common-share count. Require
             # source-revalidated SEC dated count and explicitly 40-day lagged
@@ -166,7 +196,8 @@ def run_wacc_readiness(*, repo_root: Path, artifact_root: Path | None = None,
     inputs = [x.payload for x in artifacts if x.payload.get("schema_version") == SOURCE_INPUT_SCHEMA]
     snapshots = [x.payload for x in artifacts if x.payload.get("schema_version") in SOURCE_SNAPSHOT_SCHEMAS]
     proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == EQUITY_MARKET_VALUE_PROOF_SCHEMA]
-    rows = _rows(inputs, snapshots, proofs)
+    erp_proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == ERP_PROOF_SCHEMA]
+    rows = _rows(inputs, snapshots, proofs, erp_proofs)
     complete = all(x["status"] == "FRESH_SOURCE_INPUT_CANDIDATE" for x in rows)
     result = {
         "status": "REAL_INGR_M24_WACC_SOURCE_CANDIDATES_READY_FOR_REVIEW" if complete

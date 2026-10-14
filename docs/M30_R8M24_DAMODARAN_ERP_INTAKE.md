@@ -59,3 +59,55 @@ could move 2/7 -> 3/7. `human_review_completed` stays false.
 The remaining four sources levered beta, pretax cost of debt, debt MV
 and tax treatment remain HOLD. No fake human reviewer, approved WACC,
 Draft v0.4, M29 case promotion or admission is permitted.
+
+## M30-R8M24-ERP.1 — source-month compatibility repair
+
+Real Windows execution on `main@dd5d062decfcc1ddc3baf5a0917fabdd4d03896a`
+downloaded 17,069 bytes of author HTML, but the original exact
+`Implied ERP on September 1, 2026` headline could not be extracted.
+That error alone does not show which month the downloaded page actually
+contains, or prove the 4.14% value has disappeared.
+
+The repaired importer supports **two and only two** source-anchored routes:
+
+1. Exact September 1, 2026 current-month headline with 4.14%
+   adjusted-payout, all four alternative figures and 4.75% author
+   model Treasury reference.
+2. Exact October 1, 2026 current-month headline **plus its explicit
+   `Implied ERP in previous month` panel**, with that panel matching
+   the same 4.14%, four alternatives and 4.75%. The October heading
+   establishes that the previous month is September; the actual
+   previous-month panel establishes the values. November or any later
+   month, an unspecified previous month, missing panel, duplicates, and
+   contradictory model values always FAIL CLOSED.
+
+Use this local *non-promoting* diagnostic first, on the same downloaded
+file from the user's previous execution:
+
+```powershell
+$raw = 'workspace\source_snapshots\NYU_Damodaran_ERP_20260901.html'
+python -m valuation_hub.ingr_wacc_damodaran_erp --raw $raw --diagnose --json
+```
+
+It reports original body SHA, original HTML byte count, dated current
+headlines and prior-month-panel count, **without creating any WACC object**.
+
+Then attempt original-source extraction only after confirming the page:
+```powershell
+python -m valuation_hub.ingr_wacc_damodaran_erp --raw $raw --json
+python -m valuation_hub.ingr_r8_m24_readiness --json
+```
+
+The resulting evidence includes the source extraction route, the
+separately observed original source date and 22bp risk-free mismatch.
+A **later capture of a past-month author panel is retrospective
+corroboration, not proof that it was made available as of Sep 14**.
+`historical_availability_asof_proven=false`, and genuine human review
+is still required to decide if a retrospective author-model source is
+acceptable. Even a successful source capture is not a WACC approval.
+
+If neither exact route exists, the result remains HOLD at 2/7.
+The official NYU monthly spreadsheet can be separately inspected at
+https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx ;
+its historical ERP column must NOT automatically be treated as the
+same adjusted-payout 4.14% method without independent column mapping.

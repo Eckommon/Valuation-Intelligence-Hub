@@ -69,52 +69,124 @@ def _exact_pct(section: str, label: str) -> float:
     return float(matches[0])
 
 
+def inspect_erp_html(raw: str) -> dict[str, Any]:
+    """Non-promoting diagnostics; never claims original data were approved."""
+    visible = _visible(raw)
+    headings = re.findall(
+        r"Implied ERP on\s+([A-Za-z]+\s+\d{1,2},?\s+20\d{2})\s*=",
+        visible, flags=re.I)
+    return {
+        "status": "ERP_AUTHOR_HTML_DIAGNOSTIC_ONLY",
+        "html_bytes": len(raw.encode("utf-8")),
+        "raw_body_sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(),
+        "dated_current_headings": headings[:12],
+        "dated_headings_total": len(headings),
+        "explicit_previous_month_sections": len(re.findall(
+            r"Implied ERP in previous month\s*=", visible, flags=re.I)),
+        "has_exact_sep_1_heading": any(re.fullmatch(
+            r"September\s+1,?\s+2026", h, flags=re.I) for h in headings),
+        "has_exact_oct_1_heading": any(re.fullmatch(
+            r"October\s+1,?\s+2026", h, flags=re.I) for h in headings),
+        "eligible_erp_source_assumed": False,
+        "human_review_completed": False,
+    }
+
+
+def _isolated_method_segment(visible: str) -> tuple[str, str, str]:
+    """Isolate either contemporaneous Sept1 or Oct1's explicit previous-month.
+
+    October's prior-month label alone is insufficient: an exact October 1,
+    2026 current-date headline is required, proving previous-month=Sept1.
+    A November/other current date cannot retroactively relabel its "previous".
+    """
+    headline = re.compile(
+        r"Implied ERP on\s+(?P<date>[A-Za-z]+\s+\d{1,2},?\s+20\d{2})"
+        r"\s*=\s*(?P<value>\d+(?:\.\d+)?)%\s*"
+        r"\(\s*Trailing 12 month,\s*with adjusted payout\s*\)",
+        re.I,
+    )
+    heads = list(headline.finditer(visible))
+    if len(heads) != 1:
+        raise CaseServiceError("NYU exactly one dated current ERP headline required")
+    h = heads[0]
+    date_header = " ".join(h.group("date").split())
+    if re.fullmatch(r"September\s+1,?\s+2026", date_header, re.I):
+        if float(h.group("value")) != 4.14:
+            raise CaseServiceError("Sep1 adjusted-payout ERP contradicts 4.14%")
+        tail = visible[h.end():]
+        cut = re.search(
+            r"Implied ERP in previous month|Day-to-day ERP|Downloadable datasets",
+            tail, flags=re.I)
+        section = visible[h.start(): h.end() + (cut.start() if cut else 1400)]
+        route = "SEP1_DATED_CURRENT_AUTHOR_HEADLINE"
+        cited = date_header
+    elif re.fullmatch(r"October\s+1,?\s+2026", date_header, re.I):
+        # Oct 1's headline references its own fresh date. The *previous
+        # month* panel is explicitly a September 1 model recap, not Oct data.
+        prev = list(re.finditer(
+            r"Implied ERP in previous month\s*=\s*"
+            r"(?P<value>\d+(?:\.\d+)?)%\s*"
+            r"\(\s*Trailing 12 month,\s*with adjusted payout\s*\)",
+            visible[h.end():], re.I))
+        if len(prev) != 1:
+            raise CaseServiceError("October headline requires exactly one explicit prior-month ERP panel")
+        p = prev[0]
+        tail_start = h.end() + p.start()
+        if float(p.group("value")) != 4.14:
+            raise CaseServiceError("October previous-month panel is not Sep1 ERP 4.14%")
+        tail = visible[h.end() + p.end():]
+        cut = re.search(r"Downloadable datasets|Downloadable spreadsheets|Papers:|Other Updates",
+                        tail, flags=re.I)
+        section = visible[tail_start: h.end() + p.end() + (cut.start() if cut else 1400)]
+        route = "OCT1_CURRENT_EXPLICIT_SEP1_PREVIOUS_MONTH_RECAP"
+        cited = date_header
+    else:
+        raise CaseServiceError(
+            "current NYU ERP page neither September 1 nor October 1 2026; "
+            "previous-month cannot prove Sept 1 date")
+    if not 100 <= len(section) <= 1900:
+        raise CaseServiceError("dated NYU ERP model panel missing or boundary ambiguous")
+    return section, route, cited
+
+
 def extract_dated_adjusted_erp(raw: str) -> dict[str, Any]:
     visible = _visible(raw)
-    headline = re.findall(
-        rf"{re.escape(HEADER)}\s*=\s*(\d+(?:\.\d+)?)%\s*\(\s*{re.escape(METHOD)}\s*\)",
-        visible, flags=re.I)
-    if len(headline) != 1:
-        raise CaseServiceError("NYU Sep 1 2026 adjusted-payout ERP headline missing/ambiguous")
-    if float(headline[0]) != 4.14:
-        raise CaseServiceError("NYU Sep 1 adjusted-payout ERP contradicted 4.14%")
-    start = re.search(re.escape(HEADER), visible, flags=re.I)
-    assert start is not None
-    # Anchor alternatives and model's own risk-free reference in the SAME
-    # dated author section, excluding any previous-month/next-month update.
-    end = re.search(r"(?:Implied ERP in previous month|Downloadable datasets|Day-to-day ERP)",
-                    visible[start.end():], flags=re.I)
-    segment = visible[start.start(): start.end() + (end.start() if end else 1400)]
-    # Real site may include an adjacent Day-to-day ERP link before "previous
-    # month", but this section precedes that link.
-    if len(segment) > 1900:
-        raise CaseServiceError("NYU ERP dated section exceeds isolated boundary")
+    segment, route, cited_header = _isolated_method_segment(visible)
     alternatives = {
         "trailing_cash_yield": ("Trailing 12 month cash yield", 4.09),
         "average_10yr_cash_flow": ("Average CF yield last 10 years", 6.05),
         "net_cash_yield": ("Net cash yield", 3.80),
         "normalized_earnings_payout": ("Normalized Earnings & Payout", 3.56),
     }
-    for key, (label, value) in alternatives.items():
-        actual = _exact_pct(segment, label)
-        if actual != value:
+    for key, (label, expected) in alternatives.items():
+        if _exact_pct(segment, label) != expected:
             raise CaseServiceError(f"NYU ERP alternative model {key} mismatch")
-    rf = re.findall(r"US\s+treasury\s+rate\s+of\s+(\d+(?:\.\d+)?)%\s+used\s+as\s+the\s+riskfree",
-                    segment, flags=re.I)
+    rf = re.findall(
+        r"US\s+treasury\s+rate\s+of\s+(\d+(?:\.\d+)?)%"
+        r"\s+used\s+as\s+the\s+riskfree", segment, re.I)
     if len(rf) != 1 or float(rf[0]) != 4.75:
-        raise CaseServiceError("NYU ERP Sep1 4.75% risk-free reference not source-bound")
+        raise CaseServiceError("NYU Sep1 4.75% author risk-free reference missing")
     if (date.fromisoformat(AS_OF) - date.fromisoformat(OBSERVED_ON)).days != 13:
-        raise CaseServiceError("ERP observation date lag does not match 13 days")
+        raise CaseServiceError("ERP date lag not 13 days")
+    retrospective = route.startswith("OCT1")
     return {
-        "as_of": AS_OF, "observed_on": OBSERVED_ON,
+        "as_of": AS_OF,
+        "observed_on": OBSERVED_ON,
         "model": "IMPLIED_ERP_US_TTM_ADJUSTED_PAYOUT",
-        "market": "US", "author": "Aswath Damodaran, NYU Stern",
-        "date_header": HEADER, "model_label": METHOD,
-        "erp_decimal": ERP, "erp_percent": 4.14,
+        "market": "US",
+        "author": "Aswath Damodaran, NYU Stern",
+        "date_header": HEADER,
+        "author_page_current_date_header": cited_header,
+        "source_extraction_route": route,
+        "source_is_retrospective_asof": retrospective,
+        "historical_availability_asof_proven": False,  # download/capture timestamp cannot attest first publication
+        "model_label": METHOD,
+        "erp_decimal": ERP,
+        "erp_percent": 4.14,
         "author_model_risk_free_decimal": PUBLISHED_US_TREASURY_RATE,
         "valuation_asof_risk_free_decimal": VALUATION_RF_RATE,
         "model_rf_valuation_rf_difference_basis_points": 22,
-        "alternatives_percent": {k: v for k, (_,v) in alternatives.items()},
+        "alternatives_percent": {k: v for k, (_, v) in alternatives.items()},
         "dated_section_exact": segment,
         "methodology_selection": "ASSUMPTION_PENDING_REVIEW",
         "policy": POLICY,
@@ -209,6 +281,9 @@ def materialize_erp_source(repo: Path, raw_path: Path) -> dict[str, Any]:
         "model_reference_rf": PUBLISHED_US_TREASURY_RATE,
         "valuation_asof_reference_rf": VALUATION_RF_RATE,
         "model_rf_mismatch_basis_points": 22,
+        "source_extraction_route": proof["method"]["source_extraction_route"],
+        "source_is_retrospective_asof": proof["method"]["source_is_retrospective_asof"],
+        "historical_availability_asof_proven": proof["method"]["historical_availability_asof_proven"],
         "source_snapshot_sha256": snapshot["snapshot_sha256"],
         "source_body_sha256": snapshot["body"]["sha256"],
         "erp_input_sha256": item["input_sha256"],
@@ -225,13 +300,20 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Offline NYU September 1 2026 implied ERP capture")
     p.add_argument("--repo-root", type=Path, default=Path.cwd())
     p.add_argument("--raw", type=Path, required=True)
+    p.add_argument("--diagnose", action="store_true", help="Report actual author page dates and hash; never create WACC inputs")
     p.add_argument("--json", action="store_true")
     args = p.parse_args(argv)
     try:
         repo = args.repo_root.resolve()
         _git(repo)
         path = args.raw if args.raw.is_absolute() else repo / args.raw
-        result = materialize_erp_source(repo, path)
+        if args.diagnose:
+            path = path.resolve()
+            if not path.is_relative_to((repo / "workspace" / "source_snapshots").resolve()):
+                raise CaseServiceError("ERP diagnostic raw must be user-local workspace source")
+            result = inspect_erp_html(path.read_text(encoding="utf-8-sig"))
+        else:
+            result = materialize_erp_source(repo, path)
     except (CaseServiceError, ValueError, TypeError, KeyError, OSError) as exc:
         result = {"status": "ERROR", "error": str(exc)}
     print(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2))

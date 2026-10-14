@@ -122,7 +122,9 @@ def _erp_method_proof(item: dict[str, Any], snapshots: list[dict[str, Any]],
             "source_class": "ASSUMPTION",
             "author_reference_rf": checked["author_model_reference_rf"],
             "valuation_rf": checked["valuation_reference_rf"],
-            "rf_date_convention": "AUTHOR_SEP1_4.75_PERCENT_VERSUS_VALUATION_SEP14_4.97_PERCENT"}
+            "rf_date_convention": "AUTHOR_SEP1_4.75_PERCENT_VERSUS_VALUATION_SEP14_4.97_PERCENT",
+            "source_is_retrospective_asof": matches[0]["method"]["source_is_retrospective_asof"],
+            "historical_availability_asof_proven": matches[0]["method"]["historical_availability_asof_proven"]}
 
 
 def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]],

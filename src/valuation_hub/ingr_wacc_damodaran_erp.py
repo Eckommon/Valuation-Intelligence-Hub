@@ -190,7 +190,7 @@ def extract_dated_adjusted_erp(raw: str) -> dict[str, Any]:
         if _exact_pct(segment, label) != expected:
             raise CaseServiceError(f"NYU ERP alternative model {key} mismatch")
     rf = re.findall(
-        r"US\s+treasury\s+rate\s+of\s+(\d+(?:\.\d+)?)%"
+        r"US\s+treasury\s+rate\s+of\s+(\d+(?:\.\d+)?)\s*%"
         r"\s+used\s+as\s+the\s+riskfree", segment, re.I)
     if len(rf) != 1 or float(rf[0]) != 4.75:
         raise CaseServiceError("NYU Sep1 4.75% author risk-free reference missing")

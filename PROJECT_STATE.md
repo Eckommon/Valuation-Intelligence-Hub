@@ -17,17 +17,17 @@ No synthetic fixture may be admitted to `registry/cases.json` to claim real-case
 
 Latest executable-capability canonical main:
 
-`da6045ce7826310b771ea32cedd90753998502e4`
+`6a6409990c0f5612fb6489050cf26ab47263629d`
 
-This is **M30-R7XL.1 — fail-closed user-local Ingredion R7→R7X→R6 execution orchestration with deterministic M21 rehydration**, layered after M30-R7X. It adds no valuation formula and does not replace the installed `vih` entrypoint. The top-level `vih` command remains M30-R7, while real local execution is exposed explicitly as `python -m valuation_hub.ingr_local_execution`. If the disposable M21 Q2 candidate/observation JSON is missing, the runner now re-extracts and re-normalizes it only from the exact locally validated immutable CompanyFacts snapshot SHA `57b61f2b535b446664a240228f00020b859052f384488441849da83f0ceebf32`; if that source snapshot is absent too, it fails closed with `NEED_SEC_COMPANYFACTS_SNAPSHOT`.
+This is **M30-R8 (following M30-R7XL.2) — source-bound and assumption-aware R6 diluted-share Draft and M29 promotion support**. M30-R7XL.1 — fail-closed user-local Ingredion R7→R7X→R6 execution orchestration with deterministic M21 rehydration**, layered after M30-R7X. R8 does not change the R6 valuation formula. The installed `vih` entrypoint now delegates through M30-R8 to M30-R7 and older commands. Real local source execution remains `python -m valuation_hub.ingr_local_execution`. If the disposable M21 Q2 candidate/observation JSON is missing, the runner now re-extracts and re-normalizes it only from the exact locally validated immutable CompanyFacts snapshot SHA `57b61f2b535b446664a240228f00020b859052f384488441849da83f0ceebf32`; if that source snapshot is absent too, it fails closed with `NEED_SEC_COMPANYFACTS_SNAPSHOT`.
 
 Installed `vih` enters through:
 
-`valuation_hub.cli_entry_m30r7:main`
+`valuation_hub.cli_entry_m30r8:main`
 
 and delegates unchanged through:
 
-`M30-R7 → M30-R6 → M30-R5 → M30-R4 → M30-R3 → M30-R2 → M30-R1 → M30 → M29 → ...`
+`M30-R8 → M30-R7 → M30-R6 → M30-R5 → M30-R4 → M30-R3 → M30-R2 → M30-R1 → M30 → M29 → ...`
 
 Repository state at this SHA is the canonical runtime baseline. Gitignored real-source working artifacts remain local and must not be reconstructed from hashes.
 
@@ -74,6 +74,8 @@ No human identity may be fabricated. AI authority must be explicitly typed as AI
 | M30-R7X source-bound R6 envelope ingress | #113 / #114 | `b951637a16698b2cae5ecdf6c51e7e7c5cb30636` | `36631518156` | complete |
 | M30-R7XL local real-execution orchestration | #117 / #118 | `ef5c96a17b09f4de56137e2034f7fe8a6c4779e3` | `36653644257` | complete |
 | M30-R7XL.1 deterministic M21 rehydration | #121 / #122 | `da6045ce7826310b771ea32cedd90753998502e4` | `36719117986` | complete |
+| M30-R7XL.2 SEC inline-XBRL excerpt binding | #125 / #126 | `80298f47dd9a62fecfb5362e670a70be412be40b` | `38358522927` | complete |
+| M30-R8 assumption-aware Draft/M29 successor | #112 / #127 | `6a6409990c0f5612fb6489050cf26ab47263629d` | `38498043228` | complete |
 
 M30-R5 exact tested head:
 - `a0389ce192e747258269757ec40a8d876ce9de5b`
@@ -292,28 +294,38 @@ M30-R7X closes the real-execution provenance gap for the R6 conservative upper e
 - the self-contained `source-bound-dilution-envelope-manifest-v0.1` embeds the referenced immutable source snapshots and can be supplied directly as R6 `upper_envelope` input;
 - historical raw component arrays remain backward compatible, but the source-bound manifest is the preferred real M30 path.
 
+## Real Ingredion R7/R7X/R6 execution — approved, assumption only
+
+User-local validated execution under `main@80298f47dd9a62fecfb5362e670a70be412be40b`:
+
+- `R7 package SHA` = `5411fb18b56e2b173a1d37fccd0c4d1ecb3bce105a5f8054d6e01df228e6be6d`
+- `R7X source manifest SHA` = `1fa3b50977f15bbbb05894ba12576a5ac3190b0d33bf1cffb5003f9480d59a1d`
+- `R6 evidence SHA` = `2c50fb9ee227b975dddee50ce881c20ed67f30459acffb3800636386aa270fe3`
+- `R6 adjudication SHA` = `c09e6f4f972ddd14baea619dad81d5064e162745238bcc64ceea5c764ee90b57`
+- `R6 approved package SHA` = `ae1e6612b67a56e568b9a9bcd6588c8765240a196ab395aa2dc86887b027e3af`
+- class = **ASSUMPTION**, value = **63,900,000 shares**, upper relative spread = **3.2542%**, threshold = 5%.
+- decision = `APPROVE_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION`.
+
+This authorizes the successor **not** a valuation-date `DERIVED` FACT. Input artifacts are still gitignored and must not be reconstructed from SHA alone.
+
 ## Exact resume point / 정확한 재개점
 
-Canonical repository resume main:
+Latest merged runtime main:
 
-`ef5c96a17b09f4de56137e2034f7fe8a6c4779e3`
+`6a6409990c0f5612fb6489050cf26ab47263629d`
 
-The remaining dilution step is **real local execution, not another valuation-architecture slice**. M30-R7X has removed the need to hand-author R6 source provenance.
+M30-R8 is now implemented, with a route-explicit M23 R6 assumption proposal and a noncanonical M28/M29 handoff that retains `ASSUMPTION`. The legacy exact M22/DERIVED route remains unchanged.
 
-Required local artifacts are intentionally gitignored and GitHub stores only their hashes/results. Therefore they must not be recreated from hashes or silently fabricated.
+**Next work is the real user-local governed R8 case chain**, not more dilution architecture:
 
-Exact next work:
+1. In the user-local repo, sync clean `main` and update editable installation after the new entrypoint;
+2. take the exact existing real `r6_package.json`, `r7_package.json`, `r7x_envelope_manifest.json` and reviewed base/R4 context under gitignored workspace; use `vih r8-proof-build` and validate;
+3. build M23's explicit R6 v0.3 route from a validated 2026-09-14 Ingredion v0.2 debt proposal, then carry it through the already-governed M24–M28 sourced WACC, terminal-growth, forecast, market-price, and minority-interest authorities;
+4. build the R8 v0.9 proposal, then require explicit reviewer approval and noncanonical Draft application;
+5. M29 must independently validate all 13 approved material fields and exactly four observed source claims for the R6 route; `equity.diluted_shares` must remain `ASSUMPTION` without an observed-claim link;
+6. continue through separate promotion review, admission plan, guarded `admission/*` PR/CI and merge. **Do not admit a synthetic test fixture.**
 
-1. on the user's local Windows checkout, preserve any tracked work and synchronize a clean main to origin/main; local history must contain state-sync commit 05ff4d79924f0767ce6ca8fc6dd429f07a416a64 or a newer descendant;
-2. after M30-R7XL is merged and pulled, install/update the editable package and run python -m valuation_hub.ingr_local_execution --sync-main --json;
-3. the runner discovers the required M21/M22/R4.1/Q2 artifacts by schema/metric/period/exact SHA, then executes real R7 automatically;
-4. if a validated Tier-A DEF 14A snapshot is already local, the runner continues through R7X and R6 automatically;
-5. if the runner returns NEED_PROXY_RAW_BYTES, supply only the exact locally saved 2026 DEF 14A HTML bytes with --proxy-raw <path>; the runner seals them through existing M30-E and resumes R7X → R6;
-6. all governed execution outputs are written only below gitignored workspace/execution_artifacts/US_INGR_INGREDION/run_*/, including an issue79_comment.md SHA-lineage handoff;
-7. only REAL_INGR_R6_ASSUMPTION_APPROVED + APPROVE_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION + non-null R6 package SHA may activate blocked Issue #112 / M30-R8;
-8. any R6 materiality HOLD leaves #112 blocked and returns the process to evidence/policy resolution.
-
-No manual class flip, no fabricated artifact reconstruction, and no R4 `dilution-ai-finalize` from incomplete coverage is authorized.
+If any required real WACC/macro/forecast evidence is unavailable, HOLD that field. No default assumptions, fake reviewer identity, R6B-range-to-point change or direct registry mutation.
 
 ## Remaining M30 acceptance / 잔여 완료조건
 
@@ -327,9 +339,9 @@ No manual class flip, no fabricated artifact reconstruction, and no R4 `dilution
 - [x] real INGR immutable market-price source snapshots
 - [x] real INGR reviewed market-price FACT
 - [x] source-bound Tier-A/excerpt ingress for the real R6 conservative upper envelope
-- [ ] real INGR R7 authority package + R7X source-bound envelope local execution
-- [ ] real INGR dilution authority resolved through either exact R4 coverage or a materiality-passing R6 assumption
-- [ ] assumption-aware diluted-share Draft/handoff successor preserving `ASSUMPTION` authority when the R6 route is used
+- [x] real INGR R7 authority package + R7X source-bound envelope local execution
+- [x] real INGR diluted-share assumption approved under R6 (R4 exact remains HOLD)
+- [x] assumption-aware diluted-share Draft/handoff successor preserving `ASSUMPTION` authority when the R6 route is used (M30-R8)
 - [ ] real `equity.diluted_shares` enters the governed Draft without authority relabeling
 - [ ] seven M24 WACC source inputs + governed assumption
 - [ ] M25 macro anchors + terminal-growth assumption

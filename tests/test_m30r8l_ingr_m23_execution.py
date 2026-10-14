@@ -48,6 +48,9 @@ def _real_shape(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(local, "RUN_ID", result_dir.name)
     _, _, _, profile, context = debt._reviewed_debt()
     cash = debt._cash_observation()
+    # Synthetic M30 legacy cash was artificially CFS; real SEC cash is AS_REPORTED.
+    cash["entity"]["financial_scope"] = "AS_REPORTED"
+    cash["observation_sha256"] = debt._rehash(cash, "observation_sha256")
     _json(workspace / "source_snapshots" / "synthetic_cash.json", cash)
     _json(workspace / "source_snapshots" / "synthetic_debt_context.json", context)
     _json(workspace / "source_snapshots" / "synthetic_debt_profile.json", profile)
@@ -59,26 +62,22 @@ def _real_shape(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     return workspace, proof, cash, profile, context
 
 
-def test_real_shaped_m23_sec_debt_v02_and_r6_assumption_v03(
+def test_real_shaped_m23_requires_explicit_financial_scope_reconciliation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     workspace, proof, cash, profile, context = _real_shape(tmp_path, monkeypatch)
     result = local.run_real_m23(repo_root=tmp_path, artifact_root=workspace, enforce_git=False)
-    assert result["status"] == "REAL_INGR_M23_R6_ASSUMPTION_READY"
+    assert result["status"] == "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED"
     assert result["r8_proof_sha256"] == proof["proof_sha256"]
-    assert result["fully_diluted_shares_assumption"] == 63_900_000
-    assert result["fully_diluted_shares_source_class"] == "ASSUMPTION"
     assert result["cash_observation_sha256"] == cash["observation_sha256"]
     assert result["debt_context_sha256"] == context["context_sha256"]
-    output = Path(result["run_dir"])
-    v02 = json.loads((output / "m23_sec_debt_base_v02.json").read_text(encoding="utf-8"))
-    v03 = json.loads((output / "m23_r6_assumption_v03.json").read_text(encoding="utf-8"))
-    validate_binding_proposal_sec_aggregate(v02)
-    validate_r6_v3_proposal(v03)
-    assert v02["baseline_context"]["interest_bearing_debt"]["value"] == 1_783_000_000
-    assert v03["baseline_context"]["fully_diluted_shares"]["value"] == 63_900_000
-    assert v03["share_route"] == "R6_DISCLOSURE_LIMITED_ASSUMPTION"
-    assert Path(result["run_dir"]).is_relative_to(tmp_path / "workspace")
+    assert result["financial_scopes"] == {
+        "r6_shares": "AS_REPORTED",
+        "cash": "AS_REPORTED",
+        "sec_aggregate_debt": "CFS",
+    }
+    assert result["next_action"] == "SOURCE_BOUND_AS_REPORTED_CFS_SCOPE_BRIDGE"
+    assert not list(workspace.glob("execution_artifacts/US_INGR_INGREDION/r8_m23_*/m23_r6_assumption_v03.json"))
 
 
 def test_real_shaped_m23_rehydrates_only_from_reviewed_profile(
@@ -87,9 +86,9 @@ def test_real_shaped_m23_rehydrates_only_from_reviewed_profile(
     workspace, _, _, _, context = _real_shape(tmp_path, monkeypatch)
     (workspace / "source_snapshots" / "synthetic_debt_context.json").unlink()
     result = local.run_real_m23(repo_root=tmp_path, artifact_root=workspace, enforce_git=False)
-    assert result["status"] == "REAL_INGR_M23_R6_ASSUMPTION_READY"
+    assert result["status"] == "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED"
     assert result["debt_context_sha256"] == context["context_sha256"]
-    assert (Path(result["run_dir"]) / "rehydrated_sec_debt_context.json").exists()
+    assert list(workspace.glob("execution_artifacts/US_INGR_INGREDION/r8_m23_*/rehydrated_sec_debt_context.json"))
 
 
 def test_real_shaped_m23_fails_closed_when_cash_is_missing(

@@ -230,7 +230,7 @@ def test_october_inline_html_markup_is_source_bound_and_unreviewed():
     info = erp.inspect_erp_html(OCTOBER_INLINE_AUTHOR_HTML)
     assert info["dated_current_headings"] == ["October 1, 2026"]
     assert info["explicit_previous_month_sections"] == 1
-    assert info["current_adjusted_payout_model_count"] == 1
+    assert info["current_adjusted_payout_model_count"] == 1, repr(erp._visible(OCTOBER_INLINE_AUTHOR_HTML)[:550])
     assert info["previous_month_adjusted_payout_model_count"] == 1
     result = erp.extract_dated_adjusted_erp(OCTOBER_INLINE_AUTHOR_HTML)
     assert result["erp_decimal"] == 0.0414

@@ -104,7 +104,7 @@ def inspect_erp_html(raw: str) -> dict[str, Any]:
         "has_exact_oct_1_heading": any(re.fullmatch(
             r"October\s+1,?\s+2026", h, flags=re.I) for h in headings),
         "current_adjusted_payout_model_count": len(re.findall(
-            rf"Implied\s+ERP\s+on\s+[A-Za-z]+\s+\d{1,2},?\s+20\d{2}\s*="
+            r"Implied\s+ERP\s+on\s+[A-Za-z]+\s+\d{1,2},?\s+20\d{2}\s*="
             rf"\s*{_percent_method_pattern(METHOD)}", visible, flags=re.I)),
         "previous_month_adjusted_payout_model_count": len(re.findall(
             rf"Implied\s+ERP\s+in\s+previous\s+month\s*="

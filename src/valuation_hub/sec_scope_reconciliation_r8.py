@@ -83,7 +83,7 @@ def _source_checks(snapshot: dict[str, Any]) -> dict[str, Any]:
     # The issuer identity is independently cross-checked against SEC filing
     # accession and the full source body (not descriptive publisher metadata).
     visible = _visible_html(snapshot["raw_text"])
-    if not re.search(r"\\bIngredion\\s+Incorporated\\b", visible, re.I):
+    if not re.search(r"\bIngredion\s+Incorporated\b", visible, re.I):
         raise CaseServiceError("SEC Q2 issuer identity absent in raw filing text")
     # Source is a consolidated issuer filing, not a company-level bare API label.
     bal = visible.find("Condensed Consolidated Balance Sheets")

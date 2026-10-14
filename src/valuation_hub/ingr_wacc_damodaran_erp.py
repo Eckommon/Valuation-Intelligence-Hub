@@ -71,7 +71,7 @@ def _label_pattern(label: str) -> str:
     return (re.escape(label)
             .replace(r"\ ", r"\s+")
             .replace(",", r"\s*,\s*")
-            .replace("&", r"\s*&\s*"))
+            .replace(r"\&", r"\s*&\s*"))
 
 
 def _percent_method_pattern(label: str) -> str:

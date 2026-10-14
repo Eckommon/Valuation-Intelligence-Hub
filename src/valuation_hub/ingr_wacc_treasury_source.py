@@ -119,7 +119,7 @@ def extract_treasury_ten_year(raw: str) -> dict[str, Any]:
     if actual_percent != EXPECTED_PERCENT:
         raise CaseServiceError("2026-09-14 Treasury 10 YR rate contradicts official 4.97%")
     return {"date": DATE, "maturity": TEN_YEAR_HEADER, "yield_percent": actual_percent,
-            "rate_decimal": actual_percent / 100,
+            "rate_decimal": round(actual_percent / 100, 8),
             "header": row["header"], "source_table_row": row["data_row"],
             "policy": POLICY, "source_locator": URL}
 

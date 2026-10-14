@@ -40,7 +40,10 @@ def make_r6_v3(base, proof):
     validate_r6_binding_proof(proof)
     p = proof["package"]
     ident = base["identity"]
-    if (p["entity"] != {"id": ident.get("entity_id"), "financial_scope": ident.get("financial_scope")}
+    entity = p.get("entity")
+    if (not isinstance(entity, dict)
+        or entity.get("id") != ident.get("entity_id")
+        or entity.get("financial_scope") != ident.get("financial_scope")
         or p["as_of"] != base["policy"]["as_of"] or p["unit"] != "shares"
         or p["metric"] != "fully_diluted_shares"):
         raise CaseServiceError("M23 R6 assumption identity/period/unit mismatch")
@@ -108,7 +111,10 @@ def eligibility(base, proof):
         or ancestor["source_r6_package_sha256"] != proof["package_sha256"]):
         raise CaseServiceError("M28 and M23 R6 assumption proof lineage mismatch")
     p, identity = proof["package"], base["identity"]
-    if (p.get("entity") != {"id": identity.get("entity_id"), "financial_scope": identity.get("financial_scope")}
+    source_entity = p.get("entity")
+    if (not isinstance(source_entity, dict)
+        or source_entity.get("id") != identity.get("entity_id")
+        or source_entity.get("financial_scope") != identity.get("financial_scope")
         or p.get("as_of") != base["policy"]["as_of"] or p.get("metric") != "fully_diluted_shares"
         or p.get("unit") != "shares"):
         raise CaseServiceError("R6 identity/period/metric mismatch")

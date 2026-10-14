@@ -21,6 +21,8 @@ from valuation_hub.draft_binding import DIRECT_BIND, MATERIAL_FIELDS
 from valuation_hub.draft_service import run_draft, validate_draft
 from valuation_hub.evidence import ClaimClass, EvidenceRecord, EvidenceStatus, SourceTier, evaluate_canonical_promotion
 from valuation_hub.minority_interest_draft_binding import SCHEMA_VERSION_V8
+from valuation_hub.r8_assumption_proposal import SCHEMA as SCHEMA_VERSION_V9
+from valuation_hub.r8_draft_kernel import validate_bound_result as validate_r8_bound_result
 
 CANDIDATE_SCHEMA_VERSION_V2 = "promotion-candidate-v0.2"
 CANDIDATE_STATUS = legacy.CANDIDATE_STATUS
@@ -32,6 +34,14 @@ OBSERVED_FIELD_CLASSES: dict[str, str] = {
     "equity.debt": "DERIVED",
     "equity.diluted_shares": "DERIVED",
 }
+def _observed_field_classes(proposal: dict[str, Any]) -> dict[str, str]:
+    """R6 diluted shares is an ASSUMPTION, not an observed DERIVED input."""
+    classes = dict(OBSERVED_FIELD_CLASSES)
+    if proposal.get("schema_version") == SCHEMA_VERSION_V9:
+        classes.pop("equity.diluted_shares")
+    return classes
+
+
 ALLOWED_V2_CLASSES = {"FACT", "NORMALIZED_FACT", "DERIVED", "ASSUMPTION"}
 REVIEWABLE_SOURCE_TIERS = {"A", "B", "C"}
 FORECAST_PATH_RE = re.compile(
@@ -69,12 +79,13 @@ def _decision_by_field(proposal: dict[str, Any]) -> dict[str, dict[str, Any]]:
 def _complete_bound_result(
     result: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
-    checked = validate_bound_draft_result(result)
+    proposal_kind = result.get("binding_proposal", {}).get("schema_version") if isinstance(result, dict) else None
+    checked = validate_r8_bound_result(result) if proposal_kind == SCHEMA_VERSION_V9 else validate_bound_draft_result(result)
     if checked.get("canonical") is not False:
         raise CaseServiceError("source bound result must remain noncanonical / 원천 bound result는 비정식이어야 함")
     proposal, approval, draft_after = result.get("binding_proposal"), result.get("approval"), result.get("draft_after")
-    if not isinstance(proposal, dict) or proposal.get("schema_version") != SCHEMA_VERSION_V8:
-        raise CaseServiceError("M29 requires M28 v0.8 proposal / M29는 M28 v0.8 proposal 필요")
+    if not isinstance(proposal, dict) or proposal.get("schema_version") not in (SCHEMA_VERSION_V8, SCHEMA_VERSION_V9):
+        raise CaseServiceError("M29 requires governed M28 v0.8 or R8 v0.9 proposal")
     if not isinstance(approval, dict) or not isinstance(draft_after, dict):
         raise CaseServiceError("complete approval/draft_after required / 완전한 승인·draft_after 필요")
     if validate_draft(draft_after).get("model") != "equity_fcff":
@@ -139,8 +150,9 @@ def build_evidence_catalog_claim(
     source_date: str | None = None,
 ) -> dict[str, Any]:
     proposal, _, draft, decisions, diff_by = _complete_bound_result(bound_result)
-    if field not in OBSERVED_FIELD_CLASSES:
-        raise CaseServiceError("catalog supports only five observed fields / catalog은 5개 관측필드만 지원")
+    observed = _observed_field_classes(proposal)
+    if field not in observed:
+        raise CaseServiceError("catalog supports only route-eligible observed fields")
     values = _numeric_map(draft)
     for name, value, limit in (
         ("claim_id", claim_id, 200), ("metric", metric, 200), ("publisher", publisher, 300), ("locator", locator, 2000),
@@ -161,7 +173,7 @@ def build_evidence_catalog_claim(
     return {
         "binding_field": field,
         "claim_id": claim_id.strip(),
-        "class": OBSERVED_FIELD_CLASSES[field],
+        "class": observed[field],
         "metric": metric.strip(),
         "value": values[field],
         "status": "CURRENT",
@@ -178,22 +190,23 @@ def _catalog_index(
     decisions: dict[str, dict[str, Any]],
     diff_by: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
-    if not isinstance(catalog, list) or len(catalog) != len(OBSERVED_FIELD_CLASSES):
-        raise CaseServiceError("evidence catalog must contain exactly five claims / 근거 catalog는 정확히 5개 claim 필요")
+    observed = _observed_field_classes(proposal)
+    if not isinstance(catalog, list) or len(catalog) != len(observed):
+        raise CaseServiceError("catalog must exactly cover route-eligible observed inputs")
     values, indexed, claim_ids, records = _numeric_map(draft), {}, set(), []
     expected_as_of = proposal.get("policy", {}).get("as_of")
     for item in catalog:
         if not isinstance(item, dict):
             raise CaseServiceError("catalog claim must be object / catalog claim 객체 필요")
         field, claim_id, metric = item.get("binding_field"), item.get("claim_id"), item.get("metric")
-        if field not in OBSERVED_FIELD_CLASSES or field in indexed:
+        if field not in observed or field in indexed:
             raise CaseServiceError("catalog field duplicate/unsupported / catalog 필드 중복·미지원")
         if not isinstance(claim_id, str) or not claim_id.strip() or claim_id in claim_ids:
             raise CaseServiceError("catalog claim_id missing/duplicate / catalog claim_id 누락·중복")
         if not isinstance(metric, str) or not metric.strip():
             raise CaseServiceError("catalog metric required / catalog metric 필요")
         claim_ids.add(claim_id)
-        expected_class = OBSERVED_FIELD_CLASSES[field]
+        expected_class = observed[field]
         if item.get("class") != expected_class or item.get("status") != "CURRENT":
             raise CaseServiceError("catalog class/status mismatch / catalog class·status 불일치")
         if item.get("as_of") != expected_as_of:
@@ -220,7 +233,7 @@ def _catalog_index(
         except ValueError as exc:
             raise CaseServiceError("catalog evidence enum invalid / catalog 근거 enum 오류") from exc
         indexed[field] = copy.deepcopy(item)
-    if set(indexed) != set(OBSERVED_FIELD_CLASSES):
+    if set(indexed) != set(observed):
         raise CaseServiceError("catalog must cover exactly five observed fields / catalog는 정확히 5개 관측필드 coverage 필요")
     gate = evaluate_canonical_promotion(records)
     if not gate.allowed:
@@ -253,12 +266,12 @@ def _governance_projection(
         aggregate = _aggregate_field_for_path(path)
         decision = decisions[aggregate]
         lineage = _expected_lineage(proposal, decision, diff_by[aggregate])
-        if aggregate in OBSERVED_FIELD_CLASSES:
+        if aggregate in _observed_field_classes(proposal):
             claim = catalog_by_field[aggregate]
             rows.append({
                 "path": path,
                 "binding_field": aggregate,
-                "class": OBSERVED_FIELD_CLASSES[aggregate],
+                "class": _observed_field_classes(proposal)[aggregate],
                 "claim_ids": [claim["claim_id"]],
                 "rationale": "governed observed input from complete M28 bound result / 완전 M28 bound result의 거버넌스 관측입력",
                 "lineage": lineage,
@@ -289,7 +302,7 @@ def build_complete_equity_candidate(bound_result: dict[str, Any], evidence_catal
         "canonical": False,
         "draft": copy.deepcopy(draft),
         "input_governance": _governance_projection(draft, catalog_by, proposal, decisions, diff_by),
-        "evidence": [copy.deepcopy(catalog_by[field]) for field in OBSERVED_FIELD_CLASSES],
+        "evidence": [copy.deepcopy(catalog_by[field]) for field in _observed_field_classes(proposal)],
         "source_bound_result": copy.deepcopy(bound_result),
         "source_bound_result_sha256": bound_result["result_sha256"],
         "review": {"decision": "PENDING", "reviewer": None, "reviewed_at": None, "rationale": None, "scope_sha256": None},

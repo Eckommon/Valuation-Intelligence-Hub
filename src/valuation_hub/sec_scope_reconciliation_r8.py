@@ -69,13 +69,22 @@ def _visible_html(html: str) -> str:
 def _source_checks(snapshot: dict[str, Any]) -> dict[str, Any]:
     checked = validate_external_source_snapshot(snapshot)
     src = snapshot["source"]
-    if (checked["snapshot_sha256"] != SOURCE_SHA
-        or src["tier"] != "A"
-        or src["locator"] != LOCATOR
-        or src["publisher"] not in ("SEC", "U.S. Securities and Exchange Commission")
-        or not re.search(r"(issuer|filing|10-q)", src["source_type"], re.I)):
-        raise CaseServiceError("non-identical SEC Tier-A immutable Q2 source")
+    # SOURCE_SHA already seals *all* source metadata and raw bytes. Publisher
+    # and source_type are descriptive provenance, not independently canonical
+    # SEC identifiers: earlier capture versions may label the publisher as
+    # Ingredion or SEC. Do not require an invented allowlist that would reject
+    # the exact previously reviewed immutable SEC filing.
+    if checked["snapshot_sha256"] != SOURCE_SHA:
+        raise CaseServiceError("SEC Q2 immutable source snapshot SHA mismatch")
+    if src["tier"] != "A":
+        raise CaseServiceError("SEC Q2 exact source is not Tier A")
+    if src["locator"] != LOCATOR:
+        raise CaseServiceError("SEC Q2 source locator or accession is not identical")
+    # The issuer identity is independently cross-checked against SEC filing
+    # accession and the full source body (not descriptive publisher metadata).
     visible = _visible_html(snapshot["raw_text"])
+    if not re.search(r"\bIngredion\s+Incorporated\b", visible, re.I):
+        raise CaseServiceError("SEC Q2 issuer identity absent in raw filing text")
     # Source is a consolidated issuer filing, not a company-level bare API label.
     bal = visible.find("Condensed Consolidated Balance Sheets")
     notes = visible.find("Notes to the Condensed Consolidated Financial Statements")

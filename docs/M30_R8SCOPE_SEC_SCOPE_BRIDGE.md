@@ -10,6 +10,23 @@ source SHA checks passing:
 - AI-reviewed SEC aggregate debt `1339821cb11c66482cfcbff66838ea6bdd42d32ebabcd32927e6839e6fa1286a` (USD 1,783m, `CFS`)
 - source-embedded R8 proof `8abc7cf93fd3e2bf93422e915ab4fe5c6ebad2faef34a0a2f7596038eda55cc9` (63.9m, `ASSUMPTION`).
 
+## M30-R8SCOPE.1 immutable source metadata compatibility
+
+The real user-local R8SCOPE attempt found an exact Q2 snapshot SHA but
+initially returned `non-identical SEC Tier-A immutable Q2 source`.
+The old predicate required both `source.publisher` and
+`source.source_type` to match a newly invented textual allowlist that was
+**not part of the original R7/R7X snapshot contract**.
+
+The repair independently retains all meaningful identity checks: complete
+`external-source-snapshot-v0.1` SHA/body validation, exact sealed Q2 SHA,
+Tier A, exact SEC CIK/accession URL, visible issuer name, exact issuer/filing
+accession on cash and debt, and filed consolidated financial statements and
+figures. Existing descriptive publisher/type fields remain immutable and
+validated as nonempty by their original snapshot schema, but are **not**
+interpreted as substitute accession identifiers. No source artifact SHA
+may be rewritten and no lower-tier or wrong-URL source can pass.
+
 ## Source-bound proof
 
 Only the **existing, immutable** SEC 2026-Q2 10-Q Tier-A external snapshot,

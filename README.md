@@ -74,6 +74,8 @@ python -m pip install -e ".[dev]"
 - M30-R7X: source-bound Tier-A snapshot/excerpt ingress for the real R6 conservative upper envelope
 - M30-R7XL: fail-closed user-local Ingredion R7→R7X→R6 execution runner with clean-Git sync and artifact auto-discovery
 - M30-R7XL.1: deterministic M21 Q2 candidate/observation rehydration from the exact immutable SEC CompanyFacts snapshot; source absence still fails closed
+- M30-R7XL.2: inline-XBRL-safe Q2 PSU source excerpt binding
+- M30-R8: source-embedded independent R6 proof; explicit M23 ASSUMPTION share route; guarded M28 v0.9 application and M29 route-aware observed evidence projection
 
 ## Key semantic guardrails / 핵심 의미 안전장치
 
@@ -161,9 +163,9 @@ Target case ID: US_INGR_INGREDION
 
 ### Current runtime baseline
 
-`main@da6045ce7826310b771ea32cedd90753998502e4`
+`main@6a6409990c0f5612fb6489050cf26ab47263629d`
 
-Latest executable capability: **M30-R7XL.1 — fail-closed local Ingredion R7→R7X→R6 orchestration with deterministic M21 rehydration**, layered after R7X. The installed `vih` entrypoint remains M30-R7; R7XL is invoked explicitly with `python -m valuation_hub.ingr_local_execution`.
+Latest executable capability: **M30-R8 — honest R6 ASSUMPTION share denominator through M23→M28→M29**, after R7XL.2; no canonical case admission yet, layered after R7X. The installed `vih` entrypoint remains M30-R7; R7XL is invoked explicitly with `python -m valuation_hub.ingr_local_execution`.
 
 Recent canonical sequence:
 
@@ -180,6 +182,8 @@ Recent canonical sequence:
 | M30-R7X source-bound R6 envelope ingress | `b951637a16698b2cae5ecdf6c51e7e7c5cb30636` | `36631518156` |
 | M30-R7XL local real-execution orchestration | `ef5c96a17b09f4de56137e2034f7fe8a6c4779e3` | `36653644257` |
 | M30-R7XL.1 M21 rehydration fix | `da6045ce7826310b771ea32cedd90753998502e4` | `36719117986` |
+| M30-R7XL.2 inline-XBRL PSU excerpt fix | `80298f47dd9a62fecfb5362e670a70be412be40b` | `38358522927` |
+| M30-R8 assumption-aware handoff | `6a6409990c0f5612fb6489050cf26ab47263629d` | `38498043228` |
 
 ### Real Ingredion fields already governed
 
@@ -322,3 +326,11 @@ Complete handoff and M30:
 - [`docs/M30_E_EXTERNAL_SOURCE_INTAKE.md`](docs/M30_E_EXTERNAL_SOURCE_INTAKE.md)
 - [`docs/M30_R1_SEC_AGGREGATE_DEBT_CLI.md`](docs/M30_R1_SEC_AGGREGATE_DEBT_CLI.md)
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — canonical resume point / 정식 재개점
+
+## M30-R8 assumption-aware continuation / R6 희석주식수 가정 연결
+
+User-local Ingredion R6 returned `APPROVE_DISCLOSURE_LIMITED_DILUTION_ASSUMPTION` with 63,900,000 selected shares and 3.2542% upper-envelope spread. The R6 package SHA is `ae1e6612b67a56e568b9a9bcd6588c8765240a196ab395aa2dc86887b027e3af`; the original source bytes remain gitignored in the user's workspace.
+
+R8 does not promote this value to `DERIVED`. The exact M22 route stays `DERIVED`, while a distinct source-bound M23 R6 route stays `ASSUMPTION` through M28 and M29. The installed `vih` CLI now delegates through `valuation_hub.cli_entry_m30r8:main`. See `docs/M30_R8_WORKPLAN.md` for guarded local inputs and CLI.
+
+A valid dilution-share assumption is **not** a completed 13-field FCFF Draft or an admitted real Ingredion case. The remaining real WACC/macro/forecast and approval/promotional gates must pass independently.

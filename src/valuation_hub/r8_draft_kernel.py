@@ -39,7 +39,7 @@ def validate_bound_result(result):
     validate_assumption_approval(a, p, d)
     if result != _project(p, d, a):
         raise CaseServiceError("R8 bound result does not reproduce")
-    return {"status": "PASS_R8_BOUND_RESULT", "result_sha256": result["result_sha256"],
+    return {"status": "PASS_R8_BOUND_RESULT", "canonical": False, "result_sha256": result["result_sha256"],
             "applied_field_count": len(a["approved_fields"]), "share_class": "ASSUMPTION"}
 
 def apply_approval(proposal, draft, approval):

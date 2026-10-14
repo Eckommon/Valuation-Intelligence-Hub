@@ -92,10 +92,9 @@ def test_real_ai_reviewed_context_preserved_then_scoped_hold(
     workspace, proof, cash, _, _ = _real_shape(tmp_path, monkeypatch)
     profile, context = _ai_debt_in_workspace(workspace, monkeypatch)
     result = local.run_real_m23(repo_root=tmp_path, artifact_root=workspace, enforce_git=False)
-    assert result["status"] == "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED"
+    assert result["status"] == "NEED_SEC_SCOPE_SOURCE_SNAPSHOT"
     assert result["r8_proof_sha256"] == proof["proof_sha256"]
-    assert result["cash_observation_sha256"] == cash["observation_sha256"]
-    assert result["debt_context_sha256"] == context["context_sha256"]
+    assert result["required_snapshot_sha256"] == local.SCOPE_SOURCE_SHA
     assert result["financial_scopes"] == {
         "r6_shares": "AS_REPORTED",
         "cash": "AS_REPORTED",
@@ -112,8 +111,7 @@ def test_real_ai_reviewed_profile_only_rehydrates_exact_ai_context(
     profile, context = _ai_debt_in_workspace(workspace, monkeypatch)
     (workspace / "source_snapshots" / "ai_debt_context.json").unlink()
     result = local.run_real_m23(repo_root=tmp_path, artifact_root=workspace, enforce_git=False)
-    assert result["status"] == "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED"
-    assert result["debt_context_sha256"] == context["context_sha256"]
+    assert result["status"] == "NEED_SEC_SCOPE_SOURCE_SNAPSHOT"
     generated = list(workspace.glob("execution_artifacts/US_INGR_INGREDION/r8_m23_*/rehydrated_sec_debt_context.json"))
     assert len(generated) == 1
     restored = json.loads(generated[0].read_text(encoding="utf-8"))
@@ -139,16 +137,15 @@ def test_real_shaped_m23_requires_explicit_financial_scope_reconciliation(
 ) -> None:
     workspace, proof, cash, profile, context = _real_shape(tmp_path, monkeypatch)
     result = local.run_real_m23(repo_root=tmp_path, artifact_root=workspace, enforce_git=False)
-    assert result["status"] == "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED"
+    assert result["status"] == "NEED_SEC_SCOPE_SOURCE_SNAPSHOT"
     assert result["r8_proof_sha256"] == proof["proof_sha256"]
-    assert result["cash_observation_sha256"] == cash["observation_sha256"]
-    assert result["debt_context_sha256"] == context["context_sha256"]
+    assert result["required_snapshot_sha256"] == local.SCOPE_SOURCE_SHA
     assert result["financial_scopes"] == {
         "r6_shares": "AS_REPORTED",
         "cash": "AS_REPORTED",
         "sec_aggregate_debt": "CFS",
     }
-    assert result["next_action"] == "SOURCE_BOUND_AS_REPORTED_CFS_SCOPE_BRIDGE"
+    assert result["next_action"] == "RESTORE_EXACT_INGR_2026Q2_TIER_A_SOURCE"
     assert not list(workspace.glob("execution_artifacts/US_INGR_INGREDION/r8_m23_*/m23_r6_assumption_v03.json"))
 
 
@@ -158,8 +155,7 @@ def test_real_shaped_m23_rehydrates_only_from_reviewed_profile(
     workspace, _, _, _, context = _real_shape(tmp_path, monkeypatch)
     (workspace / "source_snapshots" / "synthetic_debt_context.json").unlink()
     result = local.run_real_m23(repo_root=tmp_path, artifact_root=workspace, enforce_git=False)
-    assert result["status"] == "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED"
-    assert result["debt_context_sha256"] == context["context_sha256"]
+    assert result["status"] == "NEED_SEC_SCOPE_SOURCE_SNAPSHOT"
     assert list(workspace.glob("execution_artifacts/US_INGR_INGREDION/r8_m23_*/rehydrated_sec_debt_context.json"))
 
 

@@ -155,6 +155,9 @@ def build_binding_proposal_with_diluted_shares(base_proposal: dict[str, Any], sh
 
 
 def validate_binding_proposal_v3(proposal: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(proposal, dict) and proposal.get("share_route") == "R6_DISCLOSURE_LIMITED_ASSUMPTION":
+        from valuation_hub.r8_assumption_proposal import validate_r6_v3_proposal
+        return validate_r6_v3_proposal(proposal)
     if (
         not isinstance(proposal, dict)
         or proposal.get("schema_version") != SCHEMA_VERSION_V3

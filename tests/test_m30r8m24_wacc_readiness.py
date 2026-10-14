@@ -90,9 +90,11 @@ def test_all_seven_immutable_sources_are_only_ready_for_review(
     _inputs(workspace)
     result = wacc.run_wacc_readiness(repo_root=tmp_path, artifact_root=workspace,
                                      m23_run_dir=run, enforce_git=False)
-    assert result["status"] == "REAL_INGR_M24_WACC_SOURCE_CANDIDATES_READY_FOR_REVIEW"
-    assert result["metrics_ready"] == 7
-    assert all(x["status"] == "FRESH_SOURCE_INPUT_CANDIDATE" for x in result["metrics"])
+    # Equity MV must not be considered ready merely because one price
+    # snapshot is present: its shares-lag source and method proof are distinct.
+    assert result["status"] == "HOLD_REAL_INGR_M24_WACC_INPUT_GAPS"
+    assert result["metrics_ready"] == 6
+    assert next(x for x in result["metrics"] if x["metric"] == "equity_market_value")["status"] == "EQUITY_MARKET_VALUE_TWO_SOURCE_PROOF_MISSING"
     assert all(x["provenance"]["status"] == "SNAPSHOT_VERIFIED_VALUE_REQUIRES_REVIEW"
                for x in result["metrics"])
     assert result["reviewed_wacc_package"] is None

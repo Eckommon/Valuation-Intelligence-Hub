@@ -28,6 +28,7 @@ M23_V02_SHA = "42b8d691a3617235d52179bb56340ba0a7f2fca055a8b608f8eda5c44eb6d378"
 M23_RUN = "r8_m23_20261014T141303035707Z"
 SOURCE_INPUT_SCHEMA = "wacc-source-input-v0.1"
 SOURCE_SNAPSHOT_SCHEMAS = {"external-source-snapshot-v0.1", "source-snapshot-v0.1"}
+EQUITY_MARKET_VALUE_PROOF_SCHEMA = "ingr-market-cap-proxy-proof-v0.1"
 
 
 def _m23(repo: Path, run_dir: Path) -> dict[str, Any]:
@@ -81,7 +82,29 @@ def _origin_check(input_payload: dict[str, Any], snapshots: list[dict[str, Any]]
             "source_sha256": src["source_sha256"]}
 
 
-def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _market_cap_proof(input_payload: dict[str, Any], snapshots: list[dict[str, Any]],
+                      proofs: list[dict[str, Any]]) -> dict[str, Any]:
+    from valuation_hub.ingr_wacc_equity_market_value import validate_market_cap_proxy
+    matching = [x for x in proofs if x.get("wacc_input_sha256") == input_payload.get("input_sha256")]
+    if not matching:
+        return {"status": "EQUITY_MARKET_VALUE_TWO_SOURCE_PROOF_MISSING"}
+    if len(matching) != 1:
+        raise CaseServiceError("duplicate or conflicting market-cap proxy proofs")
+    proof = matching[0]
+    price = [x for x in snapshots if x.get("snapshot_sha256") == proof.get("source_price_snapshot_sha256")]
+    sec = [x for x in snapshots if x.get("snapshot_sha256") == proof.get("source_sec_snapshot_sha256")]
+    if len(price) != 1 or len(sec) != 1:
+        return {"status": "EQUITY_MARKET_VALUE_SUPPORTING_SOURCE_MISSING"}
+    validate_market_cap_proxy(proof, input_payload, price[0], sec[0])
+    return {"status": "EQUITY_MARKET_VALUE_TWO_SOURCE_PROXY_VERIFIED_REVIEW_PENDING",
+            "share_lag_days": proof["share_lag_days"],
+            "shares_source_date": proof["reported_common_shares"]["observed_on"],
+            "method_sha256": proof["proof_sha256"],
+            "share_class": "ASSUMPTION"}
+
+
+def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]],
+          proofs: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     as_date = date.fromisoformat(AS_OF)
     for metric in REQUIRED_METRICS:
@@ -107,6 +130,14 @@ def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]]) -> list[di
                   else "FRESH_SOURCE_INPUT_CANDIDATE")
         if status == "FRESH_SOURCE_INPUT_CANDIDATE" and provenance["status"] != "SNAPSHOT_VERIFIED_VALUE_REQUIRES_REVIEW":
             status = "SOURCE_BYTES_UNVERIFIED"
+        if metric == "equity_market_value" and status == "FRESH_SOURCE_INPUT_CANDIDATE":
+            # Price alone never proves current common-share count. Require
+            # source-revalidated SEC dated count and explicitly 40-day lagged
+            # proxy method, not the separate R6 diluted-share ASSUMPTION.
+            method = _market_cap_proof(item, sources, proofs or [])
+            provenance["market_cap_method"] = method
+            if method["status"] != "EQUITY_MARKET_VALUE_TWO_SOURCE_PROXY_VERIFIED_REVIEW_PENDING":
+                status = method["status"]
         out.append({"metric": metric, "status": status,
                     "observed_on": item["observed_on"], "age_days": age,
                     "max_age_days": FRESHNESS_MAX_AGE_DAYS[metric],
@@ -134,7 +165,8 @@ def run_wacc_readiness(*, repo_root: Path, artifact_root: Path | None = None,
     artifacts = _scan(root)
     inputs = [x.payload for x in artifacts if x.payload.get("schema_version") == SOURCE_INPUT_SCHEMA]
     snapshots = [x.payload for x in artifacts if x.payload.get("schema_version") in SOURCE_SNAPSHOT_SCHEMAS]
-    rows = _rows(inputs, snapshots)
+    proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == EQUITY_MARKET_VALUE_PROOF_SCHEMA]
+    rows = _rows(inputs, snapshots, proofs)
     complete = all(x["status"] == "FRESH_SOURCE_INPUT_CANDIDATE" for x in rows)
     result = {
         "status": "REAL_INGR_M24_WACC_SOURCE_CANDIDATES_READY_FOR_REVIEW" if complete

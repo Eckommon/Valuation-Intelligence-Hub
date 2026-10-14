@@ -135,6 +135,9 @@ def validate_binding_proposal_v2(proposal: dict[str, Any]) -> dict[str, Any]:
 
 
 def validate_binding_proposal_any(proposal: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(proposal, dict) and proposal.get("schema_version") == "draft-binding-proposal-v0.2-sec-debt-scoped-r8":
+        from valuation_hub.sec_scope_debt_binding_r8 import validate_scope_bridged_debt_proposal
+        return validate_scope_bridged_debt_proposal(proposal)
     if isinstance(proposal, dict) and proposal.get("schema_version") == SCHEMA_VERSION_V2:
         return validate_binding_proposal_v2(proposal)
     if isinstance(proposal, dict) and proposal.get("schema_version") == "draft-binding-proposal-v0.2-sec-aggregate-debt":

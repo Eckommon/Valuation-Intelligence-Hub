@@ -29,6 +29,15 @@ from valuation_hub.sec_aggregate_debt_authority import (
     validate_reviewed_sec_aggregate_debt,
     validate_sec_aggregate_debt_binding_context,
 )
+from valuation_hub.sec_scope_reconciliation_r8 import (
+    SOURCE_SHA as SCOPE_SOURCE_SHA,
+    build_scope_bridge,
+    validate_scope_bridge,
+)
+from valuation_hub.sec_scope_debt_binding_r8 import (
+    build_scope_bridged_debt_proposal,
+    validate_scope_bridged_debt_proposal,
+)
 
 CASE_ID = "US_INGR_INGREDION"
 AS_OF = "2026-09-14"
@@ -212,28 +221,27 @@ def run_real_m23(*, repo_root: Path, artifact_root: Path | None = None,
     cash_scope = cash.payload["entity"]["financial_scope"]
     debt_scope = debt.payload["entity"]["financial_scope"]
     r6_scope = proof["package"]["entity"]["financial_scope"]
+    source_snapshot = _exact(sources, "snapshot_sha256", SCOPE_SOURCE_SHA, "Q2 Tier-A immutable consolidated SEC filing")
     if cash_scope != debt_scope or r6_scope != debt_scope:
-        # A filed consolidated-statement claim and an independently reviewed
-        # scope-reconciliation assertion are required. Never silently relabel
-        # signed SEC/NORMALIZED_FACT source objects or synthesize M19 components.
-        return {
-            "status": "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED",
-            "next_action": "SOURCE_BOUND_AS_REPORTED_CFS_SCOPE_BRIDGE",
-            "r8_proof_sha256": R8_PROOF_SHA,
-            "cash_observation_sha256": CASH_SHA,
-            "debt_context_sha256": DEBT_CONTEXT_SHA,
-            "financial_scopes": {"r6_shares": r6_scope, "cash": cash_scope, "sec_aggregate_debt": debt_scope},
-            "required_evidence": [
-                "SAME_INGR_2026Q2_10Q_FILING_IDENTITY",
-                "SOURCE_BOUND_CONSOLIDATED_STATEMENT_SCOPE",
-                "INDEPENDENT_REVIEWED_SCOPE_RECONCILIATION",
-            ],
-            "git": git_state,
-        }
-    v02 = build_binding_proposal_with_sec_aggregate_debt(
-        [cash.payload], debt.payload, as_of=AS_OF, max_age_days=550
-    )
-    validate_binding_proposal_sec_aggregate(v02)
+        if source_snapshot is None:
+            return {
+                "status": "NEED_SEC_SCOPE_SOURCE_SNAPSHOT",
+                "next_action": "RESTORE_EXACT_INGR_2026Q2_TIER_A_SOURCE",
+                "required_snapshot_sha256": SCOPE_SOURCE_SHA,
+                "financial_scopes": {"cash": cash_scope, "r6_shares": r6_scope, "sec_aggregate_debt": debt_scope},
+                "r8_proof_sha256": R8_PROOF_SHA,
+                "git": git_state,
+            }
+        bridge = build_scope_bridge(cash.payload, debt.payload, proof, source_snapshot.payload)
+        validate_scope_bridge(bridge)
+        v02 = build_scope_bridged_debt_proposal(bridge)
+        validate_scope_bridged_debt_proposal(v02)
+        _write(run_dir / "r8_sec_scope_bridge.json", bridge)
+    else:
+        v02 = build_binding_proposal_with_sec_aggregate_debt(
+            [cash.payload], debt.payload, as_of=AS_OF, max_age_days=550
+        )
+        validate_binding_proposal_sec_aggregate(v02)
     v03 = build_r6_v3_proposal(v02, proof)
     validate_r6_v3_proposal(v03)
     share = next(row for row in v03["draft_input_matrix"] if row["field"] == "equity.diluted_shares")
@@ -249,6 +257,11 @@ def run_real_m23(*, repo_root: Path, artifact_root: Path | None = None,
         "cash_source_path": str(cash.path),
         "debt_context_sha256": DEBT_CONTEXT_SHA,
         "debt_source_path": str(debt.path),
+        "source_financial_scopes": {
+            "cash": cash_scope, "r6_shares": r6_scope, "sec_aggregate_debt": debt_scope,
+        },
+        "scope_bridge_sha256": bridge["bridge_sha256"] if cash_scope != debt_scope or r6_scope != debt_scope else None,
+        "source_sec_snapshot_sha256": SCOPE_SOURCE_SHA if cash_scope != debt_scope or r6_scope != debt_scope else None,
         "r6_package_sha256": R6_PACKAGE_SHA,
         "r8_proof_sha256": R8_PROOF_SHA,
         "m23_sec_debt_v02_proposal_sha256": v02["proposal_sha256"],

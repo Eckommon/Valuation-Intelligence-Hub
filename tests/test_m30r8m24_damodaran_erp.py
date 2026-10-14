@@ -121,3 +121,66 @@ def test_outside_user_local_workspace_prohibited(tmp_path:Path):
     path.write_text(FAKE_NYU,encoding="utf-8")
     with pytest.raises(CaseServiceError):
         erp.materialize_erp_source(tmp_path,path)
+
+
+OCTOBER_AUTHOR_HTML = FAKE_NYU.replace(
+    "Implied ERP on September 1, 2026 = 4.14%",
+    "Implied ERP on October 1, 2026 = 4.20%",
+).replace(
+    "Implied ERP in previous month = 4.28% (Trailing 12 month, with adjusted payout).",
+    "Implied ERP in previous month = 4.14% (Trailing 12 month, with adjusted payout); "
+    "4.09% (Trailing 12 month cash yield); 6.05% (Average CF yield last 10 years); "
+    "3.80% (Net cash yield); 3.56% (Normalized Earnings &amp; Payout) "
+    "(with the US treasury rate of 4.75% used as the riskfree rate in US dollars).",
+)
+
+
+def test_october_explicit_previous_month_is_valid_sep1_method_only_as_retrospective():
+    result = erp.extract_dated_adjusted_erp(OCTOBER_AUTHOR_HTML)
+    assert result["erp_decimal"] == 0.0414
+    assert result["observed_on"] == "2026-09-01"
+    assert result["source_extraction_route"] == "OCT1_CURRENT_EXPLICIT_SEP1_PREVIOUS_MONTH_RECAP"
+    assert result["author_page_current_date_header"] == "October 1, 2026"
+    assert result["source_is_retrospective_asof"] is True
+    assert result["historical_availability_asof_proven"] is False
+    artifact = erp.build_erp_source(
+        OCTOBER_AUTHOR_HTML, captured_at="2026-10-15T00:00:00+00:00")
+    assert artifact["proof"]["method"]["source_is_retrospective_asof"] is True
+    assert erp.validate_erp_source_proof(
+        artifact["proof"], artifact["wacc_input"], artifact["snapshot"]
+    )["status"] == "PASS_SOURCE_BOUND_NYU_IMPLIED_ERP_CANDIDATE"
+    rows = readiness._rows(
+        [artifact["wacc_input"]], [artifact["snapshot"]], [], [artifact["proof"]])
+    assert rows[1]["status"] == "FRESH_SOURCE_INPUT_CANDIDATE"
+    assert rows[1]["provenance"]["erp_method"]["source_class"] == "ASSUMPTION"
+
+
+@pytest.mark.parametrize("bad_html", [
+    OCTOBER_AUTHOR_HTML.replace("October 1, 2026", "November 1, 2026"),
+    OCTOBER_AUTHOR_HTML.replace("Implied ERP in previous month =", "Unspecified ERP ="),
+    OCTOBER_AUTHOR_HTML.replace("Implied ERP in previous month = 4.14%",
+                                "Implied ERP in previous month = 4.12%"),
+    OCTOBER_AUTHOR_HTML.replace(
+        "(with the US treasury rate of 4.75% used as the riskfree rate in US dollars).",
+        "(with the US treasury rate of 5.29% used as the riskfree rate in US dollars)."),
+    OCTOBER_AUTHOR_HTML.replace(
+        "</p><a>",
+        "Implied ERP in previous month = 4.14% (Trailing 12 month, with adjusted payout); "
+        "4.09% (Trailing 12 month cash yield); 6.05% (Average CF yield last 10 years); "
+        "3.80% (Net cash yield); 3.56% (Normalized Earnings &amp; Payout) "
+        "(with the US treasury rate of 4.75% used as the riskfree rate in US dollars).</p><a>"),
+])
+def test_retrospective_date_method_riskfree_and_duplicate_section_fail_closed(bad_html):
+    with pytest.raises(CaseServiceError):
+        erp.extract_dated_adjusted_erp(bad_html)
+
+
+def test_original_downloaded_page_diagnostic_never_creates_source():
+    diagnostic = erp.inspect_erp_html(OCTOBER_AUTHOR_HTML)
+    assert diagnostic["dated_current_headings"] == ["October 1, 2026"]
+    assert diagnostic["explicit_previous_month_sections"] == 1
+    assert diagnostic["has_exact_oct_1_heading"] is True
+    assert diagnostic["has_exact_sep_1_heading"] is False
+    assert diagnostic["eligible_erp_source_assumed"] is False
+    assert diagnostic["human_review_completed"] is False
+    assert len(diagnostic["raw_body_sha256"]) == 64

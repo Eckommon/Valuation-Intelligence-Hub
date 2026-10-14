@@ -40,13 +40,37 @@ It searches only existing local `workspace/**/*.json` for:
 
 If the source files do not exist, status is `NEED_REAL_M23_SOURCE_ARTIFACTS`
 with the exact missing SHA. An existing R8 proof cannot recreate historical
-cash or debt evidence from hashes.
+cash or debt evidence from hashes. If the exact sources are present but SEC
+financial-scope claims differ, the runner fails closed as
+`HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED` instead.
 
-After a successful validation, the runner writes two noncanonical JSON
+Only after successful source and scope reconciliation can the runner write two noncanonical JSON
 proposals under a new gitignored
 `workspace/execution_artifacts/US_INGR_INGREDION/r8_m23_*/`
 folder and returns their exact SHA lineage, preserving the selected
 63,900,000 diluted shares as **`ASSUMPTION`**, not `DERIVED`.
+
+## Confirmed real financial-scope blocker
+
+The canonical SEC observation normalizer emits `financial_scope=AS_REPORTED`
+for cash, and M22/R6 current shares are also `AS_REPORTED`. The separate
+M30 reviewed SEC aggregate-debt contract explicitly emits
+`financial_scope=CFS`.
+
+**The scopes are not interchangeable without a governed bridge.** If the
+exact reviewed cash and debt artifacts are found, the current runner
+returns `HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED` with:
+
+- R6 diluted shares: `AS_REPORTED`
+- SEC normalized cash: `AS_REPORTED`
+- SEC reviewed aggregate debt: `CFS`
+
+No M23 v0.2/v0.3 proposal may be emitted under this unresolved mismatch.
+Next required work is an independently validated and source-bound
+scope-reconciliation claim tying the cash and SEC aggregate debt to the same
+Ingredion 2026 Q2 filing/statement boundary, preserving original source SHAs
+and classes. Neither reinterpret a cash observation's scope nor silently
+rewrite the debt context to claim identity.
 
 ## Explicit exclusion
 

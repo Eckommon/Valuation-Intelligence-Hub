@@ -81,8 +81,17 @@ def extract_debt_mv(raw: str) -> dict[str, Any]:
         raise CaseServiceError("SEC Q2 vs prior-year comparison columns missing")
     if not re.search(r"Level\s+1\s+Level\s+2\s+Level\s+3\s+Total\s+Level\s+1\s+Level\s+2\s+Level\s+3\s+Total", fair, re.I):
         raise CaseServiceError("SEC Level 2 fair value position not demonstrated")
-    fv_row = _row(fair, r"(?<!Total\s)Long-term\s+debt",
-                  r"The\s+carrying\s+values\s+of", "long-term fair value")
+    # The narrative directly after the hierarchy repeats "long-term
+    # debt". Restrict the row search to the bounded *table* before the
+    # narrative rather than counting that prose as a second numeric row.
+    marker = re.search(r"The\s+carrying\s+values\s+of", fair, flags=re.I)
+    if marker is None:
+        raise CaseServiceError("SEC fair-value table/narrative boundary missing")
+    table = fair[:marker.start()]
+    fv_labels = list(re.finditer(r"Long-term\s+debt", table, flags=re.I))
+    if len(fv_labels) != 1:
+        raise CaseServiceError("SEC long-term fair-value hierarchy row missing or ambiguous")
+    fv_row = table[fv_labels[0].end():]
     fv = _numbers(fv_row, name="long-term fair value")
     if fv != [0, 1640, 0, 1640, 0, 1649, 0, 1649]:
         raise CaseServiceError("SEC long-term Level-2 fair value or year columns contradicted")

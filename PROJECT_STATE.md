@@ -13,9 +13,79 @@
 
 No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
-## Current runtime-canonical baseline / 현재 runtime 정식 기준선
+## 2026-10-15 M30-R8M24 checkpoint — current resume point / 최신 재개점
 
-Latest executable-capability canonical main:
+This section **supersedes the historical M30-R8 baseline below**. Always
+verify the actual merged main SHA using GitHub/git before further
+implementation. Last *feature* merged main:
+
+`3add8569b68869e59fa21f1f04185dbdc09be786`
+
+Source-provenance and readiness slices completed through PR/CI:
+
+| Slice | PR | Feature merge main | Python 3.11/3.12 final-head CI |
+|---|---|---|---|
+| NYU Damodaran Oct-page Sep ERP inline-markup strict parser | #149 | `43265fc565ab0b10eea2f93f910cbceeb90ab8ff` | `38609326752` PASS/PASS |
+| SEC 2026Q2 long-term Level-2 debt FV + short-term debt FV proxy | #151 | `17e26305d75c92ad1c03d4ff0d3a56a4b186ea10` | `38653697205` PASS/PASS |
+| SEC 2026Q2/2026 guidance tax ETR observation only | #153 | `3add8569b68869e59fa21f1f04185dbdc09be786` | `38654208754` PASS/PASS |
+
+**Real user-local Ingredion as-of 2026-09-14 WACC remains
+`HOLD_REAL_INGR_M24_WACC_INPUT_GAPS`, with exactly **2/7 actually
+confirmed** original inputs from the user's last run (risk-free UST 10y
+4.97% and market-value-of-equity 40-day share-lag ASSUMPTION).
+The real 17,069-byte NYU author HTML has its original SHA
+`755ad4d972431c7852bc0a723630d86cbfc84b14febb259858d1938458c0e0c7`
+and Oct 1 2026 heading + previous-month section; **it still needs a
+real post-#149 extraction rerun**. A source-attested 4.14% ERP is not a
+reviewed WACC and retains the 22bp original author model Treasury vs
+valuation-date risk-free convention.
+
+The SEC 2026-06-30 debt market-value proxy is 1,640m disclosed
+long-term debt Level 2 fair value + 41m short-term carrying ≈ FV
+= **USD 1,681m ASSUMPTION** (vs 1,783m carrying), which **still
+needs user-local exact original SEC HTML replay** after #151.
+No snapshot SHA may be invented from web text or synthetic fixtures.
+
+The SEC tax-ETR observation #153 records GAAP Q2 33.7%, adjusted Q2
+27.2%, full-year GAAP range 27.4–28.9%, adjusted range 26.0–27.5%;
+**not a WACC tax_rate**. It deliberately produces no tax WACC source
+input and requires marginal-tax policy evidence.
+
+### Immediate next execution (Windows user-local, gitignored data)
+
+1. Confirm clean merged main; read `docs/M30_R8M24_DAMODARAN_ERP_INTAKE.md`
+   and rerun existing October author raw HTML via
+   `python -m valuation_hub.ingr_wacc_damodaran_erp --raw <LOCAL_HTML> --json`.
+2. Capture SEC Q2 Form 10-Q on the machine using a private runtime
+   `SEC_USER_AGENT` (never commit, log or pass it as CLI arg).
+   Follow `docs/M30_R8M24_DEBT_MARKET_VALUE_INTAKE.md` and run
+   `python -m valuation_hub.ingr_wacc_debt_market_value --raw <LOCAL_HTML> --json`.
+3. Capture SEC Aug 4 2026 8-K Exhibit 99 and run the
+   **source-only** tax observation intake per
+   `docs/M30_R8M24_TAX_OBSERVATION_INTAKE.md`.
+4. Rerun `python -m valuation_hub.ingr_r8_m24_readiness --json`;
+   verify all source/body/input/proof SHAs and candidate statuses.
+   Source readiness **could** move 2/7→3/7→4/7 only after the
+   original local source proofs validate. Never report such progress
+   before it is actually observed.
+5. Obtain evidence-driven **levered beta** and **forward pre-tax
+   cost of debt** per Issue #154 and separately reviewed WACC marginal
+   cash-tax convention per Issue #150/#152. No historical average
+   borrowing rate or midpoint of management effective-tax guidance
+   may silently substitute.
+6. Only when all seven candidate inputs pass identity, as-of, freshness,
+   provenance, exact method/scenario contract: proceed to governed
+   WACC preparation/approval, then M25/M26, M28 13/13, M29,
+   safeguarded `admission/*` PR/CI and canonical real case.
+
+Parent Issues #66/#79 remain open. No fabricated approval, canonical
+case, Draft v0.4, or registry mutation. The older M30-R8 historical
+sections below preserve lineage but must not be treated as the latest
+work cursor.
+
+## Historical M30-R8 runtime baseline / 과거 runtime 기준선
+
+Historical M30-R8 capability main (superseded by the resume checkpoint above):
 
 `6a6409990c0f5612fb6489050cf26ab47263629d`
 

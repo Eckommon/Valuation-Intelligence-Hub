@@ -45,6 +45,7 @@ def _real_shape(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     manifest = json.loads((result_dir / "r7x_envelope_manifest.json").read_text(encoding="utf-8"))
     proof = build_r6_binding_proof(package, base, inventory, historical, manifest)
     _json(result_dir / "r8_binding_proof.json", proof)
+    monkeypatch.setattr(local, "RUN_ID", result_dir.name)
     _, _, _, profile, context = debt._reviewed_debt()
     cash = debt._cash_observation()
     _json(workspace / "source_snapshots" / "synthetic_cash.json", cash)

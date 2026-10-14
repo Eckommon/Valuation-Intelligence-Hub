@@ -30,6 +30,7 @@ SOURCE_INPUT_SCHEMA = "wacc-source-input-v0.1"
 SOURCE_SNAPSHOT_SCHEMAS = {"external-source-snapshot-v0.1", "source-snapshot-v0.1"}
 EQUITY_MARKET_VALUE_PROOF_SCHEMA = "ingr-market-cap-proxy-proof-v0.1"
 ERP_PROOF_SCHEMA = "wacc-erp-method-source-proof-v0.1"
+DEBT_MV_PROOF_SCHEMA = "ingr-debt-market-value-proxy-proof-v0.1"
 
 
 def _m23(repo: Path, run_dir: Path) -> dict[str, Any]:
@@ -127,9 +128,32 @@ def _erp_method_proof(item: dict[str, Any], snapshots: list[dict[str, Any]],
             "historical_availability_asof_proven": matches[0]["method"]["historical_availability_asof_proven"]}
 
 
+def _debt_mv_method_proof(item: dict[str, Any], snapshots: list[dict[str, Any]],
+                          proofs: list[dict[str, Any]]) -> dict[str, Any]:
+    from valuation_hub.ingr_wacc_debt_market_value import validate_debt_mv_proof
+    matches = [p for p in proofs if p.get("wacc_input_sha256") == item.get("input_sha256")]
+    if not matches:
+        return {"status": "DEBT_MV_EXPLICIT_METHOD_PROOF_MISSING"}
+    if len(matches) != 1:
+        raise CaseServiceError("debt MV method proof duplicated or conflicting")
+    origin = [s for s in snapshots if s.get("snapshot_sha256") == matches[0].get("snapshot_sha256")]
+    if len(origin) != 1:
+        return {"status": "DEBT_MV_SEC_ORIGINAL_SNAPSHOT_MISSING"}
+    checked = validate_debt_mv_proof(matches[0], item, origin[0])
+    return {"status": "DEBT_MV_SOURCE_MODEL_PROOF_VERIFIED_REVIEW_PENDING",
+            "proof_sha256": checked["method_proof_sha256"],
+            "observed_on": checked["observed_on"],
+            "source_class": "ASSUMPTION",
+            "method": matches[0]["method"]["method"],
+            "book_value_usd_millions": matches[0]["method"]["total_carrying_value_usd_millions"],
+            "market_value_proxy_usd_millions": matches[0]["method"]["debt_mv_proxy_usd_millions"],
+            "human_review_completed": False}
+
+
 def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]],
           proofs: list[dict[str, Any]] | None = None,
-          erp_proofs: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+          erp_proofs: list[dict[str, Any]] | None = None,
+          debt_mv_proofs: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     as_date = date.fromisoformat(AS_OF)
     for metric in REQUIRED_METRICS:
@@ -161,6 +185,14 @@ def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]],
             method = _erp_method_proof(item, sources, erp_proofs or [])
             provenance["erp_method"] = method
             if method["status"] != "ERP_SOURCE_MODEL_PROOF_VERIFIED_REVIEW_PENDING":
+                status = method["status"]
+        if metric == "debt_market_value" and status == "FRESH_SOURCE_INPUT_CANDIDATE":
+            # A SEC snapshot with a debt number is not proof of total debt
+            # market value. Enforce separately reconstructed Level-2 and short-
+            # term fair-value approximation with undrawn facilities excluded.
+            method = _debt_mv_method_proof(item, sources, debt_mv_proofs or [])
+            provenance["debt_mv_method"] = method
+            if method["status"] != "DEBT_MV_SOURCE_MODEL_PROOF_VERIFIED_REVIEW_PENDING":
                 status = method["status"]
         if metric == "equity_market_value" and status == "FRESH_SOURCE_INPUT_CANDIDATE":
             # Price alone never proves current common-share count. Require
@@ -199,7 +231,8 @@ def run_wacc_readiness(*, repo_root: Path, artifact_root: Path | None = None,
     snapshots = [x.payload for x in artifacts if x.payload.get("schema_version") in SOURCE_SNAPSHOT_SCHEMAS]
     proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == EQUITY_MARKET_VALUE_PROOF_SCHEMA]
     erp_proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == ERP_PROOF_SCHEMA]
-    rows = _rows(inputs, snapshots, proofs, erp_proofs)
+    debt_mv_proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == DEBT_MV_PROOF_SCHEMA]
+    rows = _rows(inputs, snapshots, proofs, erp_proofs, debt_mv_proofs)
     complete = all(x["status"] == "FRESH_SOURCE_INPUT_CANDIDATE" for x in rows)
     result = {
         "status": "REAL_INGR_M24_WACC_SOURCE_CANDIDATES_READY_FOR_REVIEW" if complete

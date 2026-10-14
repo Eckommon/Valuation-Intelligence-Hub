@@ -62,6 +62,78 @@ def _real_shape(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     return workspace, proof, cash, profile, context
 
 
+def _ai_debt_in_workspace(workspace: Path, monkeypatch: pytest.MonkeyPatch):
+    """Create an actual M30-R2.2 AI-adjudicated profile/context, not human-labeled."""
+    ai = _fixture("test_m30r22_review_authority.py")
+    from valuation_hub.sec_aggregate_debt_authority import (
+        AI_REASON,
+        build_sec_aggregate_debt_binding_context,
+        finalize_reviewed_sec_aggregate_debt,
+        validate_reviewed_sec_aggregate_debt,
+        validate_sec_aggregate_debt_binding_context,
+    )
+    observation = ai._observation()
+    assertion = ai._ai_assertion(observation)
+    profile = finalize_reviewed_sec_aggregate_debt(observation, assertion)
+    context = build_sec_aggregate_debt_binding_context(profile, as_of=local.AS_OF)
+    assert profile["binding_eligibility"]["reason"] == AI_REASON
+    assert validate_reviewed_sec_aggregate_debt(profile)["review_authority"] == "AI"
+    assert validate_sec_aggregate_debt_binding_context(context)["review_authority"] == "AI"
+    _json(workspace / "source_snapshots" / "ai_debt_profile.json", profile)
+    _json(workspace / "source_snapshots" / "ai_debt_context.json", context)
+    monkeypatch.setattr(local, "DEBT_CONTEXT_SHA", context["context_sha256"])
+    monkeypatch.setattr(local, "DEBT_PROFILE_SHA", profile["profile_sha256"])
+    return profile, context
+
+
+def test_real_ai_reviewed_context_preserved_then_scoped_hold(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace, proof, cash, _, _ = _real_shape(tmp_path, monkeypatch)
+    profile, context = _ai_debt_in_workspace(workspace, monkeypatch)
+    result = local.run_real_m23(repo_root=tmp_path, artifact_root=workspace, enforce_git=False)
+    assert result["status"] == "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED"
+    assert result["r8_proof_sha256"] == proof["proof_sha256"]
+    assert result["cash_observation_sha256"] == cash["observation_sha256"]
+    assert result["debt_context_sha256"] == context["context_sha256"]
+    assert result["financial_scopes"] == {
+        "r6_shares": "AS_REPORTED",
+        "cash": "AS_REPORTED",
+        "sec_aggregate_debt": "CFS",
+    }
+    assert profile["binding_eligibility"]["reason"] == "AI_REVIEWED_EXACT_SEC_AGGREGATE_DEBT"
+    assert not list(workspace.glob("execution_artifacts/US_INGR_INGREDION/r8_m23_*/m23_r6_assumption_v03.json"))
+
+
+def test_real_ai_reviewed_profile_only_rehydrates_exact_ai_context(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace, _, _, _, _ = _real_shape(tmp_path, monkeypatch)
+    profile, context = _ai_debt_in_workspace(workspace, monkeypatch)
+    (workspace / "source_snapshots" / "ai_debt_context.json").unlink()
+    result = local.run_real_m23(repo_root=tmp_path, artifact_root=workspace, enforce_git=False)
+    assert result["status"] == "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED"
+    assert result["debt_context_sha256"] == context["context_sha256"]
+    generated = list(workspace.glob("execution_artifacts/US_INGR_INGREDION/r8_m23_*/rehydrated_sec_debt_context.json"))
+    assert len(generated) == 1
+    restored = json.loads(generated[0].read_text(encoding="utf-8"))
+    assert restored == context
+    assert restored["reviewed_profile"]["profile_sha256"] == profile["profile_sha256"]
+    assert restored["reviewed_profile"]["binding_eligibility"]["reason"] == "AI_REVIEWED_EXACT_SEC_AGGREGATE_DEBT"
+
+
+def test_real_ai_authority_mislabeling_is_not_accepted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace, _, _, _, _ = _real_shape(tmp_path, monkeypatch)
+    profile, context = _ai_debt_in_workspace(workspace, monkeypatch)
+    bad_context = copy.deepcopy(context)
+    bad_context["reviewed_profile"]["binding_eligibility"]["reason"] = "HUMAN_REVIEWED_EXACT_SEC_AGGREGATE_DEBT"
+    _json(workspace / "source_snapshots" / "ai_debt_context.json", bad_context)
+    with pytest.raises(CaseServiceError, match="reviewer-type"):
+        local.run_real_m23(repo_root=tmp_path, artifact_root=workspace, enforce_git=False)
+
+
 def test_real_shaped_m23_requires_explicit_financial_scope_reconciliation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

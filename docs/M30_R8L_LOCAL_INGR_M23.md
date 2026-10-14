@@ -50,6 +50,23 @@ proposals under a new gitignored
 folder and returns their exact SHA lineage, preserving the selected
 63,900,000 diluted shares as **`ASSUMPTION`**, not `DERIVED`.
 
+## M30-R8L.1 AI/HUMAN SEC aggregate-debt authority validation
+
+The real reviewed SEC aggregate-debt context was issued by the existing M30-R2.2
+**AI review authority**, which stores
+`binding_eligibility.reason=AI_REVIEWED_EXACT_SEC_AGGREGATE_DEBT`.
+The historical M30-P1 validator accepts **human-reviewed** profiles only and
+must not be applied to the real AI-adjudicated bytes.
+
+This runner therefore imports the canonical `sec_aggregate_debt_authority`
+builder and validators, preserving the actual reviewed profile and context
+SHA lineage. Existing human-reviewed artifacts remain supported, and false
+human labels on AI assertions still fail closed.
+
+**This is a verifier-selection fix, not a financial-scope waiver.** Successful
+AI-verified debt validation still enters the separate
+`HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED` gate described below.
+
 ## Confirmed real financial-scope blocker
 
 The canonical SEC observation normalizer emits `financial_scope=AS_REPORTED`

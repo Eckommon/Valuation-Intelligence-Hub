@@ -102,6 +102,43 @@ def test_scope_reconciliation_preserves_original_classes_and_m23_real_shape(
     assert bridge["r8_proof"] == proof
 
 
+def test_exact_sealed_q2_issuer_metadata_alias_does_not_override_source_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, proof, cash, debt, _ = _context(tmp_path, monkeypatch)
+    # SEC source identity derives from the immutable full snapshot SHA, Tier-A,
+    # filing URL, the source body and the matching accession; a descriptive
+    # publisher/source_type is not an extra signed SEC filing identifier.
+    aliased = build_external_source_snapshot(
+        SYNTHETIC_HTML, source_publisher="Ingredion Incorporated",
+        source_type="inline_xbrl_document", source_tier="A",
+        source_locator=scope.LOCATOR, captured_at="2026-09-14T12:00:00+09:00",
+    )
+    monkeypatch.setattr(scope, "SOURCE_SHA", aliased["snapshot_sha256"])
+    checked = scope.build_scope_bridge(cash, debt, proof, aliased)
+    assert scope.validate_scope_bridge(checked)["status"] == "PASS_INGR_2026Q2_SCOPE_BRIDGE"
+    assert checked["source_snapshot"] == aliased
+    assert checked["source_snapshot_sha256"] == aliased["snapshot_sha256"]
+
+
+def test_even_sealed_snapshot_rejects_wrong_locator_or_untrusted_tier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, proof, cash, debt, _ = _context(tmp_path, monkeypatch)
+    for tier, locator, failure in (
+        ("B", scope.LOCATOR, "not Tier A"),
+        ("A", "https://www.sec.gov/Archives/edgar/data/1046257/000162828026054722/other.htm", "locator"),
+    ):
+        wrong = build_external_source_snapshot(
+            SYNTHETIC_HTML, source_publisher="Ingredion Incorporated",
+            source_type="inline_xbrl_document", source_tier=tier,
+            source_locator=locator, captured_at="2026-09-14T12:00:00+09:00",
+        )
+        monkeypatch.setattr(scope, "SOURCE_SHA", wrong["snapshot_sha256"])
+        with pytest.raises(CaseServiceError, match=failure):
+            scope.build_scope_bridge(cash, debt, proof, wrong)
+
+
 def test_r8_source_snapshot_missing_is_need_not_fake_scope_approval(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

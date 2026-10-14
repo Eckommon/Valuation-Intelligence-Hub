@@ -33,7 +33,8 @@ from valuation_hub.sec_aggregate_debt import (
 CASE_ID = "US_INGR_INGREDION"
 AS_OF = "2026-09-14"
 ENTITY_ID = "SEC_CIK:0001046257"
-SCOPE = "CFS"
+R6_AND_CASH_SCOPE = "AS_REPORTED"
+SEC_DEBT_SCOPE = "CFS"
 CURRENCY = "USD"
 EXPECTED_CASH_VALUE = 948_000_000
 EXPECTED_DEBT_VALUE = 1_783_000_000
@@ -122,7 +123,7 @@ def _valid_cash(value: dict[str, Any]) -> None:
         or value.get("value") != EXPECTED_CASH_VALUE
         or value.get("unit") != CURRENCY
         or value.get("entity", {}).get("id") != ENTITY_ID
-        or value.get("entity", {}).get("financial_scope") != SCOPE
+        or value.get("entity", {}).get("financial_scope") != R6_AND_CASH_SCOPE
         or value.get("period", {}).get("kind") != "INSTANT"
         or value.get("period", {}).get("end") != "2026-06-30"):
         raise CaseServiceError("real reviewed INGR cash authority/period/identity/SHA mismatch")
@@ -136,7 +137,7 @@ def _valid_debt(value: dict[str, Any]) -> None:
         or value.get("unit") != CURRENCY
         or value.get("policy", {}).get("as_of") != AS_OF
         or value.get("policy", {}).get("max_age_days") != 550
-        or value.get("entity") != {"id": ENTITY_ID, "financial_scope": SCOPE}
+        or value.get("entity") != {"id": ENTITY_ID, "financial_scope": SEC_DEBT_SCOPE}
         or value.get("freshness", {}).get("status") != "FRESH"
         or value.get("binding_eligibility", {}).get("eligible") is not True):
         raise CaseServiceError("real reviewed INGR aggregate-debt authority/period/identity/SHA mismatch")
@@ -178,7 +179,7 @@ def run_real_m23(*, repo_root: Path, artifact_root: Path | None = None,
         or proof["package"]["class"] != "ASSUMPTION"
         or proof["package"]["as_of"] != AS_OF
         or proof["package"]["entity"].get("id") != ENTITY_ID
-        or proof["package"]["entity"].get("financial_scope") != SCOPE):
+        or proof["package"]["entity"].get("financial_scope") != R6_AND_CASH_SCOPE):
         raise CaseServiceError("real R8 proof SHA/assumption/identity is not the exact approved case")
     sources = _scan(root)
     cash = _exact(sources, "observation_sha256", CASH_SHA, "AI-reviewed cash")
@@ -208,6 +209,27 @@ def run_real_m23(*, repo_root: Path, artifact_root: Path | None = None,
         if debt is None:
             raise CaseServiceError("reviewed debt profile vanished during deterministic rehydration")
     _valid_debt(debt.payload)
+    cash_scope = cash.payload["entity"]["financial_scope"]
+    debt_scope = debt.payload["entity"]["financial_scope"]
+    r6_scope = proof["package"]["entity"]["financial_scope"]
+    if cash_scope != debt_scope or r6_scope != debt_scope:
+        # A filed consolidated-statement claim and an independently reviewed
+        # scope-reconciliation assertion are required. Never silently relabel
+        # signed SEC/NORMALIZED_FACT source objects or synthesize M19 components.
+        return {
+            "status": "HOLD_FINANCIAL_SCOPE_RECONCILIATION_REQUIRED",
+            "next_action": "SOURCE_BOUND_AS_REPORTED_CFS_SCOPE_BRIDGE",
+            "r8_proof_sha256": R8_PROOF_SHA,
+            "cash_observation_sha256": CASH_SHA,
+            "debt_context_sha256": DEBT_CONTEXT_SHA,
+            "financial_scopes": {"r6_shares": r6_scope, "cash": cash_scope, "sec_aggregate_debt": debt_scope},
+            "required_evidence": [
+                "SAME_INGR_2026Q2_10Q_FILING_IDENTITY",
+                "SOURCE_BOUND_CONSOLIDATED_STATEMENT_SCOPE",
+                "INDEPENDENT_REVIEWED_SCOPE_RECONCILIATION",
+            ],
+            "git": git_state,
+        }
     v02 = build_binding_proposal_with_sec_aggregate_debt(
         [cash.payload], debt.payload, as_of=AS_OF, max_age_days=550
     )

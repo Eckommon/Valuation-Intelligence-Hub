@@ -71,8 +71,8 @@ def test_original_evidence_proof_has_no_tax_rate_or_approval():
     RAW.replace("26.0%", "26.1%"),
     RAW.replace("The reported and adjusted effective tax rates", "The GAAP and adjusted income tax rates"),
     RAW.replace("Full-Year 2026 Outlook", "Full-Year 2025 Outlook"),
-    RAW.replace("Pakistan business and the change in value of the Mexican peso", "different issue"),
-    RAW.replace("excludes acquisition-related integration and restructuring costs", "includes them"),
+    RAW.replace("Pakistan business", "different issue"),
+    RAW.replace("excludes acquisition-related integration", "includes them"),
     RAW.replace("</body>", "<p>The reported and adjusted effective tax rates for the second quarter were 33.7% and 27.2%, compared to 23.6% and 27.2%</p></body>"),
 ])
 def test_tampered_or_duplicate_tax_claims_fail_closed(bad):

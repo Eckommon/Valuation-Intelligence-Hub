@@ -84,6 +84,22 @@ def extract_sec_debt_inventory(raw: str) -> dict[str,Any]:
             "carrying_dec2025_usd_millions": expected[1],
             "carrying_is_not_face_principal": True,
         })
+    # Independently reconcile constituent non-note debt rows, not only
+    # summary totals. This prevents a falsified short-term component from
+    # passing while an unrelated printed total remains unchanged.
+    table_end = note.find("_________________")
+    if table_end < 0:
+        raise CaseServiceError("SEC maturity table accounting footnote boundary absent")
+    table = note[:table_end]
+    for label, start, stop, expected in (
+        ("other_long_term", r"Other\s+long-term\s+borrowings",
+         r"Total\s+long-term\s+debt", [0,1]),
+        ("other_short_term", r"Other\s+short-term\s+borrowings",
+         r"Delayed\s+draw\s+term\s+loan\s+facility", [41,48]),
+    ):
+        component = _numbers(_row(table,start,stop,label),name=label)
+        if component != expected:
+            raise CaseServiceError(f"SEC {label} financing component contradicted")
     expected_sum = sum(x["carrying_june2026_usd_millions"] for x in tranches)
     if expected_sum != 1742:
         raise CaseServiceError("senior note sum not equal long-term debt carry")

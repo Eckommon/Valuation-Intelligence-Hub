@@ -272,3 +272,91 @@ def test_october_inline_html_markup_is_source_bound_and_unreviewed():
 def test_october_inline_html_markup_conflicts_fail_closed(bad_html):
     with pytest.raises(CaseServiceError):
         erp.extract_dated_adjusted_erp(bad_html)
+
+
+# Actual local Oct-2026 raw-page diagnostic at main@041379c:
+# one dated current heading + one explicit September previous-month section;
+# current adjusted-payout full-label match=0, prior-month match=1.
+# This fixture represents HTML-split October current number and a changed
+# current-month model label. September method evidence remains completely exact.
+OCTOBER_INDEPENDENT_CURRENT_VALUE = OCTOBER_AUTHOR_HTML.replace(
+    "Implied ERP on October 1, 2026 = 4.20% (Trailing 12 month, with adjusted payout)",
+    "Implied ERP on October 1, 2026 = <b>4</b>.<i>20</i>% "
+    "(Trailing 12 month cash yield)",
+)
+
+
+def test_october_unique_value_anchor_accepts_strict_september_method_without_oct_label():
+    info = erp.inspect_erp_html(OCTOBER_INDEPENDENT_CURRENT_VALUE)
+    assert info["dated_current_headings"] == ["October 1, 2026"]
+    assert info["october_current_4_20_numeric_anchor_count"] == 1
+    assert info["current_adjusted_payout_model_count"] == 0
+    assert info["previous_month_adjusted_payout_model_count"] == 1
+    assert info["eligible_erp_source_assumed"] is False
+    assert len(info["current_headline_visible_excerpt"]) <= 220
+    source = erp.build_erp_source(
+        OCTOBER_INDEPENDENT_CURRENT_VALUE, captured_at="2026-10-15T10:00:00+00:00"
+    )
+    snapshot, item, proof = source["snapshot"], source["wacc_input"], source["proof"]
+    assert snapshot["raw_text"] == OCTOBER_INDEPENDENT_CURRENT_VALUE
+    assert proof["source_body_sha256"] == info["raw_body_sha256"]
+    assert proof["method"]["source_extraction_route"] == "OCT1_CURRENT_EXPLICIT_SEP1_PREVIOUS_MONTH_RECAP"
+    assert proof["method"]["source_is_retrospective_asof"] is True
+    assert proof["method"]["historical_availability_asof_proven"] is False
+    assert proof["method"]["alternatives_percent"] == {
+        "trailing_cash_yield": 4.09, "average_10yr_cash_flow": 6.05,
+        "net_cash_yield": 3.8, "normalized_earnings_payout": 3.56,
+    }
+    assert item["claim_class"] == "ASSUMPTION"
+    assert erp.validate_erp_source_proof(proof, item, snapshot)["human_review_completed"] is False
+    rows = readiness._rows([item], [snapshot], [], [proof])
+    assert rows[1]["status"] == "FRESH_SOURCE_INPUT_CANDIDATE"
+    assert rows[1]["provenance"]["erp_method"]["source_is_retrospective_asof"] is True
+
+
+@pytest.mark.parametrize("bad", [
+    OCTOBER_INDEPENDENT_CURRENT_VALUE.replace(
+        "October 1, 2026 = <b>4</b>.<i>20</i>%",
+        "October 1, 2026 = <b>4</b>.<i>21</i>%",
+    ),
+    OCTOBER_INDEPENDENT_CURRENT_VALUE.replace(
+        "October 1, 2026 = <b>4</b>.<i>20</i>%",
+        "October 1, 2026 = unknown",
+    ),
+    OCTOBER_INDEPENDENT_CURRENT_VALUE.replace(
+        "October 1, 2026", "November 1, 2026"
+    ),
+    OCTOBER_INDEPENDENT_CURRENT_VALUE.replace(
+        "Implied ERP in previous month =", "Unspecified previous result ="
+    ),
+    OCTOBER_INDEPENDENT_CURRENT_VALUE.replace(
+        "Implied ERP in previous month = 4.14%", "Implied ERP in previous month = 4.15%"
+    ),
+    OCTOBER_INDEPENDENT_CURRENT_VALUE.replace(
+        "4.75% used as the riskfree", "4.76% used as the riskfree"
+    ),
+    OCTOBER_INDEPENDENT_CURRENT_VALUE.replace(
+        "4.09% (Trailing 12 month cash yield)", "4.10% (Trailing 12 month cash yield)"
+    ),
+    OCTOBER_INDEPENDENT_CURRENT_VALUE.replace(
+        "</body>", "<p>Implied ERP on October 1, 2026 = "
+        "4.20% (Trailing 12 month cash yield)</p></body>"
+    ),
+    OCTOBER_INDEPENDENT_CURRENT_VALUE.replace(
+        "</body>", "<p>Implied ERP in previous month = "
+        "4.14% (Trailing 12 month, with adjusted payout)</p></body>"
+    ),
+])
+def test_october_value_only_anchor_tampering_fails_closed(bad):
+    with pytest.raises(CaseServiceError):
+        erp.extract_dated_adjusted_erp(bad)
+
+
+def test_direct_september_heading_still_requires_exact_adjusted_payout():
+    changed = FAKE_NYU.replace(
+        "4.14% (Trailing 12 month, with adjusted payout)",
+        "4.14% (Trailing 12 month cash yield)",
+        1,
+    )
+    with pytest.raises(CaseServiceError):
+        erp.extract_dated_adjusted_erp(changed)

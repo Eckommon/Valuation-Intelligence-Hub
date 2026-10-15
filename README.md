@@ -7,7 +7,36 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
-## M30-R8M24 newest executable capabilities / 최신 구현 (2026-10-16)
+## M30 latest original-provider repairs / 최신 외부원본 장애 복구 (2026-10-16)
+
+**Latest feature merge:** main@32c9ce833a21462c23e7fdfda3d308440be6bee3.
+
+Original user-local SEC bond note intake on the previous main failed
+to recognize an exact 2.900% coupon label in nested Inline-XBRL
+text. PR #164 (CI Python 3.11/3.12 PASS) allows only exact numeric
+coupon/date labels with HTML-induced spaces and gives a nonpromoting
+--diagnose option. The real unchanged SEC original should be retried.
+
+The user's two Stooq historical stock CSV HTTP downloads actually
+returned anti-bot JavaScript HTML, not a row of OHLCV market data.
+**No challenge bypass and no beta invention**: PR #165 (both CI
+versions PASS) adds a separate Yahoo v8 chart original JSON provider
+for date-scoped INGR/^GSPC historical closes, two SHA-locked
+snapshots, price-only weekly regression and explicit unverified
+point-in-time/vendor limitations. Both import paths retain
+fail-closed authentication/missing-date/duplicated-bodies semantics.
+
+**Last actually source-attested WACC readiness remains 4/7.**
+No real Yahoo JSON beta has been submitted and no true issuer
+forward YTM or marginal tax method has been approved. Successful
+source extraction is not the same as authorized WACC or valuation.
+
+Read [PROJECT_STATE.md](PROJECT_STATE.md) newest current
+checkpoint and [Yahoo JSON intake](docs/M30_R8M24_YAHOO_CHART_BETA_INTAKE.md)
+and [SEC original bond intake](docs/M30_R8M24_FORWARD_DEBT_INVENTORY.md)
+before resuming local original-source verification.
+
+## M30-R8M24 historical beta/debt implementation baseline / 최신 구현 (2026-10-16)
 
 Last feature merge `main@25aadb77893d38a459e41452d1201d9b5027e73a`.
 PR #160 (INGR.US × ^SPX source-bound 3-year weekly **price-only**

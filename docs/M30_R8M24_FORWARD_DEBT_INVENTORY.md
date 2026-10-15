@@ -85,3 +85,40 @@ The unresolved WACC source fields remain
 pending user original CSV), `pre_tax_cost_of_debt` and
 `tax_rate`. No WACC approval, Draft, 13/13 handoff or
 canonical real Ingredion case is claimed.
+
+
+## RD.2 real-source mismatch / 실증 실패 기록과 한정 수정
+
+On the user's **actual** user-local 2026Q2 original SEC snapshot
+(body SHA `bb03a79c2ab289873e5cfe6cc299ba52d9659dda5594d224b6dce844a6bbf167`),
+RD.1 returned **`INGR 2.900% note/maturity missing or duplicate`**.
+That is an HTML visible-text **label parser mismatch**, not evidence
+that the 2.900% note is absent. The official SEC 10-Q published on
+2026-08-07 explicitly lists the 2.900% June 2030, 3.200% October
+2026, 3.900% June 2050, 6.625% April 2037 note rows.
+
+RD.2 permits only whitespace produced by Inline-XBRL/HTML text-node
+separators inside the same exact coupon digits/decimal, percent
+symbol, and date commas. Coupon, maturities, observed accounting
+values, financing classifications, period and original SHA must remain
+exact. Counterfactual amount and maturity mutations fail closed.
+
+If the same original still fails after this tested fix, run this
+**read-only, non-promoting diagnostic** and provide just its JSON:
+
+```powershell
+$source = 'workspace\source_snapshots\INGR_Q2_debt_market_value_bb03a79c2ab28987_snapshot.json'
+python -m valuation_hub.ingr_wacc_debt_bond_terms --snapshot $source --diagnose --json
+```
+
+
+It prints bounded visible public SEC note labels only; no snapshot,
+input, reviewer, or WACC rate is created.
+
+The separately encountered Stooq downloads were JavaScript browser
+verification HTML instead of CSV (as proven by the user's first
+line and CSV-header error). Such HTML files must **never** be converted
+to fabricated price series or used for beta readiness; they may be
+quarantined locally with a non-overwriting filename. Alternative
+Yahoo historical chart original JSON is a distinct vendor and
+requires an independent source-specific proof and method route.

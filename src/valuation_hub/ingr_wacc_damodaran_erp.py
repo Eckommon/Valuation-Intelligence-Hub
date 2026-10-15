@@ -91,6 +91,18 @@ def inspect_erp_html(raw: str) -> dict[str, Any]:
     headings = re.findall(
         r"Implied ERP on\s+([A-Za-z]+\s+\d{1,2},?\s+20\d{2})\s*=",
         visible, flags=re.I)
+    oct_numeric = list(re.finditer(
+        r"Implied\s+ERP\s+on\s+October\s+1,?\s+2026\s*=\s*4\s*\.\s*20\s*%",
+        visible, flags=re.I))
+    current_header = list(re.finditer(
+        r"Implied\s+ERP\s+on\s+[A-Za-z]+\s+\d{1,2},?\s+20\d{2}\s*=",
+        visible, flags=re.I))
+    # Bounded diagnostics use only the public author's visible HTML text.
+    # Do not materialize WACC artifacts or normalize original body bytes.
+    current_excerpt = (
+        visible[current_header[0].end():current_header[0].end() + 220]
+        if len(current_header) == 1 else None
+    )
     return {
         "status": "ERP_AUTHOR_HTML_DIAGNOSTIC_ONLY",
         "html_bytes": len(raw.encode("utf-8")),
@@ -103,6 +115,8 @@ def inspect_erp_html(raw: str) -> dict[str, Any]:
             r"September\s+1,?\s+2026", h, flags=re.I) for h in headings),
         "has_exact_oct_1_heading": any(re.fullmatch(
             r"October\s+1,?\s+2026", h, flags=re.I) for h in headings),
+        "october_current_4_20_numeric_anchor_count": len(oct_numeric),
+        "current_headline_visible_excerpt": current_excerpt,
         "current_adjusted_payout_model_count": len(re.findall(
             r"Implied\s+ERP\s+on\s+[A-Za-z]+\s+\d{1,2},?\s+20\d{2}\s*="
             rf"\s*{_percent_method_pattern(METHOD)}", visible, flags=re.I)),
@@ -127,12 +141,13 @@ def _isolated_method_segment(visible: str) -> tuple[str, str, str]:
         raise CaseServiceError("NYU exactly one dated current ERP heading required")
     h = dated_headings[0]
     date_header = " ".join(h.group("date").split())
-    current = re.match(
-        rf"\s*{_percent_method_pattern(METHOD)}", visible[h.end():], flags=re.I)
-    if current is None:
-        raise CaseServiceError("NYU dated current adjusted-payout model missing/ambiguous")
-
     if re.fullmatch(r"September\s+1,?\s+2026", date_header, re.I):
+        # For contemporaneous September, require the COMPLETE dated
+        # adjusted-payout model. No fallback to an unrelated method.
+        current = re.match(
+            rf"\s*{_percent_method_pattern(METHOD)}", visible[h.end():], flags=re.I)
+        if current is None:
+            raise CaseServiceError("NYU September current adjusted-payout model missing/ambiguous")
         if float(current.group("value")) != 4.14:
             raise CaseServiceError("Sep1 adjusted-payout ERP contradicts 4.14%")
         # A past-month recap can coexist with the September headline; it is
@@ -146,8 +161,13 @@ def _isolated_method_segment(visible: str) -> tuple[str, str, str]:
         route = "SEP1_DATED_CURRENT_AUTHOR_HEADLINE"
         cited = date_header
     elif re.fullmatch(r"October\s+1,?\s+2026", date_header, re.I):
-        # Exactly one Oct 1 dated author headline identifies the earlier
-        # month. Only the explicit previous-month panel attests Sep1's values.
+        # October's current model LABEL is not evidence of September's
+        # methodology. Anchor the unique October current heading to its
+        # author-observed 4.20% value, without requiring October's payout
+        # label; require a separate exact September previous-month model.
+        # HTML inline nodes may split the October decimal itself: 4 . 20 %.
+        if not re.match(r"\s*4\s*\.\s*20\s*%", visible[h.end():], flags=re.I):
+            raise CaseServiceError("October 1 2026 author current ERP 4.20% numeric anchor missing")
         prev_headings = list(re.finditer(
             r"Implied\s+ERP\s+in\s+previous\s+month\s*=", visible, flags=re.I))
         if len(prev_headings) != 1 or prev_headings[0].start() < h.end():
@@ -292,7 +312,9 @@ def materialize_erp_source(repo: Path, raw_path: Path) -> dict[str, Any]:
     raw = path.read_text(encoding="utf-8-sig")
     result = build_erp_source(raw, captured_at=datetime.now(timezone.utc).isoformat())
     snapshot, item, proof = result["snapshot"], result["wacc_input"], result["proof"]
-    tag = snapshot["snapshot_sha256"][:16]
+    # Stable raw-source-body key avoids duplicate WACC candidates when the
+    # same public HTML is captured again at a different local timestamp.
+    tag = snapshot["body"]["sha256"][:16]
     out_snapshot = source_root / f"NYU_Damodaran_implied_ERP_20260901_{tag}_snapshot.json"
     out_input = source_root / f"INGR_wacc_equity_risk_premium_20260901_{tag}.json"
     out_proof = source_root / f"INGR_wacc_equity_risk_premium_20260901_{tag}_proof.json"

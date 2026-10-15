@@ -155,3 +155,69 @@ If it succeeds, only count a *source candidate* (potentially 3/7),
 still with ASSUMPTION, source_is_retrospective_asof=true,
 historical_availability_asof_proven=false, human_review_completed=false.
 The remaining four WACC inputs and final approval are separately blocked.
+
+
+## ERP.3 — original Oct 1 HTML source diagnostic and method-independent October date anchor
+
+**Actual, not synthetic, 2026-10-15 user-local result** at
+`main@041379c4f2ef42344725d108b1c05e65d55690c1`:
+
+- original NYU HTML: 17,069 bytes; SHA-256
+  `755ad4d972431c7852bc0a723630d86cbfc84b14febb259858d1938458c0e0c7`;
+- exactly one current heading dated **October 1, 2026**, exactly
+  one explicit previous-month panel;
+- previous-month adjusted-payout label matches once;
+- October current **full adjusted-payout label matches zero times**;
+- importer FAIL CLOSED with
+  `NYU dated current adjusted-payout model missing/ambiguous`.
+
+The previous failure was caused by gating retrieval of a **September
+historical previous-month model** on parsing the **unrelated October
+current-month payout label**. ERP.3 separates these two evidentiary
+claims:
+
+1. Precisely one October 1, 2026 author current date headline,
+   itself anchored to the source-author's October **4.20%** current
+   numeric value (allowing only HTML-derived whitespace inside 4.20%).
+2. Precisely one prior-month panel containing **September 1** adjusted
+   payout 4.14%, all four expected alternative-model figures, author
+   reference Treasury 4.75%, and exact original page bytes/SHA.
+
+The October adjusted payout **method label is not required** to
+date September's distinct previous-month claim. The October numeric
+4.20 anchor, however, is required; a contradictory current value,
+duplicate headings, unsupported November roll-forward, wrong
+September rate/method or modified source bytes fail closed.
+
+Direct September 1 current headlines still require an exact full
+September adjusted-payout model. Both routes remain ASSUMPTION and
+retrospective historical availability is NOT established by October
+capture. October route remains
+`historical_availability_asof_proven=false`.
+No synthetic HTML is accepted as a real-case original.
+
+After the tested ERP.3 merge, retry **the identical existing source
+file**, not a current re-download:
+
+```powershell
+git switch main
+git pull --ff-only origin main
+$raw = 'workspace\source_snapshots\NYU_Damodaran_ERP_20260901.html'
+python -m valuation_hub.ingr_wacc_damodaran_erp --raw $raw --diagnose --json
+python -m valuation_hub.ingr_wacc_damodaran_erp --raw $raw --json
+python -m valuation_hub.ingr_r8_m24_readiness --json
+```
+
+
+The diagnostic now emits
+`october_current_4_20_numeric_anchor_count` plus a bounded
+`current_headline_visible_excerpt`. If the October value anchor
+count is not exactly 1, or any later method proof fails, **retain 2/7**
+and inspect that bounded public text. Never hand-insert 4.14% to
+bypass source SHA. Captures are named by original raw body SHA so
+repeated identical bytes cannot silently create duplicate WACC inputs.
+
+SEC original capture requires a distinct, user-owned runtime-only
+`SEC_USER_AGENT` with a genuine contact email. Missing it
+does **not** alter or invalidate the NYU original; no SEC snapshot
+exists until the SEC download and importer are independently successful.

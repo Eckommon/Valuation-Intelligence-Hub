@@ -7,7 +7,33 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
-## 2026-10-15 live work cursor / 최신 M30 작업 재개점
+## 2026-10-16 verified real WACC source checkpoint / 검증 완료 상태
+
+The user ran the original user-local NYU/SEC immutable HTML importers
+on clean `main@1a9844eba17d936dba3d951b756ba8355e1c3ce5`.
+Full SHA-attested M24 JSON confirmed **4/7 real unreviewed source
+candidates**: 4.97% UST 10Y, 4.14% author Sep ERP via **Oct
+retrospective** source, USD6.220bn equity market-value proxy, and
+USD1.681bn debt market-value proxy. The SEC August 4 2026 8-K tax
+observations were separately imported with SHA proof but deliberately
+did **not** create a WACC `tax_rate` input.
+
+**Remaining 3**: levered beta; forward pre-tax cost of debt;
+source-attested WACC marginal cash-tax methodology. The ERP's
+`historical_availability_asof_proven=false` means the Oct
+retrospective page cannot prove what was known by valuation as-of
+Sep 14. Its 4.75% author RF and 4.97% valuation Treasury also differ
+by 22 bp. **4/7 source readiness does not mean reviewed WACC or
+as-of-valid final assumptions.**
+
+Canonical current details and SHA lineage:
+[PROJECT_STATE.md](PROJECT_STATE.md) **2026-10-16 checkpoint**.
+SEC public EDGAR downloads are free; local User-Agent contact email
+only identifies legitimate scripted access and must not be committed.
+No reviewed WACC package, Draft v0.4, 13/13 handoff or real-case
+canonical registry promotion is claimed.
+
+## 2026-10-15 historical 2/7 work cursor / 과거 기준선
 
 Current feature-complete implementation baseline through
 `main@05146a65d34847364f7654879677fff4c253cef6`

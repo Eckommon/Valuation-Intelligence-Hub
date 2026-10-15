@@ -7,6 +7,23 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
+## M30-R8M24 newest executable capabilities / 최신 구현 (2026-10-16)
+
+Last feature merge `main@25aadb77893d38a459e41452d1201d9b5027e73a`.
+PR #160 (INGR.US × ^SPX source-bound 3-year weekly **price-only**
+OLS beta) and PR #162 (re-validation of the already source-verified
+2026Q2 SEC four-note bond schedule, **no forward market debt yield**)
+both passed Python 3.11+3.12 full CI.
+
+These **capabilities are implemented but not equivalent to original
+market evidence**. No actual user-local INGR/SPX CSV beta execution has
+been received, and bond schedule extraction cannot replace dated
+issuer YTM. Last *actually measured* M24 source readiness remains
+**4/7**: beta, pre-tax cost of debt and marginal cash-tax rate absent.
+See [PROJECT_STATE.md](PROJECT_STATE.md) for the executable handoff
+and [beta intake](docs/M30_R8M24_BETA_REGRESSION_INTAKE.md) /
+[forward-debt inventory](docs/M30_R8M24_FORWARD_DEBT_INVENTORY.md).
+
 ## 2026-10-16 verified real WACC source checkpoint / 검증 완료 상태
 
 The user ran the original user-local NYU/SEC immutable HTML importers

@@ -67,7 +67,15 @@ def extract_sec_debt_inventory(raw: str) -> dict[str,Any]:
         end=locations[i+1].start() if i+1<len(locations) else note.find("Revolving credit agreement",start)
         if end <= start:
             raise CaseServiceError("SEC four senior-note term rows not contiguous")
-        amounts = _numbers(note[start:end],name=f"senior note {coupon}%")
+        bounded = note[start:end].strip()
+        if coupon == "3.200":
+            # SEC explicitly marks the Oct-2026 refinancing note (i).
+            # Accept only the documented footnote marker at this row,
+            # not arbitrary narrative text mixed into numeric columns.
+            if not re.match(r"^\(i\)\s+",bounded,re.I):
+                raise CaseServiceError("2026 senior-note refinancing footnote marker absent")
+            bounded = re.sub(r"^\(i\)\s+","",bounded, count=1, flags=re.I)
+        amounts = _numbers(bounded,name=f"senior note {coupon}%")
         if amounts != list(expected):
             raise CaseServiceError(f"SEC note {coupon}% dated carrying amounts contradicted: {amounts}")
         tranches.append({

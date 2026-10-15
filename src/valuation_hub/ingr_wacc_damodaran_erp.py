@@ -312,7 +312,9 @@ def materialize_erp_source(repo: Path, raw_path: Path) -> dict[str, Any]:
     raw = path.read_text(encoding="utf-8-sig")
     result = build_erp_source(raw, captured_at=datetime.now(timezone.utc).isoformat())
     snapshot, item, proof = result["snapshot"], result["wacc_input"], result["proof"]
-    tag = snapshot["snapshot_sha256"][:16]
+    # Stable raw-source-body key avoids duplicate WACC candidates when the
+    # same public HTML is captured again at a different local timestamp.
+    tag = snapshot["body"]["sha256"][:16]
     out_snapshot = source_root / f"NYU_Damodaran_implied_ERP_20260901_{tag}_snapshot.json"
     out_input = source_root / f"INGR_wacc_equity_risk_premium_20260901_{tag}.json"
     out_proof = source_root / f"INGR_wacc_equity_risk_premium_20260901_{tag}_proof.json"

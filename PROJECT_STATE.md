@@ -19,7 +19,7 @@ This section **supersedes the historical M30-R8 baseline below**. Always
 verify the actual merged main SHA using GitHub/git before further
 implementation. Last *feature* merged main:
 
-`3add8569b68869e59fa21f1f04185dbdc09be786`
+`05146a65d34847364f7654879677fff4c253cef6`
 
 Source-provenance and readiness slices completed through PR/CI:
 
@@ -28,6 +28,7 @@ Source-provenance and readiness slices completed through PR/CI:
 | NYU Damodaran Oct-page Sep ERP inline-markup strict parser | #149 | `43265fc565ab0b10eea2f93f910cbceeb90ab8ff` | `38609326752` PASS/PASS |
 | SEC 2026Q2 long-term Level-2 debt FV + short-term debt FV proxy | #151 | `17e26305d75c92ad1c03d4ff0d3a56a4b186ea10` | `38653697205` PASS/PASS |
 | SEC 2026Q2/2026 guidance tax ETR observation only | #153 | `3add8569b68869e59fa21f1f04185dbdc09be786` | `38654208754` PASS/PASS |
+| ERP.3 October 4.20 numeric source anchor + independent Sep prior-month model | #157 | `05146a65d34847364f7654879677fff4c253cef6` | `38723026771` PASS/PASS |
 
 **Real user-local Ingredion as-of 2026-09-14 WACC remains
 `HOLD_REAL_INGR_M24_WACC_INPUT_GAPS`, with exactly **2/7 actually
@@ -35,8 +36,15 @@ confirmed** original inputs from the user's last run (risk-free UST 10y
 4.97% and market-value-of-equity 40-day share-lag ASSUMPTION).
 The real 17,069-byte NYU author HTML has its original SHA
 `755ad4d972431c7852bc0a723630d86cbfc84b14febb259858d1938458c0e0c7`
-and Oct 1 2026 heading + previous-month section; **it still needs a
-real post-#149 extraction rerun**. A source-attested 4.14% ERP is not a
+and Oct 1 2026 heading + previous-month section. On original
+`main@041379c4` Windows execution, the October current adjusted-payout
+label did **not** match (count 0), whereas the explicit prior-month
+adjusted-payout matched (count 1); the importer correctly returned
+`NYU dated current adjusted-payout model missing/ambiguous`.
+ERP.3 / PR #157 now binds the October current date + **4.20% value**
+independently of the exact previous-month September 4.14% model,
+all four alternatives and September author Treasury 4.75%.
+**It still needs a real post-#157 original-source extraction rerun**. A source-attested 4.14% ERP is not a
 reviewed WACC and retains the 22bp original author model Treasury vs
 valuation-date risk-free convention.
 
@@ -56,8 +64,10 @@ input and requires marginal-tax policy evidence.
 1. Confirm clean merged main; read `docs/M30_R8M24_DAMODARAN_ERP_INTAKE.md`
    and rerun existing October author raw HTML via
    `python -m valuation_hub.ingr_wacc_damodaran_erp --raw <LOCAL_HTML> --json`.
-2. Capture SEC Q2 Form 10-Q on the machine using a private runtime
-   `SEC_USER_AGENT` (never commit, log or pass it as CLI arg).
+2. SEC source capture was **not run** in the last Windows attempt:
+   it stopped at missing `SEC_USER_AGENT`. Set a *real personal contact*
+   email only in the current PowerShell environment (never infer, commit,
+   paste in chat, or pass on CLI). Capture SEC Q2 Form 10-Q locally.
    Follow `docs/M30_R8M24_DEBT_MARKET_VALUE_INTAKE.md` and run
    `python -m valuation_hub.ingr_wacc_debt_market_value --raw <LOCAL_HTML> --json`.
 3. Capture SEC Aug 4 2026 8-K Exhibit 99 and run the

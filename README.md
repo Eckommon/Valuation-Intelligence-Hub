@@ -10,13 +10,18 @@ Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPT
 ## 2026-10-15 live work cursor / 최신 M30 작업 재개점
 
 Current feature-complete implementation baseline through
-`main@3add8569b68869e59fa21f1f04185dbdc09be786`
-(PRs #149, #151, #153; all final-head Python 3.11/3.12 CI passed).
+`main@05146a65d34847364f7654879677fff4c253cef6`
+(PRs #149, #151, #153, #157; all final-head Python 3.11/3.12 CI passed).
 See [PROJECT_STATE.md](PROJECT_STATE.md) **2026-10-15 checkpoint**
 for the authoritative current execution plan; the historical M30-R8
 table later in this README is not the latest resume cursor.
 
 Real Ingredion WACC source readiness last actually verified at **2/7**.
+The 2026-10-15 Oct1 author-HTML local run exposed a separate current-month
+model-label mismatch, addressed by ERP.3/#157; the **same immutable original
+has not yet been rerun** on that fix. SEC HTML capture also stopped on
+missing local `SEC_USER_AGENT`, which requires a genuine user-owned contact
+email set only in the PowerShell environment.
 New offline source-exact importers must still be run on original
 user-local (gitignored) NYU/SEC HTML before claiming ERP (potential 3/7)
 or Level-2-plus-short-term debt market-value proxy (potential 4/7).

@@ -98,7 +98,7 @@ def _weekly_benchmark_pairs(issuer: dict[date, float],
         raise CaseServiceError("INGR and SPX insufficient synchronized weeks")
     pairs: list[tuple[str,float,float]] = []
     for a,b in zip(dates, dates[1:]):
-        if not 4 <= (b-a).days <= 10:
+        if not 3 <= (b-a).days <= 10:
             raise CaseServiceError("INGR/SPX weekly gap inconsistent")
         ir = issuer[b]/issuer[a] - 1
         mr = market[b]/market[a] - 1

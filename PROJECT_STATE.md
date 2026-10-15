@@ -13,6 +13,54 @@
 
 No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
+## 2026-10-16 M30-R8M24 beta/forward-debt next implementation cursor / 다음 구현 재개점
+
+Last merged executable implementation (verify GitHub main on each
+resumption): `25aadb77893d38a459e41452d1201d9b5027e73a`.
+This **does not supersede actual 4/7 source evidence** documented below.
+
+| Mission | PR | Merge SHA | Final-head CI, Python 3.11/3.12 | Source readiness |
+|---|---|---|---|---|
+| M30-R8M24-BETA price-only INGR/^SPX 3y weekly OLS with dual immutable CSV SHA/proof | #160 | `a15eb8287642663f7b1314fddec1065af64eb576` | `38760693827` PASS/PASS | **NOT RUN ON REAL CSV**, 4/7 persists |
+| M30-R8M24-RD.1 exact previously validated SEC four fixed senior-note maturity/coupon/carry inventory; forward yield HOLD | #162 | `25aadb77893d38a459e41452d1201d9b5027e73a` | `38762490748` PASS/PASS | source-only context; no \`pre_tax_cost_of_debt\` input |
+
+**Actual next steps, not completion claims / 실제 다음 순서**
+
+1. Read `docs/M30_R8M24_BETA_REGRESSION_INTAKE.md`;
+   capture true daily **INGR.US** and **^SPX** Stooq CSV (date-scoped
+   2023-09-14→2026-09-14) in gitignored workspace. Stooq may
+   require API access/CAPTCHA; never fabricate a CSV or store a key.
+   Run `python -m valuation_hub.ingr_wacc_levered_beta --issuer <ORIGINAL_CSV> --market <ORIGINAL_CSV> --json`.
+   Price-only beta omits dividends and remains an ASSUMPTION;
+   historical vendor adjustment/publication as-of is unproven.
+   If actual source proof passes, potential **5/7 source candidates**
+   only; still not a reviewed WACC.
+2. Reuse the **existing actual** SEC original snapshot named
+   `INGR_Q2_debt_market_value_bb03a79c2ab28987_snapshot.json`.
+   Run `python -m valuation_hub.ingr_wacc_debt_bond_terms --snapshot workspace/source_snapshots/INGR_Q2_debt_market_value_bb03a79c2ab28987_snapshot.json --json`.
+   It validates coupon/maturity rows for 2.9%/2030, 3.2%/2026,
+   3.9%/2050 and 6.625%/2037; fiscal debt totals and undrawn Tate & Lyle
+   acquisition funding; returns **no forward yield**.
+3. Per #161/#154, obtain **issuer-specific market YTM or 2026-09-14
+   dated comparable term-match credit-spread + UST**; prove coupon dates,
+   principal/face vs reported carrying, accrual, call/redemption,
+   refinancing and maturity/market-weight convention. Do NOT use the
+   Q2 historical coupon average, Level2 aggregate fair value of
+   1,640m or January 2026 industry 5.07% as a directly observed
+   firm-specific forward debt cost.
+4. Per #150/#152, distinguish company accounting effective tax from
+   WACC marginal interest deductibility under applicable jurisdictions.
+   The 2026 8-K tax proof does not generate \`tax_rate\`.
+5. Rerun M24 readiness; preserve as-of 2026-09-14, 4/7 actually
+   confirmed, source timing of October retrospective NYU September
+   ERP unproven, author 4.75% RF vs valuation 4.97%.
+   Only 7/7 plus governed review proceeds to M25/M26, M28 13/13,
+   M29 and guarded admission.
+
+No paid service authorization, external trade, human approval,
+WACC package, Draft v0.4, or Ingredion registry canonicalization
+occurred in this implementation.
+
 ## 2026-10-16 M30-R8M24 live original-source checkpoint / 실증 원본 재검증 완료
 
 **THIS IS THE NEWEST REAL EXECUTION STATE**, superseding the earlier

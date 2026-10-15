@@ -126,3 +126,33 @@ def test_local_proof_reuses_original_snapshot_without_new_download(tmp_path:Path
     outside.write_text(original.read_text(),encoding="utf-8")
     with pytest.raises(CaseServiceError):
         debt.materialize_sec_debt_inventory(tmp_path,outside)
+
+
+def test_inline_xbrl_coupon_and_date_node_splits_keep_exact_numbers():
+    changed = (RAW
+        .replace("2.900% senior notes due June 1, 2030",
+                 "2.<strong>900</strong> % senior notes due June 1 <span>,</span> 2030")
+        .replace("3.200% senior notes due October 1, 2026",
+                 "3 . <b>200</b> % senior notes due October <i>1</i> , 2026")
+        .replace("3.900% senior notes due June 1, 2050",
+                 "3. <i>900</i> % senior notes due June 1, 2050")
+        .replace("6.625% senior notes due April 15, 2037",
+                 "6.<strong>625</strong> % senior notes due April 15 , 2037")
+    )
+    data = debt.extract_sec_debt_inventory(changed)
+    assert [v["coupon_percent"] for v in data["tranches"]] == [2.9,3.2,3.9,6.625]
+    info = debt.inspect_sec_bond_html(changed)
+    assert info["status"] == "SEC_NOTE6_ORIGINAL_VISIBLE_DIAGNOSTIC_ONLY"
+    assert len(info["senior_note_label_excerpts"]) == 4
+    assert info["pretax_debt_rate_selected"] is None
+
+
+@pytest.mark.parametrize("before,after", [
+    ("2.900%", "2.901%"),
+    ("3.200%", "3.201%"),
+    ("6.625%", "6.626%"),
+    ("June 1, 2030", "June 2, 2030"),
+])
+def test_inline_xbrl_whitespace_tolerance_does_not_tolerate_value_or_maturity_change(before,after):
+    with pytest.raises(CaseServiceError):
+        debt.extract_sec_debt_inventory(RAW.replace(before,after))

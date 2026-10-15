@@ -32,6 +32,7 @@ EQUITY_MARKET_VALUE_PROOF_SCHEMA = "ingr-market-cap-proxy-proof-v0.1"
 ERP_PROOF_SCHEMA = "wacc-erp-method-source-proof-v0.1"
 DEBT_MV_PROOF_SCHEMA = "ingr-debt-market-value-proxy-proof-v0.1"
 BETA_PROOF_SCHEMA = "ingr-weekly-price-beta-method-proof-v0.1"
+YAHOO_BETA_PROOF_SCHEMA = "ingr-yahoo-chart-weekly-price-beta-proof-v0.1"
 
 
 def _m23(repo: Path, run_dir: Path) -> dict[str, Any]:
@@ -152,33 +153,48 @@ def _debt_mv_method_proof(item: dict[str, Any], snapshots: list[dict[str, Any]],
 
 
 def _beta_method_proof(item: dict[str, Any], sources: list[dict[str, Any]],
-                       proofs: list[dict[str, Any]]) -> dict[str, Any]:
+                       stooq_proofs: list[dict[str, Any]],
+                       yahoo_proofs: list[dict[str, Any]]) -> dict[str, Any]:
     from valuation_hub.ingr_wacc_levered_beta import validate_beta_method_proof
-    matches = [p for p in proofs if p.get("wacc_input_sha256") == item.get("input_sha256")]
-    if not matches:
+    from valuation_hub.ingr_wacc_yahoo_chart_beta import validate_yahoo_beta_proof
+
+    stooq = [p for p in stooq_proofs if p.get("wacc_input_sha256") == item.get("input_sha256")]
+    yahoo = [p for p in yahoo_proofs if p.get("wacc_input_sha256") == item.get("input_sha256")]
+    if len(stooq) + len(yahoo) == 0:
         return {"status": "BETA_TWO_SOURCE_PRICE_REGRESSION_PROOF_MISSING"}
-    if len(matches) != 1:
-        raise CaseServiceError("beta method proof duplicated or conflicting")
-    proof = matches[0]
+    if len(stooq) + len(yahoo) != 1:
+        raise CaseServiceError("beta proofs duplicated/ambiguous across price providers")
+    proof = (stooq or yahoo)[0]
     issuers = [s for s in sources if s.get("snapshot_sha256") == proof.get("issuer_snapshot_sha256")]
     markets = [s for s in sources if s.get("snapshot_sha256") == proof.get("market_snapshot_sha256")]
     if len(issuers) != 1 or len(markets) != 1:
         return {"status": "BETA_ORIGINAL_ISSUER_OR_MARKET_SNAPSHOT_MISSING"}
-    checked = validate_beta_method_proof(proof,item,issuers[0],markets[0])
-    return {"status": "BETA_PRICE_ONLY_TWO_SOURCE_PROOF_VERIFIED_REVIEW_PENDING",
+    if stooq:
+        checked = validate_beta_method_proof(proof,item,issuers[0],markets[0])
+        return {"status": "BETA_PRICE_ONLY_TWO_SOURCE_PROOF_VERIFIED_REVIEW_PENDING",
+                "proof_sha256": checked["method_proof_sha256"],
+                "beta": checked["beta"], "weekly_returns": checked["n_weekly_returns"],
+                "r_squared": checked["r_squared"],
+                "return_basis": "PRICE_ONLY_NOT_TOTAL_RETURN",
+                "provider": "Stooq original CSV",
+                "historical_availability_asof_proven": False,
+                "human_review_completed": False}
+    checked = validate_yahoo_beta_proof(proof,item,issuers[0],markets[0])
+    return {"status": "BETA_YAHOO_PRICE_ONLY_TWO_SOURCE_PROOF_VERIFIED_REVIEW_PENDING",
             "proof_sha256": checked["method_proof_sha256"],
-            "beta": checked["beta"], "weekly_returns": checked["n_weekly_returns"],
-            "r_squared": checked["r_squared"],
+            "beta": checked["beta"], "weekly_returns": checked["weekly_returns"],
+            "r_squared": proof["method"]["r_squared"],
             "return_basis": "PRICE_ONLY_NOT_TOTAL_RETURN",
+            "provider": "Yahoo v8 chart original JSON",
             "historical_availability_asof_proven": False,
             "human_review_completed": False}
-
 
 def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]],
           proofs: list[dict[str, Any]] | None = None,
           erp_proofs: list[dict[str, Any]] | None = None,
           debt_mv_proofs: list[dict[str, Any]] | None = None,
-          beta_proofs: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+          beta_proofs: list[dict[str, Any]] | None = None,
+          yahoo_beta_proofs: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     as_date = date.fromisoformat(AS_OF)
     for metric in REQUIRED_METRICS:
@@ -215,9 +231,10 @@ def _rows(items: list[dict[str, Any]], sources: list[dict[str, Any]],
             # A numeric beta in a vendor snapshot is not an independently
             # verified issuer-specific regression. Enforce original paired
             # price-series SHA, date alignment and price-only model caveats.
-            method = _beta_method_proof(item,sources,beta_proofs or [])
+            method = _beta_method_proof(item,sources,beta_proofs or [],yahoo_beta_proofs or [])
             provenance["beta_method"] = method
-            if method["status"] != "BETA_PRICE_ONLY_TWO_SOURCE_PROOF_VERIFIED_REVIEW_PENDING":
+            if method["status"] not in {"BETA_PRICE_ONLY_TWO_SOURCE_PROOF_VERIFIED_REVIEW_PENDING",
+                                        "BETA_YAHOO_PRICE_ONLY_TWO_SOURCE_PROOF_VERIFIED_REVIEW_PENDING"}:
                 status = method["status"]
         if metric == "debt_market_value" and status == "FRESH_SOURCE_INPUT_CANDIDATE":
             # A SEC snapshot with a debt number is not proof of total debt
@@ -266,7 +283,8 @@ def run_wacc_readiness(*, repo_root: Path, artifact_root: Path | None = None,
     erp_proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == ERP_PROOF_SCHEMA]
     debt_mv_proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == DEBT_MV_PROOF_SCHEMA]
     beta_proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == BETA_PROOF_SCHEMA]
-    rows = _rows(inputs, snapshots, proofs, erp_proofs, debt_mv_proofs, beta_proofs)
+    yahoo_beta_proofs = [x.payload for x in artifacts if x.payload.get("schema_version") == YAHOO_BETA_PROOF_SCHEMA]
+    rows = _rows(inputs, snapshots, proofs, erp_proofs, debt_mv_proofs, beta_proofs, yahoo_beta_proofs)
     complete = all(x["status"] == "FRESH_SOURCE_INPUT_CANDIDATE" for x in rows)
     result = {
         "status": "REAL_INGR_M24_WACC_SOURCE_CANDIDATES_READY_FOR_REVIEW" if complete

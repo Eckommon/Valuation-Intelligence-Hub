@@ -13,7 +13,88 @@
 
 No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
-## 2026-10-15 M30-R8M24 checkpoint — current resume point / 최신 재개점
+## 2026-10-16 M30-R8M24 live original-source checkpoint / 실증 원본 재검증 완료
+
+**THIS IS THE NEWEST REAL EXECUTION STATE**, superseding the earlier
+2026-10-15 **2/7** checkpoint below. The user ran Windows PowerShell
+on clean `main@1a9844eba17d936dba3d951b756ba8355e1c3ce5`
+and supplied complete non-secret CLI JSON, including actual original
+source snapshots, input/proof SHA digests, and the M24 readiness
+manifest. All files remain user-local, gitignored. **Actual sourced
+WACC readiness is now 4/7**, not merely a hypothetical outcome.
+
+| Real WACC metric | 2026-09-14 source status | Semantics |
+|---|---|---|
+| `risk_free_rate` | `FRESH_SOURCE_INPUT_CANDIDATE` | FACT; 4.97% nominal UST 10Y; Tier A |
+| `equity_risk_premium` | `FRESH_SOURCE_INPUT_CANDIDATE` | ASSUMPTION; 4.14%; Tier B; October 1 author **retrospective** previous-month section |
+| `levered_beta` | `MISSING_SOURCE_INPUT` | Requires source-aligned levered-beta methodology |
+| `pre_tax_cost_of_debt` | `MISSING_SOURCE_INPUT` | Requires forward-looking issuer debt yield / spread methodology |
+| `equity_market_value` | `FRESH_SOURCE_INPUT_CANDIDATE` | ASSUMPTION; USD 6,220,000,248.77 using 40-day lagged Aug 5 shares; Tier B |
+| `debt_market_value` | `FRESH_SOURCE_INPUT_CANDIDATE` | ASSUMPTION; USD 1,681,000,000; June 30 observed Level-2 long-term 1,640m + short-term carrying-as-FV 41m; Tier A |
+| `tax_rate` | `MISSING_SOURCE_INPUT` | Marginal cash-tax method unresolved; published effective tax guidance is not a WACC input |
+
+**Local evidence SHA identifiers (never paste identifying SEC User-Agent):**
+
+- NYU September ERP: original 17,069-byte HTML body SHA
+  `755ad4d972431c7852bc0a723630d86cbfc84b14febb259858d1938458c0e0c7`;
+  snapshot `d40b61c2b52e5b25d8ed52f2343fc77167933bf13da22fde63776c229f6a5d99`;
+  input `015c2e17b2062e402fe944c08888d6cc148819e0c0597efbb7f215438f53f66d`;
+  proof `d6a1b996383d172c499bc9b22cdd53089837c847f8432fff3386fb8c9dd7c541`.
+- Ingredion June 30 SEC Q2 debt MV: source body SHA
+  `bb03a79c2ab289873e5cfe6cc299ba52d9659dda5594d224b6dce844a6bbf167`;
+  snapshot `f2b195c18e55ab579d9eb997017b9dc4327d7a6758fe19349d982d70e94007d6`;
+  input `bc35facac9203aa5d1001de8c0c1484f4c9efb56a4e07c3a5957585cb0872ed2`;
+  proof `4c7c42515b5de8fd123abeff8a6462a7f112ffc0f885d459049406a90e136426`.
+- Ingredion August 4 SEC 8-K tax context: source body SHA
+  `da3b94266f9f3ef43a0d67e538e50ab13123e3d32d9b54c68e77c660fdb11468`;
+  snapshot `9b9c61e450e746c7ee0104adde22a1bce51b963532d2b2c47e275814074abe42`;
+  proof `1174776e912c86368c5b64bf299157a36c0cf6291dd57dc7bafc7ac23f022961`;
+  context-only `REAL_INGR_TAX_OBSERVATIONS_CAPTURED_METHOD_HOLD`;
+  **no WACC tax source input created**.
+
+The runtime returned:
+`status=HOLD_REAL_INGR_M24_WACC_INPUT_GAPS`,
+`metrics_ready=4`,
+`human_review_completed=false`,
+`draft_v04_created=false`,
+`reviewed_wacc_package=null`.
+
+**Critical temporal/economic risk:** October retrospective NYU author page
+proves the September **4.14% method** and underlying September
+data were reported *later*, not that the source was available by the
+**September 14** valuation as-of. The extraction explicitly reports
+`historical_availability_asof_proven=false`, and the NYU author
+original model risk-free **4.75%** differs from target Treasury **4.97%**
+by **22 bps**. These are analytical-adjudication blockers independent of
+source freshness. An after-date document cannot be treated as
+contemporaneous merely because the observed-on month predates as-of.
+
+**Next execution:** Prioritize Issue #154 for independent, time-aligned
+**levered beta** and **forward pre-tax cost of debt**, and #150/#152 for
+jurisdiction/deductibility-grounded **marginal cash-tax** selection.
+Preserve existing immutable originals and avoid re-importing the
+same source bytes; use original-source date and method proof.
+Only after all 7/7, independent source date checks and governed AI/human
+authority as appropriate, proceed to scenario WACC, M25/M26, Draft 13/13,
+M29 and guarded canonical real-case admission. No claim of a completed
+valuation or a reviewed WACC.
+
+### SEC access costs and privacy / SEC 공시 무료 이용과 개인정보
+
+The US SEC officially provides public EDGAR search/downloads free of
+charge; declaring a genuine, user-owned email as the scripted
+`User-Agent` contact **does not register a paid account or
+create an EDGAR retrieval charge**. This contact is transmitted in
+request headers to SEC; it is not a payment credential. Keep it in the
+local PowerShell process/environment and outside GitHub, JSON
+artifacts, issues, CI logs and chat. SEC automated fair-use rate is
+currently **at most 10 requests per second**. Third-party premium
+data services are separate from free SEC EDGAR.
+Authoritative policy:
+https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data
+
+
+## 2026-10-15 M30-R8M24 checkpoint — historical 2-of-7 resume point / 과거 재개점
 
 This section **supersedes the historical M30-R8 baseline below**. Always
 verify the actual merged main SHA using GitHub/git before further

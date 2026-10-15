@@ -152,13 +152,16 @@ def inspect_sec_bond_html(raw: str) -> dict[str, Any]:
             r"7\s*\.\s*Pension\s+and\s+Other\s+Postretirement\s+Benefits","debt schedule")
     except CaseServiceError:
         note = ""
-    matches = list(re.finditer(r"senior\s+notes\s+due",note,re.I))
+    # Only report contractual table labels, not the later (i) narrative
+    # which repeats the Oct-2026 note as a footnote explanation.
+    table = note.split("_________________", 1)[0]
+    matches = list(re.finditer(r"senior\s+notes\s+due",table,re.I))
     return {
         "status": "SEC_NOTE6_ORIGINAL_VISIBLE_DIAGNOSTIC_ONLY",
         "original_body_sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(),
         "note6_bounded": bool(note),
         "senior_note_label_excerpts": [
-            note[max(0,m.start()-35):m.end()+45] for m in matches[:8]
+            table[max(0,m.start()-35):m.end()+45] for m in matches[:8]
         ],
         "pretax_debt_rate_selected": None,
         "human_review_completed": False,

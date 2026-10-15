@@ -56,8 +56,15 @@ def extract_sec_debt_inventory(raw: str) -> dict[str,Any]:
     tranches: list[dict[str,Any]] = []
     locations = []
     for coupon,label,maturity,expected in NOTE_ROWS:
-        maturity_label = re.escape(label).replace(r"\ ", r"\s+")
-        pattern = rf"{re.escape(coupon)}%\s+senior\s+notes\s+due\s+{maturity_label}"
+        # SEC Inline-XBRL markup can split percentage and date punctuation
+        # into adjacent visible text nodes. Allow only node whitespace:
+        # exact coupon digits and exact maturity remain mandatory.
+        coupon_integer, decimals = coupon.split(".")
+        coupon_text = rf"{coupon_integer}\s*\.\s*{decimals}\s*%"
+        month_day, year = label.split(", ")
+        month, day = month_day.rsplit(" ", 1)
+        maturity_label = rf"{re.escape(month)}\s+{re.escape(day)}\s*,\s*{re.escape(year)}"
+        pattern = rf"{coupon_text}\s+senior\s+notes\s+due\s+{maturity_label}"
         rows = list(re.finditer(pattern,note,re.I))
         if len(rows) != 1:
             raise CaseServiceError(f"INGR {coupon}% note/maturity missing or duplicate")
@@ -137,6 +144,27 @@ def extract_sec_debt_inventory(raw: str) -> dict[str,Any]:
     }
 
 
+def inspect_sec_bond_html(raw: str) -> dict[str, Any]:
+    """Inspect actual bounded SEC text without creating any WACC artifact."""
+    visible = _visible(raw)
+    try:
+        note = _section(visible,r"6\s*\.\s*Financing\s+Arrangements",
+            r"7\s*\.\s*Pension\s+and\s+Other\s+Postretirement\s+Benefits","debt schedule")
+    except CaseServiceError:
+        note = ""
+    matches = list(re.finditer(r"senior\s+notes\s+due",note,re.I))
+    return {
+        "status": "SEC_NOTE6_ORIGINAL_VISIBLE_DIAGNOSTIC_ONLY",
+        "original_body_sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(),
+        "note6_bounded": bool(note),
+        "senior_note_label_excerpts": [
+            note[max(0,m.start()-35):m.end()+45] for m in matches[:8]
+        ],
+        "pretax_debt_rate_selected": None,
+        "human_review_completed": False,
+    }
+
+
 def _projection(snapshot: dict[str,Any]) -> dict[str,Any]:
     validate_external_source_snapshot(snapshot)
     if (snapshot["source"]["locator"] != URL
@@ -200,13 +228,24 @@ def main(argv:list[str]|None=None)->int:
     p=argparse.ArgumentParser(description="SEC original immutable 2026Q2 bond terms; NOT WACC debt yield")
     p.add_argument("--repo-root",type=Path,default=Path.cwd())
     p.add_argument("--snapshot",required=True,type=Path)
+    p.add_argument("--diagnose",action="store_true")
     p.add_argument("--json",action="store_true")
     args=p.parse_args(argv)
     try:
         repo=args.repo_root.resolve()
         _git(repo)
         raw=args.snapshot if args.snapshot.is_absolute() else repo/args.snapshot
-        value=materialize_sec_debt_inventory(repo,raw)
+        if args.diagnose:
+            allowed = (repo/"workspace"/"source_snapshots").resolve()
+            if not raw.resolve().is_relative_to(allowed):
+                raise CaseServiceError("SEC debt diagnostic requires local original snapshot")
+            snapshot = load_external_source_snapshot(raw)
+            validate_external_source_snapshot(snapshot)
+            if snapshot["body"]["sha256"] != REQUIRED_ORIGINAL_SHA256:
+                raise CaseServiceError("SEC original body SHA mismatch")
+            value = inspect_sec_bond_html(snapshot["raw_text"])
+        else:
+            value = materialize_sec_debt_inventory(repo,raw)
     except (CaseServiceError,OSError,KeyError,ValueError,TypeError) as exc:
         value={"status":"ERROR","error":str(exc)}
     print(json.dumps(value,indent=2,sort_keys=True,ensure_ascii=False))

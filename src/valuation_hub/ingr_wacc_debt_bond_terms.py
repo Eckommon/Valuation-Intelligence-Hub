@@ -56,7 +56,8 @@ def extract_sec_debt_inventory(raw: str) -> dict[str,Any]:
     tranches: list[dict[str,Any]] = []
     locations = []
     for coupon,label,maturity,expected in NOTE_ROWS:
-        pattern = rf"{re.escape(coupon)}%\s+senior\s+notes\s+due\s+{re.escape(label).replace(r'\ ',r'\s+')}"
+        maturity_label = re.escape(label).replace(r"\ ", r"\s+")
+        pattern = rf"{re.escape(coupon)}%\s+senior\s+notes\s+due\s+{maturity_label}"
         rows = list(re.finditer(pattern,note,re.I))
         if len(rows) != 1:
             raise CaseServiceError(f"INGR {coupon}% note/maturity missing or duplicate")

@@ -360,3 +360,17 @@ def test_direct_september_heading_still_requires_exact_adjusted_payout():
     )
     with pytest.raises(CaseServiceError):
         erp.extract_dated_adjusted_erp(changed)
+
+
+def test_original_source_replay_fails_closed_without_duplicate_wacc_candidate(tmp_path: Path):
+    local = tmp_path / "workspace" / "source_snapshots"
+    local.mkdir(parents=True)
+    raw = local / "NYU_author_original.html"
+    raw.write_text(OCTOBER_INDEPENDENT_CURRENT_VALUE, encoding="utf-8")
+    result = erp.materialize_erp_source(tmp_path, raw)
+    assert Path(result["source_snapshot_path"]).exists()
+    assert Path(result["erp_input_path"]).exists()
+    assert Path(result["method_proof_path"]).exists()
+    with pytest.raises(CaseServiceError, match="already exists"):
+        erp.materialize_erp_source(tmp_path, raw)
+    assert len(list(local.glob("*_snapshot.json"))) == 1

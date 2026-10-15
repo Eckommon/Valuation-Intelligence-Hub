@@ -13,7 +13,64 @@
 
 No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
-## 2026-10-16 M30-R8M24 beta/forward-debt next implementation cursor / 다음 구현 재개점
+## 2026-10-16 M30-R8M24 actual source blockers and tested fixes / 실증 장애·수정
+
+**Latest code merge (verify exact HEAD each turn):**
+32c9ce833a21462c23e7fdfda3d308440be6bee3.
+
+On clean prior main 4ce85bd74fa06a09ce6e2275fb48b3cfa9078b38
+the real user-local run reported:
+
+- SEC RD.1 maturity parser: ERROR "INGR 2.900% note/maturity
+  missing or duplicate" on original user-local Q2 Form 10-Q
+  (raw SHA bb03a79c2ab289873e5cfe6cc299ba52d9659dda5594d224b6dce844a6bbf167).
+  The official SEC 10-Q DOES list the note: the code's exact
+  Inline-XBRL HTML text-node whitespace assumption was too strict.
+- INGR.US and ^SPX Stooq CSV downloads: both instead returned
+  JavaScript browser verification HTML. The OHLCV importer
+  correctly rejected them; do not run third-party challenge
+  solvers, retry with invented token, or treat HTML as market data.
+- M24 readiness remained exactly **4/7 actually verified**, missing
+  levered_beta, pre_tax_cost_of_debt and marginal tax_rate.
+
+**Fixed capabilities, not new observed market numbers:**
+
+| Fix | GitHub | Final-head Python 3.11/3.12 CI | Authority |
+|---|---|---|---|
+| SEC exact coupon/dates with HTML node spacing, bounded non-promoting --diagnose | PR #164 → main 84f55ee26f3af60cbebf6437f5bd827187a983bd | run 38764614323 PASS/PASS | SEC original user-local re-execution **not yet confirmed**; no YTM |
+| Yahoo v8 original two-source INGR/^GSPC daily chart JSON alternate beta route | PR #165 → main 32c9ce833a21462c23e7fdfda3d308440be6bee3 | run 38765181808 PASS/PASS | Yahoo original user-local JSON **not yet obtained**; no observed beta |
+
+**Next execution** (all originals remain gitignored; no overwrite
+or fabricated snapshot):
+
+1. Pull latest main. Re-run exact already stored SEC source:
+   python -m valuation_hub.ingr_wacc_debt_bond_terms
+   --snapshot workspace/source_snapshots/INGR_Q2_debt_market_value_bb03a79c2ab28987_snapshot.json
+   --json. If ERROR, rerun same command with --diagnose for
+   bounded note-text excerpts and **do not edit the original**.
+2. Read docs/M30_R8M24_YAHOO_CHART_BETA_INTAKE.md.
+   Request independent original JSON from two date-scoped Yahoo v8
+   chart URLs using PowerShell (INGR and ^GSPC), and run
+   python -m valuation_hub.ingr_wacc_yahoo_chart_beta
+   --issuer <original_JSON> --market <original_JSON> --json.
+   The older Stooq challenge HTML files must never be passed.
+   Yahoo API is unofficial and may rate-limit or demand auth.
+   Any download blocked/short/wrong-schema fails closed.
+3. Rerun python -m valuation_hub.ingr_r8_m24_readiness --json.
+   Only *actual successful* original-source beta proof may raise
+   4/7→5/7 unreviewed candidates. Bond inventory has no
+   pre_tax_cost_of_debt input and changes readiness by zero.
+4. Independently source contemporaneous issuer YTMs/credit spreads
+   as of 2026-09-14 (Issue #161/#154) and WACC marginal cash-tax
+   convention (Issue #150/#152). No coupon average, Level 2
+   aggregate fair-value ratio or effective-tax guidance midpoint
+   can replace either. Preserve ERP October retrospective source's
+   availability caveat and 22bp model/valuation risk-free difference.
+
+No source credentials, paid service, human approval, WACC package,
+Draft v0.4, 13/13 or canonical real-case admission occurred here.
+
+## 2026-10-16 M30-R8M24 beta/forward-debt historical beta/debt cursor / 다음 구현 재개점
 
 Last merged executable implementation (verify GitHub main on each
 resumption): `25aadb77893d38a459e41452d1201d9b5027e73a`.

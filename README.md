@@ -7,7 +7,33 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
-## M30 latest original-provider repairs / 최신 외부원본 장애 복구 (2026-10-16)
+## Real M30 WACC 5/7 original-source checkpoint / 실제 증빙 5/7 (2026-10-17)
+
+The user's completed original local SEC bond inventory and Yahoo
+INGR/^GSPC chart JSON beta intake, on
+`main@0e5d99796d13f5c23f974c48d914e778ba7ac047`,
+has now measured **5/7 unreviewed WACC source candidates** — not the
+historical 4/7 described below.
+
+- SEC Note 6 official original fixed senior-note inventory
+  reconstructed 4 notes, USD 1,742m long-term carrying debt,
+  source SHA-locked, **no forward debt yield generated**.
+- Yahoo original daily price-only series: 157 weekly aligned
+  return observations, issuer beta **0.342231910459605**,
+  R² **0.07067663798658909**. This explains only ~7.07% of the
+  sample equity price-return variance under that model. QA emits
+  explicit low-explanatory-power review advisory, not a source
+  rejection; no dividends/total-return or as-of vendor history proof.
+- **Remaining two**: issuer 2026-09-14 forward
+  `pre_tax_cost_of_debt` and jurisdiction/interest
+  deductibility-grounded WACC marginal `tax_rate`.
+  Source model still needs explicit ERP timing + risk-free
+  convention review. No WACC approval, Draft, or canonical case.
+
+Canonical original-body/input/method SHA and follow-up runbook:
+[PROJECT_STATE.md](PROJECT_STATE.md) **2026-10-17**.
+
+## M30 historical original-provider repairs / 최신 외부원본 장애 복구 (2026-10-16)
 
 **Latest feature merge:** main@32c9ce833a21462c23e7fdfda3d308440be6bee3.
 

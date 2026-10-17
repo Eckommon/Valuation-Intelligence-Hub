@@ -33,6 +33,30 @@ ERP_PROOF_SCHEMA = "wacc-erp-method-source-proof-v0.1"
 DEBT_MV_PROOF_SCHEMA = "ingr-debt-market-value-proxy-proof-v0.1"
 BETA_PROOF_SCHEMA = "ingr-weekly-price-beta-method-proof-v0.1"
 YAHOO_BETA_PROOF_SCHEMA = "ingr-yahoo-chart-weekly-price-beta-proof-v0.1"
+BETA_LOW_R_SQUARED_REVIEW_THRESHOLD = 0.10  # QA advisory only; NOT an acceptance/failure rule
+
+
+def _beta_regression_risk(r_squared: float) -> dict[str, Any]:
+    # Provenance computation (upstream proof) supplies R². The 0.10
+    # cutoff is a transparent reviewer triage policy, NOT a statistical
+    # significance test or a universal cost-of-capital convention.
+    if not isinstance(r_squared, (float, int)) or isinstance(r_squared, bool):
+        raise CaseServiceError("beta regression R² must be finite numeric")
+    if not 0 <= r_squared <= 1:
+        raise CaseServiceError("beta regression R² outside [0,1]")
+    return {
+        "status": "LOW_EXPLANATORY_POWER_REVIEW_REQUIRED"
+                  if r_squared < BETA_LOW_R_SQUARED_REVIEW_THRESHOLD
+                  else "EXPLANATORY_POWER_REVIEW_PENDING",
+        "r_squared": r_squared,
+        "comparison_threshold": BETA_LOW_R_SQUARED_REVIEW_THRESHOLD,
+        "threshold_semantics": "INTERNAL_NON_BLOCKING_REVIEW_TRIAGE_NOT_STATISTICAL_SIGNIFICANCE",
+        "equity_return_variance_explained": r_squared,
+        "price_only_total_return_adjustment_missing": True,
+        "historical_source_availability_asof_proven": False,
+        "beta_source_candidate_not_reviewed_wacc": True,
+    }
+
 
 
 def _m23(repo: Path, run_dir: Path) -> dict[str, Any]:
@@ -175,6 +199,7 @@ def _beta_method_proof(item: dict[str, Any], sources: list[dict[str, Any]],
                 "proof_sha256": checked["method_proof_sha256"],
                 "beta": checked["beta"], "weekly_returns": checked["n_weekly_returns"],
                 "r_squared": checked["r_squared"],
+                "regression_quality": _beta_regression_risk(checked["r_squared"]),
                 "return_basis": "PRICE_ONLY_NOT_TOTAL_RETURN",
                 "provider": "Stooq original CSV",
                 "historical_availability_asof_proven": False,
@@ -184,6 +209,7 @@ def _beta_method_proof(item: dict[str, Any], sources: list[dict[str, Any]],
             "proof_sha256": checked["method_proof_sha256"],
             "beta": checked["beta"], "weekly_returns": checked["weekly_returns"],
             "r_squared": proof["method"]["r_squared"],
+            "regression_quality": _beta_regression_risk(proof["method"]["r_squared"]),
             "return_basis": "PRICE_ONLY_NOT_TOTAL_RETURN",
             "provider": "Yahoo v8 chart original JSON",
             "historical_availability_asof_proven": False,

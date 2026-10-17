@@ -13,6 +13,36 @@
 
 No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
+## 2026-10-17 TAX.2 implementation successor / 세율 증빙 추가 단계
+
+Tax statutory/effective rate separation implemented for FY2025 SEC
+10-K (filed 2026-02-17; original source:
+https://www.sec.gov/Archives/edgar/data/1046257/000162828026008603/ingr-20251231.htm).
+**Issue #168 / PR #169** delivers an offline original-HTML
+source-only intake that checks 2025 U.S. statutory **21.0%/$204m**
+vs company historical global ETR **24.4%/$238m**, +0.7pp
+state/local bridge and 2025 foreign tax/geography anchors. It writes
+a user-local snapshot and separate proof by original body SHA.
+It intentionally does **not** emit a `tax_rate` WACC input, approve
+a cash tax shield, assume §163(j) deductibility, or assert that
+FY2025 ETR equals the 2026-09-14 marginal rate.
+
+**This code's 2025 10-K original has NOT yet been run on the user's
+machine**. User may capture the source after merged main and run
+`python -m valuation_hub.ingr_wacc_tax_bridge_10k --raw
+workspace/source_snapshots/INGR_2025_SEC_10K_original.html --json`,
+preserving source bytes and SEC contact privacy. Details:
+`docs/M30_R8M24_TAX_2025_BRIDGE_INTAKE.md`.
+The next true cash marginal tax method needs jurisdiction-specific
+financing and income forecasts, applied §163(j) and foreign
+deductibility, and scenario-specific incremental tax shield proof.
+**Real 5/7 stays measured**; remaining tax_rate and
+pre_tax_cost_of_debt remain HOLD. Financial market bonds may require
+CUSIP-specific FINRA TRACE print/yield evidence; official bulk
+Enhanced Historical TRACE is a separate paid/lagged offering,
+not automatic free Sep-14 historical issuer YTM access.
+Issue #161 tracks the yield evidence route.
+
 ## 2026-10-17 M30-R8M24 user-local original-source checkpoint — ACTUAL 5/7 / 실제 검증 최신 상태
 
 **This checkpoint supersedes the earlier 4/7 and 2/7 notes below.**

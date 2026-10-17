@@ -64,6 +64,8 @@ def test_proof_tied_to_two_original_json_and_wacc_readiness():
     assert rows[2]["status"]=="FRESH_SOURCE_INPUT_CANDIDATE"
     assert rows[2]["provenance"]["beta_method"]["provider"]=="Yahoo v8 chart original JSON"
     assert rows[2]["provenance"]["beta_method"]["historical_availability_asof_proven"] is False
+    assert rows[2]["provenance"]["beta_method"]["regression_quality"]["threshold_semantics"] == "INTERNAL_NON_BLOCKING_REVIEW_TRIAGE_NOT_STATISTICAL_SIGNIFICANCE"
+    assert rows[2]["provenance"]["beta_method"]["regression_quality"]["beta_source_candidate_not_reviewed_wacc"] is True
     assert readiness._rows([w],[i,m])[2]["status"]=="BETA_TWO_SOURCE_PRICE_REGRESSION_PROOF_MISSING"
     assert readiness._rows([w],[i],[],[],[],[],[p])[2]["status"]=="BETA_ORIGINAL_ISSUER_OR_MARKET_SNAPSHOT_MISSING"
     tampered=copy.deepcopy(p)
@@ -123,3 +125,16 @@ def test_replay_is_immutable_and_no_review(tmp_path:Path):
     outside.write_text(ISSUER,encoding="utf-8")
     with pytest.raises(CaseServiceError):
         beta.materialize_yahoo_beta(tmp_path,outside,b)
+
+
+def test_beta_r_squared_low_power_is_review_advisory_not_source_rejection():
+    from valuation_hub.ingr_r8_m24_readiness import _beta_regression_risk
+    low = _beta_regression_risk(0.07067663798658909)
+    assert low["status"] == "LOW_EXPLANATORY_POWER_REVIEW_REQUIRED"
+    assert low["equity_return_variance_explained"] == 0.07067663798658909
+    assert low["beta_source_candidate_not_reviewed_wacc"] is True
+    assert _beta_regression_risk(0.2)["status"] == "EXPLANATORY_POWER_REVIEW_PENDING"
+    assert _beta_regression_risk(0.1)["status"] == "EXPLANATORY_POWER_REVIEW_PENDING"
+    for invalid in (float("nan"), -0.01, 1.1, True):
+        with pytest.raises(CaseServiceError):
+            _beta_regression_risk(invalid)

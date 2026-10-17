@@ -130,7 +130,7 @@ def extract_2025_tax_bridge(raw: str) -> dict[str, Any]:
         "historical_us_federal_imputed_provision_usd_millions": 204,
         "historical_consolidated_effective_percent": 24.4,
         "historical_consolidated_tax_provision_usd_millions": 238,
-        "historic_etp_minus_us_base_percentage_points": 3.4,
+        "historical_etr_minus_us_base_percentage_points": 3.4,
         "historical_state_and_local_effect_percentage_points": 0.7,
         "foreign_country_effects_present": ["Mexico", "Germany", "Colombia", "other"],
         "foreign_tax_credit_effect_present": True,

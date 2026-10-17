@@ -13,7 +13,78 @@
 
 No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
-## 2026-10-16 M30-R8M24 actual source blockers and tested fixes / 실증 장애·수정
+## 2026-10-17 M30-R8M24 user-local original-source checkpoint — ACTUAL 5/7 / 실제 검증 최신 상태
+
+**This checkpoint supersedes the earlier 4/7 and 2/7 notes below.**
+User ran main at `0e5d99796d13f5c23f974c48d914e778ba7ac047` on Windows
+and supplied full local no-secret JSON. The two former blockers were
+resolved against the unchanged exact inputs, **not merely synthetic CI**.
+
+- SEC Q2 2026 **original** body SHA
+  `bb03a79c2ab289873e5cfe6cc299ba52d9659dda5594d224b6dce844a6bbf167`;
+  existing snapshot SHA
+  `f2b195c18e55ab579d9eb997017b9dc4327d7a6758fe19349d982d70e94007d6`;
+  real Note 6 inventory proof SHA
+  `6158a891e2cc91d1466672c92a24c9141af2fe180a8735869b3cbe97b6f48997`;
+  **4 senior notes**, carrying long-term USD **1,742m**.
+  `REAL_INGR_SEC_BOND_TERMS_CAPTURED_FORWARD_YIELD_HOLD`.
+  No issuer 2026-09-14 bond YTM, no forward pretax debt rate,
+  `wacc_debt_input_created=false`.
+- Yahoo v8 original issuer body SHA
+  `3eb0accd980d947ad80176edaa8b6188080122d83a04c86f0be162d9b6ba37cd`;
+  Yahoo ^GSPC original body SHA
+  `979d47fc367208c03ba89c70268ef3d01a09b8f9456199e2e2449970fe235307`;
+  INGR source input SHA
+  `3fa3ecf50a7c44c59197c61f890efeb0cd520defb8a8e96964e38e75b7d0ddf4`;
+  two-source proof SHA
+  `1f53a9bb6758c4d7718e5f650a62bb2b0e459ce4dde4df85a16a999b03fbbf91`;
+  **price-only** 3-year weekly **157 paired returns**, OLS
+  `beta=0.342231910459605`,
+  `R²=0.07067663798658909` (approx **7.07%** of
+  INGR sample weekly equity-price-return variance explained by this
+  single S&P500 price-return regression). This is *not* a regression
+  standard-error confidence interval, statistical validity proof, or
+  total-return beta. The low R², missing dividends, possible vendor
+  price adjustments and historical availability require explicit
+  methodological review. Source `ASSUMPTION`, Tier B, not
+  reviewed WACC.
+- Actual M24 result **5/7 `FRESH_SOURCE_INPUT_CANDIDATE`**:
+  rf 4.97%, ERP 4.14% (October author *retrospective* Sep1 values),
+  beta as above, market equity proxy USD 6,220,000,248.77, debt-MV
+  proxy USD 1,681m. **MISSING** only
+  `pre_tax_cost_of_debt` and `tax_rate`.
+- Overall status remains **`HOLD_REAL_INGR_M24_WACC_INPUT_GAPS`**;
+  `human_review_completed=false`,
+  `reviewed_wacc_package=null`,
+  `draft_v04_created=false`. No real-case canonical
+  promotion/admission, and no fake reviewer.
+- Beta QA: the review-triage threshold `R² < 0.10` is
+  explicit local **advisory only**, NOT a significance test,
+  promotion grant or automatic source failure. 5/7 source score
+  remains compatible with a low-quality unreviewed regression.
+- Original NYU ERP snapshot still has
+  `historical_availability_asof_proven=false` relative to
+  **valuation as-of 2026-09-14**, and original author 4.75% RF differs
+  from 4.97% same-date selected RF. Do not erase this risk.
+
+**Next implement/execute:** (i) WACC 2026-09-14 issuer forward
+`pre_tax_cost_of_debt` via actual dated bonds/term-matched
+market yields and 2026 October refinancing assumptions, Issue #161;
+(ii) jurisdiction-weighted marginal cash tax and U.S. IRC §163(j)
+interest deductibility evidence (Issues #150/#152). The 2025 10-K
+(filed 2026-02-17) documents **21% U.S. federal statutory** vs
+**24.4% worldwide 2025 effective** tax; both are distinct from the
+global WACC marginal interest shield. The SEC Q2 8-K effective ETR
+source is context-only, not an approved tax WACC source.
+See official 2025 10-K:
+https://www.sec.gov/Archives/edgar/data/1046257/000162828026008603/ingr-20251231.htm
+and IRS §163(j) Form 8990 instructions:
+https://www.irs.gov/instructions/i8990.
+No pre-tax issuer-specific bond YTM or deductible worldwide cash-tax
+rate has been established by the local 5/7 run.
+
+
+## 2026-10-16 M30-R8M24 historical source blockers and tested fixes / 실증 장애·수정
 
 **Latest code merge (verify exact HEAD each turn):**
 32c9ce833a21462c23e7fdfda3d308440be6bee3.

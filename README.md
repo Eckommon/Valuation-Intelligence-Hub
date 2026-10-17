@@ -7,6 +7,22 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
+## M30-R8M24-TAX.2 2025 SEC tax-context intake / 세율 법정·실효 비교 증빙
+
+New source-only FY2025 Ingredion SEC 10-K tax reconciliation importer:
+`python -m valuation_hub.ingr_wacc_tax_bridge_10k --raw <original_HTML> --json`.
+Requires immutable original official SEC 2025 10-K HTML under gitignored
+workspace. As of 2026-09-14 the SEC 2025-12-31 10-K (filed 2026-02-17)
+reports 21.0% US federal statutory vs 24.4% consolidated historical
+effective, with state/local and foreign tax differences. Explicitly
+**not an approved marginal cash interest tax shield**: §163(j) limits,
+borrowing entity/jurisdictions and forward tax capacity are missing.
+No `tax_rate` WACC source is created and **actual readiness remains
+5/7**. Reference:
+[2025 SEC tax bridge intake](docs/M30_R8M24_TAX_2025_BRIDGE_INTAKE.md).
+The original 2025 SEC document has not yet been executed on the user
+machine; parser/CI tests use synthetic fixtures only.
+
 ## Real M30 WACC 5/7 original-source checkpoint / 실제 증빙 5/7 (2026-10-17)
 
 The user's completed original local SEC bond inventory and Yahoo

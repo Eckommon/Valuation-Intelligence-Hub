@@ -67,7 +67,7 @@ def test_original_source_sha_proof_no_wacc_and_tamper():
     ("ICE BofA BBB US Corporate Index","ICE BofA AAA US Corporate Index"),
     ("internal use only","unrestricted public data"),
     ("Daily, Close","Monthly"),
-    ("ICE Data Indices, LLC","Another Data Provider"),
+    ("Ice Data Indices, LLC","Another Data Provider"),
 ])
 def test_bad_original_identity_or_dated_value_fails_closed(original,modified):
     bad=RAW.replace(original,modified)

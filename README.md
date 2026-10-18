@@ -7,6 +7,25 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
+## M30-R8M24: new real SEC tax evidence and BBB debt comparator / 2026-10-18
+
+User-local original FY2025 SEC 10-K TAX.2 verification succeeded on
+`main@fa2cb655...`; raw body SHA `f932b04e0bf99ad8...`,
+tax proof `c3d83e6a3c59...`. It attests 21% US statutory vs
+24.4% 2025 global effective tax, **NOT 2026 marginal cash shield**.
+Measured M24 WACC source readiness remains **5/7**, with
+issuer forward pre-tax cost of debt and marginal tax-rate absent.
+
+Official FRED/ICE U.S. BBB corporate *index* effective yield
+(BAMLC0A4CBBBEY) was 5.90% on Sep 14 2026. This is **not
+an Ingredion company bond yield nor a proven issuer BBB rating**.
+Issue #170 adds a local-only copyrighted/source-licensed
+non-promoting comparator capture, with 2026-09-14 table/date
+attestation; only synthetic CI fixtures, no ICE licensed original
+material in git. See
+[RD.3 licensed index intake](docs/M30_R8M24_FRED_BBB_INDEX_COMPARATOR.md)
+and [latest PROJECT_STATE.md](PROJECT_STATE.md).
+
 ## M30-R8M24-TAX.2 2025 SEC tax-context intake / 세율 법정·실효 비교 증빙
 
 New source-only FY2025 Ingredion SEC 10-K tax reconciliation importer:

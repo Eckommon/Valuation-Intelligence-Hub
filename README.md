@@ -7,6 +7,27 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
+## M30-R8M24-RD.4: first-party issuer BBB credit rating / 등급 근거
+
+Fitch Ratings **June 8, 2026** confirmed Ingredion long-term
+issuer IDR and senior unsecured debt rating **BBB**, outlook Stable,
+short-term F2, before valuation as-of September 14, 2026. S&P
+June 8, 2026 public rating report also corroborates BBB senior
+unsecured class. A licensed FRED BBB market index yielded
+**5.90%** Sep14; actual company credit class compatibility
+is source-supported, but individual INGR borrowing market
+YTM or matching maturity/refinancing term is **not** yet
+observed. The pending Tate & Lyle acquisition entails
+around USD4.4bn **future** incremental financing, not a
+June2026 funded liability.
+
+RD.4 offline original Fitch HTML source/proof intake
+is evidence-only (no WACC input) pending real user-local
+original; see
+[Fitch original rating intake](docs/M30_R8M24_FITCH_20260608_RATING_INTAKE.md)
+and [PROJECT_STATE.md](PROJECT_STATE.md). As-of
+market-level 5/7 source readiness and WACC HOLD persist.
+
 ## M30-R8M24: new real SEC tax evidence and BBB debt comparator / 2026-10-18
 
 User-local original FY2025 SEC 10-K TAX.2 verification succeeded on

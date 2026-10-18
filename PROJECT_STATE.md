@@ -13,6 +13,40 @@
 
 No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
+## 2026-10-18 RD.4 primary 2026 pre-as-of Ingredion issuer BBB rating / 신용등급 진전
+
+**First-party rated-borrower evidence discovered**: Fitch Ratings
+June 8, 2026, official
+https://www.fitchratings.com/research/corporate-finance/fitch-affirms-ingredion-incorporated-idr-at-bbb-outlook-stable-08-06-2026:
+Ingredion Long-Term IDR **BBB**, senior unsecured long-term
+**BBB**, short-term **F2**, Outlook **Stable**; pending
+Tate & Lyle acquisition expected in second half 2027 requires
+around **USD4.4bn future incremental borrowing** (not
+June30 2026 funded debt). S&P June 8, 2026 primary also
+reports same BBB senior unsecured class at
+https://www.spglobal.com/ratings/en/regulatory/article/-/view/type/HTML/id/3576456 .
+Fitch issuer's BBB credit **rating class** thus matches the FRED
+Sep14 BBB-index yield 5.90% documented in RD.3, but not the
+issuer instrument-specific YTM, liquidity, maturity/refinance
+premium or projected acquisition capital structure.
+
+**Issue #172 / RD.4:** independently ingest official Fitch
+June 8 original HTML under ignored workspace and emit SHA-bound
+rating/context proof only; preserves no WACC debt source input.
+S&P original not yet SHA-attested. See
+`docs/M30_R8M24_FITCH_20260608_RATING_INTAKE.md`.
+If blocked by publisher login/challenge, stop and preserve
+HOLD — no bypass or fabricated original.
+
+A future explicit indexed BBB **standalone** forward-debt
+assumption must source-bind and govern issuer rating,
+2026-09-14 index yield, actual four-note SEC inventory,
+due Oct2026 refinancing, tenor mismatch and prospective 2027
+acquisition; no treating 5.90% as an INGR observed bond quote.
+**Actual WACC source readiness remains 5/7**, missing
+pre_tax_cost_of_debt and tax_rate, despite verified tax
+context and forward-market/rating comparators.
+
 ## 2026-10-18 SEC 2025 actual tax original + RD.3 market comparator / 최신 실증
 
 **Last actually observed canonical Windows run**: main

@@ -13,6 +13,52 @@
 
 No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
+## 2026-10-18 SEC 2025 actual tax original + RD.3 market comparator / 최신 실증
+
+**Last actually observed canonical Windows run**: main
+`fa2cb655cfee54f5d9ef273d2b271852ade9d238`.
+The user's **unaltered original SEC FY2025 10-K** passed TAX.2:
+
+- original source body SHA:
+  `f932b04e0bf99ad80ea19326b724d553368cac6c6dad2ab64c1512154cd1aa1b`;
+- source snapshot:
+  `eb36a3dfede4b45e040dfcc5ae4b7e55caeb6b2a9cde6e3135dbcab6d52b6d08`;
+- tax-method proof:
+  `c3d83e6a3c59236b1a18c1fc5cd3fa513605d6de0cf0c81c6131c291593a5594`;
+- `REAL_INGR_2025_TAX_STATUTORY_EFFECTIVE_BRIDGE_CAPTURED_METHOD_HOLD`:
+  historic 21.0% federal US statutory and 24.4% global FY2025
+  effective; **no WACC marginal tax input**.
+
+The real local M24 run separately reconfirmed **5/7** source
+candidates, with beta **0.342231910459605**, 157 weekly aligned
+Yahoo INGR/^GSPC *price-only* returns and R² **0.07067663798658909**
+(low explanatory power reviewer triage). Missing exactly
+`pre_tax_cost_of_debt` and `tax_rate`; status
+`HOLD_REAL_INGR_M24_WACC_INPUT_GAPS`, human_review_completed=false,
+reviewed_wacc_package=null, draft_v04_created=false.
+
+**New RD.3 market comparison investigation:** Official
+[FRED/ICE BBB US Corporate Index Effective Yield](https://fred.stlouisfed.org/data/BAMLC0A4CBBBEY)
+series BAMLC0A4CBBBEY shows **2026-09-14 5.90%**, prior
+2026-09-11 5.89%. It is a BBB index *benchmark*, not an INGR
+bond yield; neither INGR's BBB credit rating nor tenor/term match
+has been verified. FRED/ICE index data are proprietary and licensed
+**for internal use only**. Work Issue #170 introduces a
+**non-WACC-input** local-only evidence comparator intake; test
+fixtures must be synthetic. The original index HTML is NOT
+captured from the user's machine yet. No direct 6/7 claim.
+
+Read `docs/M30_R8M24_FRED_BBB_INDEX_COMPARATOR.md` and
+`docs/M30_R8M24_TAX_2025_BRIDGE_INTAKE.md` for the next exact
+local source checks. To truly close #161, independently source
+2026-09-14 INGR/issuer-term market prices or a source-backed
+credit/rating/refinancing scenario with typed analytical review;
+to close #168/#150/#152, substantiate *incremental 2026 cash
+interest deductibility* by jurisdiction under relevant rules.
+Original NYU ERP is retrospective October; no Sept14 release
+availability attested, and author 4.75% RF vs valuation 4.97%.
+Do not promote any unreviewed WACC or Draft.
+
 ## 2026-10-17 TAX.2 implementation successor / 세율 증빙 추가 단계
 
 Tax statutory/effective rate separation implemented for FY2025 SEC

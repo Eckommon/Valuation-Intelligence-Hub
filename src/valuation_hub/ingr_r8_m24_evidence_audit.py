@@ -108,8 +108,10 @@ def assess_nonpromoting_gates(readiness:dict[str,Any],
     metrics=readiness.get("metrics")
     if not isinstance(metrics,list) or len(metrics)!=7:
         raise CaseServiceError("WACC audit metrics expected exactly seven")
+    if any(not isinstance(x,dict) for x in metrics):
+        raise CaseServiceError("invalid WACC metric record")
     m={x.get("metric"):x for x in metrics}
-    if len(m)!=7 or any(not isinstance(x,dict) for x in metrics):
+    if len(m)!=7:
         raise CaseServiceError("duplicate or invalid WACC metrics")
     if sum(x.get("status")=="FRESH_SOURCE_INPUT_CANDIDATE" for x in metrics)!=readiness.get("metrics_ready"):
         raise CaseServiceError("WACC readiness source count contradicted")
@@ -162,8 +164,8 @@ def assess_nonpromoting_gates(readiness:dict[str,Any],
              "verified_bond_terms_not_bond_yield":True,
              "due_october_2026_refinancing_requires_separate_treatment":True,
              "tate_lyle_2027_future_debt_not_as_reported_debt":True,
-             "original_fred_ice_index_not_locally_attested":True,
-             "original_fitch_rating_not_locally_attested":True},
+             "original_fred_ice_index_not_attested_by_this_audit":True,
+             "original_fitch_rating_not_attested_by_this_audit":True},
             {"metric":"tax_rate",
              "status":"HOLD_INCREMENTAL_JURISDICTIONAL_CASH_INTEREST_SHIELD_UNPROVEN",
              "historical_us_statutory_not_global_marginal_rate":True,

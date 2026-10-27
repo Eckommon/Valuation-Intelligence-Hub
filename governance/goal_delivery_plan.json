@@ -1,0 +1,129 @@
+{
+  "schema_version": "vih-goal-delivery-plan-v0.1",
+  "baseline_as_of": "2026-10-27",
+  "north_star": "Evidence-grounded reproducible decision-useful cross-asset valuation: price versus intrinsic value, expectations, scenario returns, risks and provenance",
+  "canonical_policy_paths": [
+    "docs/FOUNDATION.md",
+    "docs/AI_GROUNDING_POLICY.md",
+    "docs/AI_DECISION_AUTHORITY.md",
+    "docs/GOAL_DELIVERY_LOOP.md"
+  ],
+  "case_target": {
+    "case_id": "US_INGR_INGREDION",
+    "entity_id": "SEC_CIK:0001046257",
+    "valuation_as_of": "2026-09-14",
+    "scope": "AS_REPORTED",
+    "required_material_fields": 13,
+    "registry_admitted": false
+  },
+  "user_reported_checkpoint": {
+    "observation_type": "USER_SUPPLIED_LOCAL_CLI_OUTPUT_NOT_REPLAYED_IN_GITHUB_CI",
+    "local_run_date": "2026-10-27",
+    "on_main_sha": "b92e77ee0e1ab3c210f2f409b6989d0989235189",
+    "wacc_candidates": 5,
+    "wacc_required": 7,
+    "missing": [
+      "pre_tax_cost_of_debt",
+      "tax_rate"
+    ],
+    "status": "HOLD_REAL_INGR_M24_WACC_INPUT_GAPS",
+    "reviewed_wacc": false,
+    "completed_valuation": false,
+    "caveats": [
+      "Beta price-only R-squared 0.07067663798658909, unreviewed",
+      "October-retrospective ERP availability by valuation as-of unproven",
+      "Author 4.75% RF differs from valuation 4.97% RF"
+    ]
+  },
+  "statuses": [
+    "CODE_MERGED_LOCAL_RUN_PENDING",
+    "BLOCKED_REAL_EVIDENCE",
+    "WAITING_DEPENDENCY",
+    "NOT_YET_VALIDATED"
+  ],
+  "priorities": [
+    {
+      "id": "P0",
+      "title": "Release hygiene and offline original-source audit",
+      "status": "CODE_MERGED_LOCAL_RUN_PENDING",
+      "blocking_proof": "USER_LOCAL_AUDIT_UNAVAILABLE_TO_CI",
+      "required_paths": [
+        "src/valuation_hub/ingr_r8_m24_evidence_audit.py",
+        "tests/test_m30r8m24_evidence_audit.py"
+      ],
+      "next_action": "User run: python -m valuation_hub.ingr_r8_m24_evidence_audit --json; capture no-secret result",
+      "exit_gate": "Exact original-source local audit PASS and current real WACC HOLD unmodified"
+    },
+    {
+      "id": "P1",
+      "title": "Ingredion date-aligned debt yield, marginal tax and model review",
+      "status": "BLOCKED_REAL_EVIDENCE",
+      "blocking_proof": "DEBT_YTM_AND_JURISDICTIONAL_CASH_INTEREST_SHIELD_MISSING",
+      "required_paths": [
+        "src/valuation_hub/ingr_r8_m24_readiness.py",
+        "docs/M30_R8M24_INGR_WACC_READINESS.md"
+      ],
+      "next_action": "Acquire authorized dated issuer/term-matched borrowing yield evidence and incremental interest deductibility by jurisdiction; separately challenge ERP/beta",
+      "exit_gate": "7/7 independently verified candidates with explicit limitations and governed WACC method"
+    },
+    {
+      "id": "P2",
+      "title": "One complete admitted real equity valuation",
+      "status": "WAITING_DEPENDENCY",
+      "blocking_proof": "P1_AND_13_FIELD_HANDOFF_INCOMPLETE",
+      "required_paths": [
+        "docs/COMPLETE_GOVERNED_EQUITY_HANDOFF.md",
+        "docs/M30_D_REAL_CASE_READINESS.md"
+      ],
+      "next_action": "Complete terminal growth, six yearly forecast fields, risk/sensitivity, 13/13 binding, reproducible guarded admission",
+      "exit_gate": "First real Ingredion in registry with rerunnable valuation and independent tie-out"
+    },
+    {
+      "id": "P3",
+      "title": "User-reproducible analytical workflow",
+      "status": "WAITING_DEPENDENCY",
+      "blocking_proof": "FIRST_REAL_CASE_NOT_DELIVERED",
+      "required_paths": [
+        "src/valuation_hub/web.py",
+        "src/valuation_hub/cli_entry_m30r8.py"
+      ],
+      "next_action": "Run E2E analyst tasks in Web/CLI, capture blockers and explain price-versus-value outputs",
+      "exit_gate": "Real-user CLI/Web scenario and failure acceptance"
+    },
+    {
+      "id": "P4",
+      "title": "Second-issuer portability",
+      "status": "WAITING_DEPENDENCY",
+      "blocking_proof": "FIRST_REAL_CASE_AND_USER_WORKFLOW_NOT_VALIDATED",
+      "required_paths": [
+        "src/valuation_hub/reference_case.py"
+      ],
+      "next_action": "Repeat real methodology on a different company without bespoke hardcoded pathway",
+      "exit_gate": "Second issuer evidence/model rerun with no issuer-specific code in shared engine"
+    },
+    {
+      "id": "P5",
+      "title": "Non-equity model fit and expansion",
+      "status": "WAITING_DEPENDENCY",
+      "blocking_proof": "P4_PORTABILITY_UNPROVEN",
+      "required_paths": [
+        "src/valuation_hub/venture.py",
+        "docs/FOUNDATION.md"
+      ],
+      "next_action": "Choose one non-equity asset and implement evidence-grounded asset-appropriate adapter",
+      "exit_gate": "At least one canonical non-equity real asset with native model and risk assessment"
+    }
+  ],
+  "claims": {
+    "first_real_case_complete": false,
+    "multi_asset_goal_complete": false,
+    "reporting_not_approval": true
+  },
+  "current_iteration": {
+    "id": "LOOP-001",
+    "objective": "Ship merged P0 audit and establish falsifiable outcome-based goal loop",
+    "implementation_status": "CODE_MERGED_LOCAL_RUN_PENDING",
+    "next_priority_id": "P1",
+    "human_local_action_needed": "Run P0 offline audit on unmodified ignored original SEC snapshots/proofs"
+  }
+}

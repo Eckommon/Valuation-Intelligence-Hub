@@ -7,6 +7,18 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
+## Goal-centered execution loop / 목표 중심 고정 반복 규약
+
+The project is measured by **real, reproducible value analysis**, not code or milestone counts. The current highest-value path is first source- and method-verified Ingredion, then a second issuer and an appropriate non-equity asset. See [Goal delivery loop](docs/GOAL_DELIVERY_LOOP.md), the [machine-checkable delivery plan](governance/goal_delivery_plan.json), and [agent instructions](AGENTS.md).
+
+Check the stored plan without claiming financial approval:
+
+~~~powershell
+python -m valuation_hub.goal_delivery_check --json
+~~~
+
+A valid plan does not change the actual Ingredion 5/7 source-candidate HOLD, reviewed-WACC absence, or lack of canonical real-case admission. The offline original-source audit is on main after PR #174, but its **user-local real execution remains pending**.
+
 ## M30-R8M24 offline risk/source audit after FRED downtime / 원본 감사 (2026-10-23)
 
 The latest real local WACC output is still **5/7** on

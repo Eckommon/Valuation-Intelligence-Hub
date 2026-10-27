@@ -13,6 +13,53 @@
 
 No synthetic fixture may be admitted to `registry/cases.json` to claim real-case completion.
 
+## 2026-10-23 AUDIT.1 — post-FRED timeout offline original-source checkpoint / 외부접속 없이 증빙 감사
+
+User last supplied a genuine clean `main@b92e77ee0e1ab3c210f2f409b6989d0989235189`
+M24 WACC readiness JSON, again **5/7** unreviewed source
+candidates. Final two source inputs still
+`pre_tax_cost_of_debt=MISSING_SOURCE_INPUT` and
+`tax_rate=MISSING_SOURCE_INPUT`. User's FRED
+`Invoke-WebRequest` timed out after 30 seconds and no FRED or
+Fitch local original file was created; this is a source-collection
+blocker, **not** a Git sync failure.
+
+**M30-R8M24-AUDIT.1** (issue #79; implementation source
+`ingr_r8_m24_evidence_audit.py`) is a new strictly offline
+immutable original-source audit. It cross-checks the verified user-local
+SEC Q2 2026 4-note schedule against original SHA
+`bb03a79c2ab289873e5cfe6cc299ba52d9659dda5594d224b6dce844a6bbf167`
+and note proof SHA `6158a891e2cc91d1466672c92a24c9141af2fe180a8735869b3cbe97b6f48997`,
+plus verified SEC FY2025 10-K original body SHA
+`f932b04e0bf99ad80ea19326b724d553368cac6c6dad2ab64c1512154cd1aa1b`
+and tax method proof SHA
+`c3d83e6a3c59236b1a18c1fc5cd3fa513605d6de0cf0c81c6131c291593a5594`,
+then runs existing M24 readiness source validation. Output is
+an ignored local independent risk/exception ledger with
+**5/7 HOLD, no rate inputs or approval**, not a market data importer.
+
+**Review warnings preserved:** Yahoo INGR beta 0.342231910459605,
+157 weekly pairs, R² 0.07067663798658909 (low-power);
+price-only no dividends; NYU September ERP Oct-retrospective
+availability unproven and author reference 4.75% RF vs Sep14
+4.97% RF; market equity 40-day share count lag; Q2 long-term
+Level2/short-term carrying debt market-value proxy.
+Finance **scenario split**: 2026-09-14 AS_REPORTED standalone
+(with upcoming Oct 2026 3.2% notes refinancing) versus
+2027 Tate & Lyle combination future incremental capital.
+Neither 2025 effective tax 24.4%, U.S. 21% statutory
+nor historic coupons create a marginal tax or issuer YTM.
+
+**Local next action:** Pull main and execute
+`python -m valuation_hub.ingr_r8_m24_evidence_audit --json`
+offline, without FRED/Fitch access, alongside existing
+`ingr_r8_m24_readiness --json`. See
+`docs/M30_R8M24_OFFLINE_EVIDENCE_BOUNDARY_AUDIT.md`.
+An audit ERROR on altered/missing original or a genuinely
+advanced 6/7 stage must be investigated, not bypassed.
+No reviewed WACC, no Draft v04, 13/13, canonical case,
+or human approval.
+
 ## 2026-10-18 RD.4 primary 2026 pre-as-of Ingredion issuer BBB rating / 신용등급 진전
 
 **First-party rated-borrower evidence discovered**: Fitch Ratings

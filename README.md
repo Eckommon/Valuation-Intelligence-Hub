@@ -7,6 +7,24 @@ Valuation-Intelligence-Hub is a reproducible, evidence-grounded valuation intell
 
 Valuation-Intelligence-Hub는 출처근거·정규화·거버넌스 FACT/ASSUMPTION·근거우선 분석 판단·Draft·가치평가 실행·승격/수용·저장소 정식화를 하나의 재현 가능한 흐름으로 연결한다. 인간 승인은 모든 내부 분석에 일률적으로 요구하지 않으며, 자금·계약·규제제출·계정권한 등 외부 구속효과가 있는 경계에 집중한다.
 
+## M30-R8M24 offline risk/source audit after FRED downtime / 원본 감사 (2026-10-23)
+
+The latest real local WACC output is still **5/7** on
+`main@b92e77ee0e1ab3c210f2f409b6989d0989235189`,
+missing forward `pre_tax_cost_of_debt` and marginal `tax_rate`.
+FRED original HTML download timed out; no original index/Fitch
+file was evidenced. Rather than invent market data or equate
+historic tax with interest cash shield, the new offline
+`python -m valuation_hub.ingr_r8_m24_evidence_audit --json`
+checks BOTH exact user-local SEC original/proof pairs,
+replays canonical M24 5/7 readiness and prints a
+non-promoting blocker ledger. It also separates 2026 as-reported
+independent company funded debt versus forecast 2027 acquisition
+financing. It never fetches a source or creates any WACC rate,
+reviewer, Draft, or canonical real case. See
+[offline evidence boundary audit](docs/M30_R8M24_OFFLINE_EVIDENCE_BOUNDARY_AUDIT.md)
+and [PROJECT_STATE.md](PROJECT_STATE.md).
+
 ## M30-R8M24-RD.4: first-party issuer BBB credit rating / 등급 근거
 
 Fitch Ratings **June 8, 2026** confirmed Ingredion long-term

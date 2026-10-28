@@ -3,6 +3,39 @@
 > Canonical human-and-AI handoff. Repository-grounded state outranks chat or AI recollection.  
 > 인간·AI 공통 정식 인계 문서. 저장소 근거 상태는 채팅·AI 기억보다 우선한다.
 
+## 2026-10-27 LOOP-001 — outcome-based goal delivery contract / 목표 재정렬
+
+**User local output on main `b92e77ee0e1ab3c210f2f409b6989d0989235189`:**
+`ingr_r8_m24_readiness --json` genuinely reconfirmed **5/7 source
+candidates**, status `HOLD_REAL_INGR_M24_WACC_INPUT_GAPS`;
+`pre_tax_cost_of_debt` and `tax_rate` remain missing.
+No reviewed WACC, 13/13 bound Draft, real Ingredion canonical admission,
+or user-verified product outcome. 2026-09-14 as-of/AS_REPORTED unchanged.
+
+**P0 release repair:** PR #174 offline SEC original-context audit merged
+to main `b0eaafab69f972c16174cf5cb61475f1ac9e4554`
+after full exact-head Python 3.11/3.12 CI PASS. This fixes the
+previous `No module named valuation_hub.ingr_r8_m24_evidence_audit`
+cause (branch-only PR), but the **audit has not been executed on the user's
+gitignored original SEC files**. Do not report source-audit PASS yet.
+
+**Strategic assessment:** Strong kernels, evidence and governance contracts
+exist, but the north-star **real end-to-end** valuation and multi-asset
+portability are not proved. The work focus moves from M-number/code output
+to real outcome gates. `docs/GOAL_DELIVERY_LOOP.md`, `AGENTS.md`,
+`governance/goal_delivery_plan.json` and offline
+`python -m valuation_hub.goal_delivery_check --json`
+are the enduring iteration contract, not financial approval.
+
+**Next critical path:** (1) receive user-local audit result without
+private identifiers; (2) independently source 2026-09-14 issuer-/tenor-
+appropriate financing cost and jurisdiction/cash-interest-deductibility
+method, then review low-explanatory-power beta and retrospective ERP
+timing; (3) complete actual 13/13 FCFF Draft, scenario/sensitivity,
+independent rerun, guarded admission; (4) second issuer, product usability,
+then non-equity. The 2027 Tate & Lyle financing remains a separate
+forward scenario, not June-2026 funded debt.
+
 ## Repository / 저장소
 
 - Repository: `Eckommon/Valuation-Intelligence-Hub`
